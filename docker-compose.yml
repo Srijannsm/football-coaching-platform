@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16
+    container_name: coaching_db
+    restart: always
+    environment:
+      POSTGRES_DB: coaching_db
+      POSTGRES_USER: coaching_user
+      POSTGRES_PASSWORD: coaching_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  web:
+    build: ./backend
+    container_name: coaching_web
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

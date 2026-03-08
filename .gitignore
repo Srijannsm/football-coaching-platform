@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# Environment files
+.env
+.env.*
+
+# Virtual environments
+venv/
+.venv/
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+postgres_data/
+
+# Migrations cache
+*/__pycache__/
+
+# Pytest / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Static files collected
+staticfiles/
