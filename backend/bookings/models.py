@@ -1,5 +1,5 @@
 from django.db import models
-from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 class Booking(models.Model):
@@ -18,7 +18,7 @@ class Booking(models.Model):
     ]
 
     player = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings"
+        "accounts.PlayerProfile", on_delete=models.CASCADE, related_name="bookings"
     )
     session = models.ForeignKey(
         "training.TrainingSession", on_delete=models.CASCADE, related_name="bookings"
@@ -29,7 +29,38 @@ class Booking(models.Model):
     booked_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("player", "session")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["player", "session"], name="unique_player_session_booking"
+            )
+        ]
+        ordering = ["-booked_at"]
 
     def __str__(self):
-        return f"{self.player.username} -> {self.session}"
+        return f"{self.player.user.username} -> {self.session}"
+
+    def clean(self):
+        if self.player.user.role != "player":
+            raise ValidationError("Only player profiles can create bookings.")
+
+        if self.session.is_cancelled:
+            raise ValidationError("Cannot book a cancelled session.")
+
+        if not self.session.is_published:
+            raise ValidationError("Cannot book an unpublished session.")
+
+        if not self.session.program.is_active:
+            raise ValidationError(
+                "Cannot book a session from an inactive training program."
+            )
+
+        if (
+            self.status in [self.STATUS_PENDING, self.STATUS_CONFIRMED]
+            and self.session.is_full
+        ):
+            if not self.pk:
+                raise ValidationError("This session is already full.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
