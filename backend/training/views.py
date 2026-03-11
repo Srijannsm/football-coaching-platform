@@ -2,6 +2,7 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from .models import TrainingProgram, TrainingSession
 from .serializers import TrainingProgramSerializer, TrainingSessionSerializer
+from django.utils.timezone import localdate
 
 
 class TrainingProgramListView(generics.ListAPIView):
@@ -21,6 +22,7 @@ class TrainingSessionListView(generics.ListAPIView):
             is_published=True,
             is_cancelled=False,
             program__is_active=True,
+            session_date__gte=localdate(),
         )
 
         program_id = self.request.query_params.get("program")

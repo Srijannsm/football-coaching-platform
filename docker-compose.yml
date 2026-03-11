@@ -15,6 +15,7 @@ services:
   web:
     build: ./backend
     container_name: coaching_web
+    user: "${UID}:${GID}"
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app

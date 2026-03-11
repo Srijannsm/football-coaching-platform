@@ -45,6 +45,7 @@ class PlayerProfile(models.Model):
     # first_name = models.CharField(max_length=150)
     # last_name = models.CharField(max_length=150)
     age = models.PositiveIntegerField(blank=True, null=True)
+    image = models.ImageField(upload_to="players/", blank=True, null=True)
     preferred_foot = models.CharField(max_length=10, choices=FOOT_CHOICES, blank=True)
     player_rating = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
     primary_position = models.CharField(max_length=50, blank=True)
