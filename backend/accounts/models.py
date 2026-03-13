@@ -16,6 +16,13 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PLAYER)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        if self.username:
+            self.username = self.username.strip().lower()
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+        
     @property
     def is_coach(self):
         return self.role == self.ROLE_COACH

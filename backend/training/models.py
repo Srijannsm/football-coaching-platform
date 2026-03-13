@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from bookings.models import Booking
 
 
 class TrainingProgram(models.Model):
@@ -85,16 +86,22 @@ class TrainingSession(models.Model):
 
     @property
     def booked_players_count(self):
-        return self.bookings.filter(status="confirmed").count()
+        return self.bookings.filter(status__in=["pending", "confirmed"]).count()
 
     @property
     def available_slots(self):
-        return self.max_players - self.booked_players_count
+        return max(self.max_players - self.booked_players_count, 0)
 
     @property
     def is_full(self):
         return self.booked_players_count >= self.max_players
 
+    @property
+    def booked_players_count(self):
+        return self.bookings.filter(
+        status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
+    ).count()
+        
     def clean(self):
         if self.start_time >= self.end_time:
             raise ValidationError("Start time must be earlier than end time.")
@@ -111,6 +118,7 @@ class TrainingSession(models.Model):
         if self.coach.role != "coach":
             raise ValidationError("Selected user must have coach role.")
 
+        
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)

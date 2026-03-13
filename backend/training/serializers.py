@@ -40,6 +40,7 @@ class TrainingSessionSerializer(serializers.ModelSerializer):
             "session_type",
             "coach",
             "coach_full_name",
+            "hero_image",
             "session_date",
             "start_time",
             "end_time",
