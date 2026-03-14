@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import Navbar from "../components/Navbar";
 
 function MyBookingsPage() {
   const [bookings, setBookings] = useState([]);
@@ -53,37 +54,38 @@ function MyBookingsPage() {
 
   return (
     <div style={styles.page}>
-      <h1 style={styles.title}>My Bookings</h1>
+      <Navbar />
+        <h1 style={styles.title}>My Bookings</h1>
 
-      {bookings.length === 0 ? (
-        <p style={styles.empty}>You have no bookings.</p>
-      ) : (
-        <div style={styles.grid}>
-          {bookings.map((booking) => (
-            <div key={booking.id} style={styles.card}>
-              <h2>{booking.program_title}</h2>
+        {bookings.length === 0 ? (
+          <p style={styles.empty}>You have no bookings.</p>
+        ) : (
+          <div style={styles.grid}>
+            {bookings.map((booking) => (
+              <div key={booking.id} style={styles.card}>
+                <h2>{booking.program_title}</h2>
 
-              <p><strong>Coach:</strong> {booking.coach_full_name}</p>
-              <p><strong>Type:</strong> {booking.session_type}</p>
-              <p><strong>Date:</strong> {booking.session_date}</p>
-              <p><strong>Time:</strong> {booking.start_time} - {booking.end_time}</p>
-              <p><strong>Location:</strong> {booking.location}</p>
-              <p><strong>Price:</strong> Rs. {booking.price}</p>
-              <p><strong>Status:</strong> {booking.status}</p>
+                <p><strong>Coach:</strong> {booking.coach_full_name}</p>
+                <p><strong>Type:</strong> {booking.session_type}</p>
+                <p><strong>Date:</strong> {booking.session_date}</p>
+                <p><strong>Time:</strong> {booking.start_time} - {booking.end_time}</p>
+                <p><strong>Location:</strong> {booking.location}</p>
+                <p><strong>Price:</strong> Rs. {booking.price}</p>
+                <p><strong>Status:</strong> {booking.status}</p>
 
-              {booking.status !== "cancelled" && (
-                <button
-                  style={styles.cancelButton}
-                  onClick={() => cancelBooking(booking.id)}
-                >
-                  Cancel Booking
-                </button>
-              )}
+                {booking.status !== "cancelled" && (
+                  <button
+                    style={styles.cancelButton}
+                    onClick={() => cancelBooking(booking.id)}
+                  >
+                    Cancel Booking
+                  </button>
+                )}
 
-            </div>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
     </div>
   );
 }
