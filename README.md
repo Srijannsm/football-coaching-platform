@@ -32,18 +32,18 @@ A full-stack football academy booking platform where players can register, brows
 - Docker Compose
 
 ## 📂 Project Structure
-football-coaching-platform
-│
-├── backend
-│ ├── accounts
-│ ├── bookings
-│ ├── training
-│ └── config
-│
-├── frontend
-│ ├── src
-│ │ ├── pages
-│ │ ├── components
-│ │ └── api
-│
+-football-coaching-platform
+-│
+-├── backend
+-│ ├── accounts
+-│ ├── bookings
+-│ ├── training
+-│ └── config
+-│
+-├── frontend
+-│ ├── src
+-│ │ ├── pages
+-│ │ ├── components
+-│ │ └── api
+-│
 └── docker-compose.yml
