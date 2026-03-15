@@ -27,23 +27,10 @@ A full-stack football academy booking platform where players can register, brows
 - Axios
 - Tailwind CSS
 
-**Dev Environment**
-- Docker
-- Docker Compose
+---
 
-## 📂 Project Structure
--football-coaching-platform
--│
--├── backend
--│ ├── accounts
--│ ├── bookings
--│ ├── training
--│ └── config
--│
--├── frontend
--│ ├── src
--│ │ ├── pages
--│ │ ├── components
--│ │ └── api
+## 👨‍💻 Author
+
+Srijan Pradhan
 -│
 └── docker-compose.yml
