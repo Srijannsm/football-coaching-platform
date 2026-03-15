@@ -32,5 +32,3 @@ A full-stack football academy booking platform where players can register, brows
 ## 👨‍💻 Author
 
 Srijan Pradhan
--│
-└── docker-compose.yml
