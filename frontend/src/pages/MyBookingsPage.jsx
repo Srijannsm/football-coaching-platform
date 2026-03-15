@@ -1,130 +1,166 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 
 function MyBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [cancelBookingId, setCancelBookingId] = useState(null);
 
   async function fetchBookings() {
-    try {
-      const response = await api.get("/my-bookings/");
-
-      if (Array.isArray(response.data)) {
-        setBookings(response.data);
-      } else if (Array.isArray(response.data.results)) {
-        setBookings(response.data.results);
-      } else {
-        setBookings([]);
-      }
-
-    } catch (err) {
-      console.error("Failed to load bookings:", err);
-      setError("Failed to load bookings.");
-    } finally {
-      setLoading(false);
-    }
+    const response = await api.get("/my-bookings/");
+    setBookings(response.data.results || response.data);
+    setLoading(false);
   }
 
-  async function cancelBooking(bookingId) {
-    try {
-      await api.put(`/my-bookings/${bookingId}/cancel/`);
+  async function cancelBooking(id) {
+    setCancelBookingId(id);
 
-      // refresh bookings after cancel
-      fetchBookings();
+    await api.put(`/my-bookings/${id}/cancel/`);
 
-    } catch (err) {
-      console.error("Cancel booking failed:", err);
-      alert("Failed to cancel booking.");
-    }
+    fetchBookings();
+    setCancelBookingId(null);
   }
 
   useEffect(() => {
     fetchBookings();
   }, []);
 
-  if (loading) {
-    return <h2 style={{ textAlign: "center" }}>Loading bookings...</h2>;
-  }
-
-  if (error) {
-    return <h2 style={{ textAlign: "center", color: "red" }}>{error}</h2>;
-  }
+  const upcoming = bookings.filter(b => b.status !== "cancelled");
+  const cancelled = bookings.filter(b => b.status === "cancelled");
 
   return (
-    <div style={styles.page}>
+    <div className="min-h-screen bg-neutral-950 text-white">
       <Navbar />
-        <h1 style={styles.title}>My Bookings</h1>
 
-        {bookings.length === 0 ? (
-          <p style={styles.empty}>You have no bookings.</p>
-        ) : (
-          <div style={styles.grid}>
-            {bookings.map((booking) => (
-              <div key={booking.id} style={styles.card}>
-                <h2>{booking.program_title}</h2>
+      <div className="mx-auto max-w-6xl px-6 py-16">
 
-                <p><strong>Coach:</strong> {booking.coach_full_name}</p>
-                <p><strong>Type:</strong> {booking.session_type}</p>
-                <p><strong>Date:</strong> {booking.session_date}</p>
-                <p><strong>Time:</strong> {booking.start_time} - {booking.end_time}</p>
-                <p><strong>Location:</strong> {booking.location}</p>
-                <p><strong>Price:</strong> Rs. {booking.price}</p>
-                <p><strong>Status:</strong> {booking.status}</p>
+        <h1 className="text-4xl font-bold mb-2">My Bookings</h1>
+        <p className="text-neutral-400 mb-10">
+          Manage your booked training sessions.
+        </p>
 
-                {booking.status !== "cancelled" && (
+        {/* UPCOMING SESSIONS */}
+        <section className="mb-16">
+
+          <h2 className="text-2xl font-bold mb-6">
+            Upcoming Sessions
+          </h2>
+
+          {upcoming.length === 0 ? (
+            <p className="text-neutral-400">
+              You have no upcoming sessions.
+            </p>
+          ) : (
+
+            <div className="space-y-5">
+
+              {upcoming.map((booking) => (
+
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-neutral-900 p-6"
+                >
+
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      {booking.program_title}
+                    </h3>
+
+                    <p className="text-sm text-neutral-400">
+                      {booking.session_date} • {booking.start_time}
+                    </p>
+
+                    <p className="text-sm text-neutral-400">
+                      Coach: {booking.coach_full_name}
+                    </p>
+                  </div>
+
                   <button
-                    style={styles.cancelButton}
                     onClick={() => cancelBooking(booking.id)}
+                    disabled={cancelBookingId === booking.id}
+                    className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold hover:bg-red-400"
                   >
-                    Cancel Booking
+                    {cancelBookingId === booking.id
+                      ? "Cancelling..."
+                      : "Cancel"}
                   </button>
-                )}
 
-              </div>
-            ))}
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
+        {/* CANCELLED SESSIONS */}
+        {cancelled.length > 0 && (
+
+          <section>
+
+            <h2 className="text-2xl font-bold mb-6 text-neutral-300">
+              Cancelled Sessions
+            </h2>
+
+            <div className="space-y-4">
+
+              {cancelled.map((booking) => (
+
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-neutral-900 p-6 opacity-70"
+                >
+
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      {booking.program_title}
+                    </h3>
+
+                    <p className="text-sm text-neutral-400">
+                      {booking.session_date} • {booking.start_time}
+                    </p>
+
+                    <p className="text-sm text-neutral-400">
+                      Coach: {booking.coach_full_name}
+                    </p>
+                  </div>
+
+                  <span className="text-sm text-red-400 font-semibold">
+                    Cancelled
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </section>
+
+        )}
+
+        {bookings.length === 0 && (
+          <div className="text-center mt-10">
+            <p className="text-neutral-400 mb-4">
+              You haven't booked any sessions yet.
+            </p>
+
+            <Link
+              to="/training-sessions"
+              className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold"
+            >
+              Browse Sessions
+            </Link>
           </div>
         )}
+
+      </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    padding: "24px",
-    backgroundColor: "#f4f4f4"
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "20px"
-  },
-  grid: {
-    maxWidth: "900px",
-    margin: "0 auto",
-    display: "grid",
-    gap: "20px"
-  },
-  card: {
-    background: "white",
-    padding: "20px",
-    borderRadius: "10px",
-    boxShadow: "0 3px 10px rgba(0,0,0,0.1)"
-  },
-  cancelButton: {
-    marginTop: "12px",
-    padding: "10px",
-    width: "100%",
-    borderRadius: "8px",
-    border: "none",
-    backgroundColor: "#c0392b",
-    color: "white",
-    cursor: "pointer"
-  },
-  empty: {
-    textAlign: "center"
-  }
-};
 
 export default MyBookingsPage;

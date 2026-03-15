@@ -1,0 +1,38 @@
+src/
+  components/
+    layout/
+      Navbar.jsx
+      Footer.jsx
+    home/
+      HeroSection.jsx
+      ServicesSection.jsx
+      WhyChooseUs.jsx
+      TestimonialsSection.jsx
+      GallerySection.jsx
+      FeaturedSessions.jsx
+    sessions/
+      SessionCard.jsx
+      SessionFilters.jsx
+    ui/
+      Button.jsx
+      Badge.jsx
+      Loader.jsx
+      EmptyState.jsx
+
+  pages/
+    HomePage.jsx
+    TrainingSessionsPage.jsx
+    MyBookingsPage.jsx
+    LoginPage.jsx
+    RegisterPage.jsx
+
+  api/
+    axios.js
+    auth.js
+    sessions.js
+    bookings.js
+
+  hooks/
+    useAuth.js
+    useSessions.js
+    useBookings.js

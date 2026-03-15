@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
+import Navbar from "../components/Navbar";
 
 const initialFormData = {
   username: "",
@@ -22,16 +23,9 @@ function RegisterPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState(initialFormData);
-
-  // Stores field-specific validation errors, e.g. { username: "Username is required" }
   const [fieldErrors, setFieldErrors] = useState({});
-
-  // Stores general API or form errors
   const [serverError, setServerError] = useState("");
-
-  // Stores a success message before redirecting
   const [successMessage, setSuccessMessage] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
@@ -42,13 +36,11 @@ function RegisterPage() {
       [name]: value,
     }));
 
-    // Clear field-specific error as the user edits
     setFieldErrors((prev) => ({
       ...prev,
       [name]: "",
     }));
 
-    // Clear global server error while user is fixing data
     setServerError("");
   }
 
@@ -99,7 +91,6 @@ function RegisterPage() {
   }
 
   function extractBackendErrors(data) {
-    // Converts DRF-style backend errors into a flat object/string for display
     const extractedFieldErrors = {};
     let fallbackMessage = "Registration failed. Please try again.";
 
@@ -115,7 +106,6 @@ function RegisterPage() {
       }
     });
 
-    // non_field_errors is common in Django REST Framework
     if (data.non_field_errors?.length) {
       fallbackMessage = data.non_field_errors[0];
     } else {
@@ -150,7 +140,6 @@ function RegisterPage() {
 
       setSuccessMessage("Registration successful. Redirecting to login...");
 
-      // Small delay gives the user feedback before navigation
       setTimeout(() => {
         navigate("/login");
       }, 1200);
@@ -183,387 +172,393 @@ function RegisterPage() {
     );
   }, [formData]);
 
+  function inputClass(hasError) {
+    return `w-full rounded-2xl border px-4 py-3 text-sm outline-none transition placeholder:text-neutral-500 ${
+      hasError
+        ? "border-red-500 bg-red-500/5 text-white focus:border-red-400"
+        : "border-white/10 bg-neutral-900 text-white focus:border-yellow-400"
+    }`;
+  }
+
+  function renderFieldError(error) {
+    if (!error) return null;
+
+    return <p className="mt-2 text-xs font-medium text-red-300">{error}</p>;
+  }
+
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Create Player Account</h1>
-        <p style={styles.subtitle}>
-          Join the academy and start booking training sessions.
-        </p>
+    <div className="min-h-screen bg-neutral-950 text-white">
+      {/* <Navbar /> */}
 
-        {serverError && (
-          <div style={styles.alertError} role="alert" aria-live="polite">
-            {serverError}
-          </div>
-        )}
+      <div className="grid min-h-[calc(100vh-73px)] lg:grid-cols-[1.1fr_1.4fr]">
+        <div className="hidden lg:flex flex-col justify-around border-r border-white/10 bg-gradient-to-br from-black via-neutral-950 to-neutral-900 p-12">
+          <div>
+            <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+              Join the Academy
+            </p>
 
-        {successMessage && (
-          <div style={styles.alertSuccess} role="status" aria-live="polite">
-            {successMessage}
-          </div>
-        )}
+            <h1 className="max-w-xl text-5xl font-extrabold leading-tight">
+              Build your player profile and start booking sessions.
+            </h1>
 
-        <form onSubmit={handleSubmit} style={styles.form} noValidate>
-          <div style={styles.fieldGroup}>
-            <label htmlFor="username" style={styles.label}>
-              Username *
-            </label>
-            <input
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Choose a username"
-              style={styles.input}
-              aria-invalid={!!fieldErrors.username}
-            />
-            {fieldErrors.username && (
-              <span style={styles.fieldError}>{fieldErrors.username}</span>
-            )}
+            <p className="mt-6 max-w-lg text-lg leading-8 text-neutral-300">
+              Create your account to access training sessions, manage your
+              bookings, and grow with structured academy coaching.
+            </p>
           </div>
 
-          <div style={styles.row}>
-            <div style={styles.fieldGroup}>
-              <label htmlFor="first_name" style={styles.label}>
-                First Name *
-              </label>
-              <input
-                id="first_name"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                placeholder="First name"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.first_name}
-              />
-              {fieldErrors.first_name && (
-                <span style={styles.fieldError}>{fieldErrors.first_name}</span>
-              )}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <h3 className="mb-2 text-lg font-bold">Player Profile</h3>
+              <p className="text-sm leading-7 text-neutral-300">
+                Add football-specific details like preferred foot, position,
+                height, and weight.
+              </p>
             </div>
 
-            <div style={styles.fieldGroup}>
-              <label htmlFor="last_name" style={styles.label}>
-                Last Name *
-              </label>
-              <input
-                id="last_name"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                placeholder="Last name"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.last_name}
-              />
-              {fieldErrors.last_name && (
-                <span style={styles.fieldError}>{fieldErrors.last_name}</span>
-              )}
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <h3 className="mb-2 text-lg font-bold">Easy Booking Flow</h3>
+              <p className="text-sm leading-7 text-neutral-300">
+                Once registered, you can browse sessions, book quickly, and
+                manage your schedule from one place.
+              </p>
             </div>
           </div>
+        </div>
 
-          <div style={styles.fieldGroup}>
-            <label htmlFor="email" style={styles.label}>
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-              style={styles.input}
-              aria-invalid={!!fieldErrors.email}
-            />
-            {fieldErrors.email && (
-              <span style={styles.fieldError}>{fieldErrors.email}</span>
-            )}
-          </div>
-
-          <div style={styles.fieldGroup}>
-            <label htmlFor="phone_number" style={styles.label}>
-              Phone Number
-            </label>
-            <input
-              id="phone_number"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleChange}
-              placeholder="98XXXXXXXX"
-              style={styles.input}
-              aria-invalid={!!fieldErrors.phone_number}
-            />
-            {fieldErrors.phone_number && (
-              <span style={styles.fieldError}>{fieldErrors.phone_number}</span>
-            )}
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.fieldGroup}>
-              <label htmlFor="password" style={styles.label}>
-                Password *
-              </label>
-              <input
-                id="password"
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="At least 8 characters"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.password}
-              />
-              {fieldErrors.password && (
-                <span style={styles.fieldError}>{fieldErrors.password}</span>
-              )}
+        <div className="px-6 py-10 lg:px-10 lg:py-12">
+          <div className="mx-auto w-full max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur md:p-10">
+            <div className="mb-8">
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+                Player Registration
+              </p>
+              <h2 className="text-3xl font-extrabold text-white md:text-4xl">
+                Create your account
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
+                Join the academy and start booking training sessions. Required
+                fields are marked with *.
+              </p>
             </div>
 
-            <div style={styles.fieldGroup}>
-              <label htmlFor="confirm_password" style={styles.label}>
-                Confirm Password *
-              </label>
-              <input
-                id="confirm_password"
-                type="password"
-                name="confirm_password"
-                value={formData.confirm_password}
-                onChange={handleChange}
-                placeholder="Re-enter password"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.confirm_password}
-              />
-              {fieldErrors.confirm_password && (
-                <span style={styles.fieldError}>
-                  {fieldErrors.confirm_password}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.fieldGroup}>
-              <label htmlFor="age" style={styles.label}>
-                Age
-              </label>
-              <input
-                id="age"
-                type="number"
-                name="age"
-                value={formData.age}
-                onChange={handleChange}
-                placeholder="Age"
-                min="0"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.age}
-              />
-              {fieldErrors.age && (
-                <span style={styles.fieldError}>{fieldErrors.age}</span>
-              )}
-            </div>
-
-            <div style={styles.fieldGroup}>
-              <label htmlFor="preferred_foot" style={styles.label}>
-                Preferred Foot
-              </label>
-              <select
-                id="preferred_foot"
-                name="preferred_foot"
-                value={formData.preferred_foot}
-                onChange={handleChange}
-                style={styles.input}
+            {serverError && (
+              <div
+                className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                role="alert"
+                aria-live="polite"
               >
-                <option value="">Select foot</option>
-                <option value="right">Right</option>
-                <option value="left">Left</option>
-                <option value="both">Both</option>
-              </select>
-            </div>
+                {serverError}
+              </div>
+            )}
+
+            {successMessage && (
+              <div
+                className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+                role="status"
+                aria-live="polite"
+              >
+                {successMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+              <section>
+                <h3 className="mb-4 text-lg font-bold text-white">
+                  Account Information
+                </h3>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label
+                      htmlFor="username"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Username *
+                    </label>
+                    <input
+                      id="username"
+                      name="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      placeholder="Choose a username"
+                      className={inputClass(!!fieldErrors.username)}
+                      aria-invalid={!!fieldErrors.username}
+                    />
+                    {renderFieldError(fieldErrors.username)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="first_name"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      First Name *
+                    </label>
+                    <input
+                      id="first_name"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      placeholder="First name"
+                      className={inputClass(!!fieldErrors.first_name)}
+                      aria-invalid={!!fieldErrors.first_name}
+                    />
+                    {renderFieldError(fieldErrors.first_name)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="last_name"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Last Name *
+                    </label>
+                    <input
+                      id="last_name"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      placeholder="Last name"
+                      className={inputClass(!!fieldErrors.last_name)}
+                      aria-invalid={!!fieldErrors.last_name}
+                    />
+                    {renderFieldError(fieldErrors.last_name)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      className={inputClass(!!fieldErrors.email)}
+                      aria-invalid={!!fieldErrors.email}
+                    />
+                    {renderFieldError(fieldErrors.email)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="phone_number"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Phone Number
+                    </label>
+                    <input
+                      id="phone_number"
+                      name="phone_number"
+                      value={formData.phone_number}
+                      onChange={handleChange}
+                      placeholder="98XXXXXXXX"
+                      className={inputClass(!!fieldErrors.phone_number)}
+                      aria-invalid={!!fieldErrors.phone_number}
+                    />
+                    {renderFieldError(fieldErrors.phone_number)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Password *
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="At least 6 characters"
+                      className={inputClass(!!fieldErrors.password)}
+                      aria-invalid={!!fieldErrors.password}
+                    />
+                    {renderFieldError(fieldErrors.password)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="confirm_password"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Confirm Password *
+                    </label>
+                    <input
+                      id="confirm_password"
+                      type="password"
+                      name="confirm_password"
+                      value={formData.confirm_password}
+                      onChange={handleChange}
+                      placeholder="Re-enter password"
+                      className={inputClass(!!fieldErrors.confirm_password)}
+                      aria-invalid={!!fieldErrors.confirm_password}
+                    />
+                    {renderFieldError(fieldErrors.confirm_password)}
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="mb-4 text-lg font-bold text-white">
+                  Player Details
+                </h3>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="age"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Age
+                    </label>
+                    <input
+                      id="age"
+                      type="number"
+                      name="age"
+                      value={formData.age}
+                      onChange={handleChange}
+                      placeholder="Age"
+                      min="0"
+                      className={inputClass(!!fieldErrors.age)}
+                      aria-invalid={!!fieldErrors.age}
+                    />
+                    {renderFieldError(fieldErrors.age)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="preferred_foot"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Preferred Foot
+                    </label>
+                    <select
+                      id="preferred_foot"
+                      name="preferred_foot"
+                      value={formData.preferred_foot}
+                      onChange={handleChange}
+                      className={inputClass(false)}
+                    >
+                      <option value="">Select foot</option>
+                      <option value="right">Right</option>
+                      <option value="left">Left</option>
+                      <option value="both">Both</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="primary_position"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Primary Position
+                    </label>
+                    <input
+                      id="primary_position"
+                      name="primary_position"
+                      value={formData.primary_position}
+                      onChange={handleChange}
+                      placeholder="e.g. Striker"
+                      className={inputClass(false)}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="secondary_position"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Secondary Position
+                    </label>
+                    <input
+                      id="secondary_position"
+                      name="secondary_position"
+                      value={formData.secondary_position}
+                      onChange={handleChange}
+                      placeholder="e.g. Winger"
+                      className={inputClass(false)}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="height_cm"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Height (cm)
+                    </label>
+                    <input
+                      id="height_cm"
+                      type="number"
+                      name="height_cm"
+                      value={formData.height_cm}
+                      onChange={handleChange}
+                      placeholder="Height in cm"
+                      min="0"
+                      className={inputClass(!!fieldErrors.height_cm)}
+                      aria-invalid={!!fieldErrors.height_cm}
+                    />
+                    {renderFieldError(fieldErrors.height_cm)}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="weight_kg"
+                      className="mb-2 block text-sm font-semibold text-white"
+                    >
+                      Weight (kg)
+                    </label>
+                    <input
+                      id="weight_kg"
+                      type="number"
+                      name="weight_kg"
+                      value={formData.weight_kg}
+                      onChange={handleChange}
+                      placeholder="Weight in kg"
+                      min="0"
+                      className={inputClass(!!fieldErrors.weight_kg)}
+                      aria-invalid={!!fieldErrors.weight_kg}
+                    />
+                    {renderFieldError(fieldErrors.weight_kg)}
+                  </div>
+                </div>
+              </section>
+
+              <button
+                type="submit"
+                disabled={loading || !isFormValid}
+                className={`w-full rounded-full px-5 py-3 text-sm font-bold transition ${
+                  loading || !isFormValid
+                    ? "cursor-not-allowed bg-neutral-700 text-neutral-300"
+                    : "bg-yellow-400 text-black hover:bg-yellow-300"
+                }`}
+              >
+                {loading ? "Creating account..." : "Register"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-neutral-400">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-yellow-400 hover:text-yellow-300"
+              >
+                Login
+              </Link>
+            </p>
           </div>
-
-          <div style={styles.row}>
-            <div style={styles.fieldGroup}>
-              <label htmlFor="primary_position" style={styles.label}>
-                Primary Position
-              </label>
-              <input
-                id="primary_position"
-                name="primary_position"
-                value={formData.primary_position}
-                onChange={handleChange}
-                placeholder="e.g. Striker"
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.fieldGroup}>
-              <label htmlFor="secondary_position" style={styles.label}>
-                Secondary Position
-              </label>
-              <input
-                id="secondary_position"
-                name="secondary_position"
-                value={formData.secondary_position}
-                onChange={handleChange}
-                placeholder="e.g. Winger"
-                style={styles.input}
-              />
-            </div>
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.fieldGroup}>
-              <label htmlFor="height_cm" style={styles.label}>
-                Height (cm)
-              </label>
-              <input
-                id="height_cm"
-                type="number"
-                name="height_cm"
-                value={formData.height_cm}
-                onChange={handleChange}
-                placeholder="Height in cm"
-                min="0"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.height_cm}
-              />
-              {fieldErrors.height_cm && (
-                <span style={styles.fieldError}>{fieldErrors.height_cm}</span>
-              )}
-            </div>
-
-            <div style={styles.fieldGroup}>
-              <label htmlFor="weight_kg" style={styles.label}>
-                Weight (kg)
-              </label>
-              <input
-                id="weight_kg"
-                type="number"
-                name="weight_kg"
-                value={formData.weight_kg}
-                onChange={handleChange}
-                placeholder="Weight in kg"
-                min="0"
-                style={styles.input}
-                aria-invalid={!!fieldErrors.weight_kg}
-              />
-              {fieldErrors.weight_kg && (
-                <span style={styles.fieldError}>{fieldErrors.weight_kg}</span>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || !isFormValid}
-            style={{
-              ...styles.button,
-              ...(loading || !isFormValid ? styles.buttonDisabled : {}),
-            }}
-          >
-            {loading ? "Creating account..." : "Register"}
-          </button>
-        </form>
-
-        <p style={styles.footerText}>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+        </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f4f4f4",
-    padding: "24px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "560px",
-    background: "white",
-    padding: "32px",
-    borderRadius: "12px",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-  },
-  title: {
-    fontSize: "45px",
-    margin: "0 0 20px",
-  },
-  subtitle: {
-    margin: "0 0 20px",
-    color: "#555",
-    fontSize: "14px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  row: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-  },
-  fieldGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  },
-  label: {
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#222",
-  },
-  input: {
-    padding: "12px 14px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    outline: "none",
-  },
-  button: {
-    marginTop: "8px",
-    padding: "12px 16px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#111827",
-    color: "white",
-    fontSize: "15px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  buttonDisabled: {
-    opacity: 0.65,
-    cursor: "not-allowed",
-  },
-  alertError: {
-    marginBottom: "16px",
-    padding: "12px 14px",
-    borderRadius: "8px",
-    background: "#fee2e2",
-    color: "#991b1b",
-    fontSize: "14px",
-  },
-  alertSuccess: {
-    marginBottom: "16px",
-    padding: "12px 14px",
-    borderRadius: "8px",
-    background: "#dcfce7",
-    color: "#166534",
-    fontSize: "14px",
-  },
-  fieldError: {
-    color: "#b91c1c",
-    fontSize: "13px",
-  },
-  footerText: {
-    marginTop: "18px",
-    fontSize: "14px",
-    color: "#444",
-  },
-};
 
 export default RegisterPage;

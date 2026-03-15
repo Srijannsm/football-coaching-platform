@@ -63,9 +63,9 @@ class TrainingSession(models.Model):
     hero_image = models.ImageField(
         upload_to="training_sessions/", blank=True, null=True
     )
-    session_date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+    session_date = models.DateField(blank=True, null=True)
+    start_time = models.TimeField(blank=True, null=True)
+    end_time = models.TimeField(blank=True, null=True)
     location = models.CharField(max_length=255)
     max_players = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=8, decimal_places=2)
@@ -85,10 +85,6 @@ class TrainingSession(models.Model):
         return f"{self.program.title} - {self.session_date} {self.start_time}"
 
     @property
-    def booked_players_count(self):
-        return self.bookings.filter(status__in=["pending", "confirmed"]).count()
-
-    @property
     def available_slots(self):
         return max(self.max_players - self.booked_players_count, 0)
 
@@ -99,12 +95,16 @@ class TrainingSession(models.Model):
     @property
     def booked_players_count(self):
         return self.bookings.filter(
-        status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
-    ).count()
-        
+            status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
+        ).count()
+
     def clean(self):
-        if self.start_time >= self.end_time:
-            raise ValidationError("Start time must be earlier than end time.")
+
+        if self.start_time is not None and self.end_time is not None:
+            if self.start_time >= self.end_time:
+                raise ValidationError(
+                    {"end_time": "End time must be later than start time."}
+                )
 
         if self.max_players < 1:
             raise ValidationError("Max players must be at least 1.")
@@ -118,7 +118,6 @@ class TrainingSession(models.Model):
         if self.coach.role != "coach":
             raise ValidationError("Selected user must have coach role.")
 
-        
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
