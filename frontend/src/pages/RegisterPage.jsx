@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
-import Navbar from "../components/Navbar";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import { Card, CardContent } from "../components/ui/Card";
+import ImageUploadField from "../components/ui/ImageUploadField";
 
 const initialFormData = {
   username: "",
@@ -19,6 +23,13 @@ const initialFormData = {
   weight_kg: "",
 };
 
+const preferredFootOptions = [
+  { value: "", label: "Select foot" },
+  { value: "right", label: "Right" },
+  { value: "left", label: "Left" },
+  { value: "both", label: "Both" },
+];
+
 function RegisterPage() {
   const navigate = useNavigate();
 
@@ -27,6 +38,10 @@ function RegisterPage() {
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
+  const [imageError, setImageError] = useState("");
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -41,6 +56,28 @@ function RegisterPage() {
       [name]: "",
     }));
 
+    setServerError("");
+  }
+
+  function handleImageSelect(file, validationError) {
+    if (validationError) {
+      setImageError(validationError);
+      return;
+    }
+
+    setImageError("");
+    setServerError("");
+
+    if (file) {
+      setProfileImageFile(file);
+      setProfileImagePreview(URL.createObjectURL(file));
+    }
+  }
+
+  function handleRemoveImage() {
+    setProfileImageFile(null);
+    setProfileImagePreview("");
+    setImageError("");
     setServerError("");
   }
 
@@ -136,7 +173,31 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      await api.post("/register/", formData);
+      const payload = new FormData();
+
+      payload.append("username", formData.username || "");
+      payload.append("email", formData.email || "");
+      payload.append("phone_number", formData.phone_number || "");
+      payload.append("first_name", formData.first_name || "");
+      payload.append("last_name", formData.last_name || "");
+      payload.append("password", formData.password || "");
+      payload.append("confirm_password", formData.confirm_password || "");
+      payload.append("age", formData.age || "");
+      payload.append("preferred_foot", formData.preferred_foot || "");
+      payload.append("primary_position", formData.primary_position || "");
+      payload.append("secondary_position", formData.secondary_position || "");
+      payload.append("height_cm", formData.height_cm || "");
+      payload.append("weight_kg", formData.weight_kg || "");
+
+      if (profileImageFile) {
+        payload.append("image", profileImageFile);
+      }
+
+      await api.post("/register/", payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       setSuccessMessage("Registration successful. Redirecting to login...");
 
@@ -162,8 +223,8 @@ function RegisterPage() {
   }
 
   const isFormValid = useMemo(() => {
-    return (
-      formData.username.trim().toLowerCase() &&
+    return Boolean(
+      formData.username.trim() &&
       formData.first_name.trim() &&
       formData.last_name.trim() &&
       formData.password &&
@@ -172,25 +233,13 @@ function RegisterPage() {
     );
   }, [formData]);
 
-  function inputClass(hasError) {
-    return `w-full rounded-2xl border px-4 py-3 text-sm outline-none transition placeholder:text-neutral-500 ${
-      hasError
-        ? "border-red-500 bg-red-500/5 text-white focus:border-red-400"
-        : "border-white/10 bg-neutral-900 text-white focus:border-yellow-400"
-    }`;
-  }
-
-  function renderFieldError(error) {
-    if (!error) return null;
-
-    return <p className="mt-2 text-xs font-medium text-red-300">{error}</p>;
-  }
+  const darkInputClass =
+    "border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10";
+  const darkLabelClass = "text-white font-semibold";
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      {/* <Navbar /> */}
-
-      <div className="grid min-h-[calc(100vh-73px)] lg:grid-cols-[1.1fr_1.4fr]">
+      <div className="grid min-h-screen lg:grid-cols-[1.1fr_1.4fr]">
         <div className="hidden lg:flex flex-col justify-around border-r border-white/10 bg-gradient-to-br from-black via-neutral-950 to-neutral-900 p-12">
           <div>
             <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
@@ -212,7 +261,7 @@ function RegisterPage() {
               <h3 className="mb-2 text-lg font-bold">Player Profile</h3>
               <p className="text-sm leading-7 text-neutral-300">
                 Add football-specific details like preferred foot, position,
-                height, and weight.
+                height, weight, and profile image.
               </p>
             </div>
 
@@ -227,334 +276,278 @@ function RegisterPage() {
         </div>
 
         <div className="px-6 py-10 lg:px-10 lg:py-12">
-          <div className="mx-auto w-full max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur md:p-10">
-            <div className="mb-8">
-              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
-                Player Registration
-              </p>
-              <h2 className="text-3xl font-extrabold text-white md:text-4xl">
-                Create your account
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-                Join the academy and start booking training sessions. Required
-                fields are marked with *.
-              </p>
-            </div>
-
-            {serverError && (
-              <div
-                className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
-                role="alert"
-                aria-live="polite"
+          <Card className="mx-auto w-full max-w-4xl rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur">
+            <CardContent className="p-8 md:p-10">
+              <Link
+                to="/"
+                className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm font-medium text-neutral-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
               >
-                {serverError}
+                <span className="text-base">←</span>
+                <span>Back to home</span>
+              </Link>
+
+              <div className="mb-8">
+                <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+                  Player Registration
+                </p>
+                <h2 className="text-3xl font-extrabold text-white md:text-4xl">
+                  Create your account
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
+                  Join the academy and start booking training sessions. Required
+                  fields are marked with *.
+                </p>
               </div>
-            )}
 
-            {successMessage && (
-              <div
-                className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
-                role="status"
-                aria-live="polite"
-              >
-                {successMessage}
-              </div>
-            )}
+              {serverError && (
+                <div
+                  className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {serverError}
+                </div>
+              )}
 
-            <form onSubmit={handleSubmit} className="space-y-8" noValidate>
-              <section>
-                <h3 className="mb-4 text-lg font-bold text-white">
-                  Account Information
-                </h3>
+              {successMessage && (
+                <div
+                  className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {successMessage}
+                </div>
+              )}
 
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <label
-                      htmlFor="username"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Username *
-                    </label>
-                    <input
-                      id="username"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      placeholder="Choose a username"
-                      className={inputClass(!!fieldErrors.username)}
-                      aria-invalid={!!fieldErrors.username}
-                    />
-                    {renderFieldError(fieldErrors.username)}
-                  </div>
+              <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+                <section>
+                  <h3 className="mb-4 text-lg font-bold text-white">
+                    Account Information
+                  </h3>
 
-                  <div>
-                    <label
-                      htmlFor="first_name"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      First Name *
-                    </label>
-                    <input
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <Input
+                        id="username"
+                        name="username"
+                        label="Username *"
+                        labelClassName={darkLabelClass}
+                        value={formData.username}
+                        onChange={handleChange}
+                        placeholder="Choose a username"
+                        error={fieldErrors.username}
+                        aria-invalid={!!fieldErrors.username}
+                        className={darkInputClass}
+                      />
+                    </div>
+
+                    <Input
                       id="first_name"
                       name="first_name"
+                      label="First Name *"
+                      labelClassName={darkLabelClass}
                       value={formData.first_name}
                       onChange={handleChange}
                       placeholder="First name"
-                      className={inputClass(!!fieldErrors.first_name)}
+                      error={fieldErrors.first_name}
                       aria-invalid={!!fieldErrors.first_name}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.first_name)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="last_name"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Last Name *
-                    </label>
-                    <input
+                    <Input
                       id="last_name"
                       name="last_name"
+                      label="Last Name *"
+                      labelClassName={darkLabelClass}
                       value={formData.last_name}
                       onChange={handleChange}
                       placeholder="Last name"
-                      className={inputClass(!!fieldErrors.last_name)}
+                      error={fieldErrors.last_name}
                       aria-invalid={!!fieldErrors.last_name}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.last_name)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Email
-                    </label>
-                    <input
+                    <Input
                       id="email"
                       type="email"
                       name="email"
+                      label="Email"
+                      labelClassName={darkLabelClass}
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      className={inputClass(!!fieldErrors.email)}
+                      error={fieldErrors.email}
                       aria-invalid={!!fieldErrors.email}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.email)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="phone_number"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Phone Number
-                    </label>
-                    <input
+                    <Input
                       id="phone_number"
                       name="phone_number"
+                      label="Phone Number"
+                      labelClassName={darkLabelClass}
                       value={formData.phone_number}
                       onChange={handleChange}
                       placeholder="98XXXXXXXX"
-                      className={inputClass(!!fieldErrors.phone_number)}
+                      error={fieldErrors.phone_number}
                       aria-invalid={!!fieldErrors.phone_number}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.phone_number)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="password"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Password *
-                    </label>
-                    <input
+                    <Input
                       id="password"
                       type="password"
                       name="password"
+                      label="Password *"
+                      labelClassName={darkLabelClass}
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="At least 6 characters"
-                      className={inputClass(!!fieldErrors.password)}
+                      error={fieldErrors.password}
                       aria-invalid={!!fieldErrors.password}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.password)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="confirm_password"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Confirm Password *
-                    </label>
-                    <input
+                    <Input
                       id="confirm_password"
                       type="password"
                       name="confirm_password"
+                      label="Confirm Password *"
+                      labelClassName={darkLabelClass}
                       value={formData.confirm_password}
                       onChange={handleChange}
                       placeholder="Re-enter password"
-                      className={inputClass(!!fieldErrors.confirm_password)}
+                      error={fieldErrors.confirm_password}
                       aria-invalid={!!fieldErrors.confirm_password}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.confirm_password)}
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <section>
-                <h3 className="mb-4 text-lg font-bold text-white">
-                  Player Details
-                </h3>
+                <section>
+                  <h3 className="mb-4 text-lg font-bold text-white">
+                    Player Details
+                  </h3>
 
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="age"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Age
-                    </label>
-                    <input
+                  <div className="mb-6">
+                    <div className="mb-6">
+                      <ImageUploadField
+                        label="Profile Image"
+                        previewUrl={profileImagePreview}
+                        onFileSelect={handleImageSelect}
+                        onRemove={handleRemoveImage}
+                        error={imageError}
+                        helperText="JPG, PNG, or WEBP. Maximum size 2MB."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Input
                       id="age"
                       type="number"
                       name="age"
+                      label="Age"
+                      labelClassName={darkLabelClass}
                       value={formData.age}
                       onChange={handleChange}
                       placeholder="Age"
                       min="0"
-                      className={inputClass(!!fieldErrors.age)}
+                      error={fieldErrors.age}
                       aria-invalid={!!fieldErrors.age}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.age)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="preferred_foot"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Preferred Foot
-                    </label>
-                    <select
+                    <Select
                       id="preferred_foot"
                       name="preferred_foot"
+                      label="Preferred Foot"
+                      labelClassName={darkLabelClass}
                       value={formData.preferred_foot}
                       onChange={handleChange}
-                      className={inputClass(false)}
-                    >
-                      <option value="">Select foot</option>
-                      <option value="right">Right</option>
-                      <option value="left">Left</option>
-                      <option value="both">Both</option>
-                    </select>
-                  </div>
+                      options={preferredFootOptions}
+                      error={fieldErrors.preferred_foot}
+                      className={darkInputClass}
+                    />
 
-                  <div>
-                    <label
-                      htmlFor="primary_position"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Primary Position
-                    </label>
-                    <input
+                    <Input
                       id="primary_position"
                       name="primary_position"
+                      label="Primary Position"
+                      labelClassName={darkLabelClass}
                       value={formData.primary_position}
                       onChange={handleChange}
                       placeholder="e.g. Striker"
-                      className={inputClass(false)}
+                      error={fieldErrors.primary_position}
+                      className={darkInputClass}
                     />
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="secondary_position"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Secondary Position
-                    </label>
-                    <input
+                    <Input
                       id="secondary_position"
                       name="secondary_position"
+                      label="Secondary Position"
+                      labelClassName={darkLabelClass}
                       value={formData.secondary_position}
                       onChange={handleChange}
                       placeholder="e.g. Winger"
-                      className={inputClass(false)}
+                      error={fieldErrors.secondary_position}
+                      className={darkInputClass}
                     />
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="height_cm"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Height (cm)
-                    </label>
-                    <input
+                    <Input
                       id="height_cm"
                       type="number"
                       name="height_cm"
+                      label="Height (cm)"
+                      labelClassName={darkLabelClass}
                       value={formData.height_cm}
                       onChange={handleChange}
                       placeholder="Height in cm"
                       min="0"
-                      className={inputClass(!!fieldErrors.height_cm)}
+                      error={fieldErrors.height_cm}
                       aria-invalid={!!fieldErrors.height_cm}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.height_cm)}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="weight_kg"
-                      className="mb-2 block text-sm font-semibold text-white"
-                    >
-                      Weight (kg)
-                    </label>
-                    <input
+                    <Input
                       id="weight_kg"
                       type="number"
                       name="weight_kg"
+                      label="Weight (kg)"
+                      labelClassName={darkLabelClass}
                       value={formData.weight_kg}
                       onChange={handleChange}
                       placeholder="Weight in kg"
                       min="0"
-                      className={inputClass(!!fieldErrors.weight_kg)}
+                      error={fieldErrors.weight_kg}
                       aria-invalid={!!fieldErrors.weight_kg}
+                      className={darkInputClass}
                     />
-                    {renderFieldError(fieldErrors.weight_kg)}
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <button
-                type="submit"
-                disabled={loading || !isFormValid}
-                className={`w-full rounded-full px-5 py-3 text-sm font-bold transition ${
-                  loading || !isFormValid
-                    ? "cursor-not-allowed bg-neutral-700 text-neutral-300"
-                    : "bg-yellow-400 text-black hover:bg-yellow-300"
-                }`}
-              >
-                {loading ? "Creating account..." : "Register"}
-              </button>
-            </form>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  disabled={loading || !isFormValid}
+                  fullWidth
+                  className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                >
+                  Register
+                </Button>
+              </form>
 
-            <p className="mt-6 text-center text-sm text-neutral-400">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="font-semibold text-yellow-400 hover:text-yellow-300"
-              >
-                Login
-              </Link>
-            </p>
-          </div>
+              <p className="mt-6 text-center text-sm text-neutral-400">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="font-semibold text-yellow-400 hover:text-yellow-300"
+                >
+                  Login
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

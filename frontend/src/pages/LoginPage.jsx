@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
-import Navbar from "../components/Navbar";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import { Card, CardContent } from "../components/ui/Card";
 
 function LoginPage() {
   const [formData, setFormData] = useState({
@@ -55,9 +57,7 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      {/* <Navbar /> */}
-
-      <div className="grid min-h-[calc(100vh-73px)] lg:grid-cols-2">
+      <div className="grid min-h-screen lg:grid-cols-2">
         <div className="hidden lg:flex flex-col justify-between border-r border-white/10 bg-gradient-to-br from-neutral-950 via-neutral-900 to-black p-12">
           <div>
             <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
@@ -98,88 +98,83 @@ function LoginPage() {
         </div>
 
         <div className="flex items-center justify-center px-6 py-12 lg:px-10">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur md:p-10">
-            <div className="mb-8">
-              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
-                Player Login
-              </p>
-              <h2 className="text-3xl font-extrabold text-white">Sign in</h2>
-              <p className="mt-3 text-sm leading-6 text-neutral-400">
-                Enter your credentials to access your academy account.
-              </p>
-            </div>
-
-            {error && (
-              <div
-                className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
-                role="alert"
+          <Card className="w-full max-w-md rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur">
+            <CardContent className="p-8 md:p-10">
+              <Link
+                to="/"
+                className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm font-medium text-neutral-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
               >
-                {error}
+                <span className="text-base">←</span>
+                <span>Back to home</span>
+              </Link>
+              <div className="mb-8">
+                <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+                  Player Login
+                </p>
+                <h2 className="text-3xl font-extrabold text-white">Sign in</h2>
+                <p className="mt-3 text-sm leading-6 text-neutral-400">
+                  Enter your credentials to access your academy account.
+                </p>
               </div>
-            )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="username"
-                  className="mb-2 block text-sm font-semibold text-white"
+              {error && (
+                <div
+                  className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                  role="alert"
                 >
-                  Username
-                </label>
-                <input
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <Input
                   id="username"
                   type="text"
                   name="username"
+                  label="Username"
+                  labelClassName="text-white font-semibold"
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Enter your username"
                   required
-                  className="w-full rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-yellow-400"
+                  className="border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10"
                 />
-              </div>
 
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-semibold text-white"
-                >
-                  Password
-                </label>
-                <input
+                <Input
                   id="password"
                   type="password"
                   name="password"
+                  label="Password"
+                  labelClassName="text-white font-semibold"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
                   required
-                  className="w-full rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-yellow-400"
+                  className="border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10"
                 />
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full rounded-full px-5 py-3 text-sm font-bold transition ${
-                  loading
-                    ? "cursor-not-allowed bg-neutral-700 text-neutral-300"
-                    : "bg-yellow-400 text-black hover:bg-yellow-300"
-                }`}
-              >
-                {loading ? "Logging in..." : "Login"}
-              </button>
-            </form>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  disabled={loading}
+                  fullWidth
+                  className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                >
+                  Login
+                </Button>
+              </form>
 
-            <p className="mt-6 text-center text-sm text-neutral-400">
-              Don&apos;t have an account?{" "}
-              <Link
-                to="/register"
-                className="font-semibold text-yellow-400 hover:text-yellow-300"
-              >
-                Register
-              </Link>
-            </p>
-          </div>
+              <p className="mt-6 text-center text-sm text-neutral-400">
+                Don&apos;t have an account?{" "}
+                <Link
+                  to="/register"
+                  className="font-semibold text-yellow-400 hover:text-yellow-300"
+                >
+                  Register
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

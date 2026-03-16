@@ -39,3 +39,17 @@ class TrainingSessionListView(generics.ListAPIView):
             queryset = queryset.filter(program__session_type=session_type)
 
         return queryset.order_by("session_date", "start_time")
+    
+class TrainingSessionDetailView(generics.RetrieveAPIView):
+    serializer_class = TrainingSessionSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return TrainingSession.objects.select_related(
+            "program", "coach"
+        ).filter(
+            is_published=True,
+            is_cancelled=False,
+            program__is_active=True,
+            session_date__gte=localdate(),
+        )    

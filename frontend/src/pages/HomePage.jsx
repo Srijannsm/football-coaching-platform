@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Button from "../components/ui/Button";
+import { Card, CardContent } from "../components/ui/Card";
 
 function HomePage() {
   return (
@@ -31,18 +33,19 @@ function HomePage() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link
-                to="/register"
-                className="rounded-full bg-yellow-400 px-6 py-3 text-sm font-bold text-black transition hover:bg-yellow-300"
-              >
-                Join Academy
+              <Link to="/register">
+                <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
+                  Join Academy
+                </Button>
               </Link>
 
-              <Link
-                to="/training-sessions"
-                className="rounded-full border border-white/70 px-6 py-3 text-sm font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
-              >
-                View Training Sessions
+              <Link to="/training-sessions">
+                <Button
+                  variant="outline"
+                  className="rounded-full border-white/70 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                >
+                  View Training Sessions
+                </Button>
               </Link>
             </div>
           </div>
@@ -51,25 +54,19 @@ function HomePage() {
 
       <section className="relative z-10 -mt-12 px-6 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-white/10 bg-white p-6 text-center text-black shadow-xl">
-            <h3 className="mb-2 text-3xl font-extrabold">100+</h3>
-            <p className="text-sm text-neutral-600">Training Sessions</p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white p-6 text-center text-black shadow-xl">
-            <h3 className="mb-2 text-3xl font-extrabold">Expert</h3>
-            <p className="text-sm text-neutral-600">Coach-Led Development</p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white p-6 text-center text-black shadow-xl">
-            <h3 className="mb-2 text-3xl font-extrabold">All Levels</h3>
-            <p className="text-sm text-neutral-600">Youth to Competitive Players</p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white p-6 text-center text-black shadow-xl">
-            <h3 className="mb-2 text-3xl font-extrabold">Flexible</h3>
-            <p className="text-sm text-neutral-600">Easy Online Booking</p>
-          </div>
+          {[
+            { value: "100+", label: "Training Sessions" },
+            { value: "Expert", label: "Coach-Led Development" },
+            { value: "All Levels", label: "Youth to Competitive Players" },
+            { value: "Flexible", label: "Easy Online Booking" },
+          ].map((item) => (
+            <Card key={item.label} className="bg-white text-black shadow-xl">
+              <CardContent className="p-6 text-center">
+                <h3 className="mb-2 text-3xl font-extrabold">{item.value}</h3>
+                <p className="text-sm text-neutral-600">{item.label}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
@@ -88,29 +85,37 @@ function HomePage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <h3 className="mb-4 text-2xl font-bold text-white">Group Training</h3>
-            <p className="leading-7 text-neutral-300">
-              Improve technical ability, awareness, and decision-making in
-              high-quality academy group sessions.
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <h3 className="mb-4 text-2xl font-bold text-white">1-to-1 Coaching</h3>
-            <p className="leading-7 text-neutral-300">
-              Focused individual coaching built around your strengths,
-              weaknesses, and performance goals.
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <h3 className="mb-4 text-2xl font-bold text-white">Goalkeeper Training</h3>
-            <p className="leading-7 text-neutral-300">
-              Specialist goalkeeper sessions covering handling, reactions,
-              positioning, footwork, and confidence.
-            </p>
-          </div>
+          {[
+            {
+              title: "Group Training",
+              description:
+                "Improve technical ability, awareness, and decision-making in high-quality academy group sessions.",
+            },
+            {
+              title: "1-to-1 Coaching",
+              description:
+                "Focused individual coaching built around your strengths, weaknesses, and performance goals.",
+            },
+            {
+              title: "Goalkeeper Training",
+              description:
+                "Specialist goalkeeper sessions covering handling, reactions, positioning, footwork, and confidence.",
+            },
+          ].map((program) => (
+            <Card
+              key={program.title}
+              className="border-white/10 bg-white/5 backdrop-blur"
+            >
+              <CardContent className="p-8">
+                <h3 className="mb-4 text-2xl font-bold text-white">
+                  {program.title}
+                </h3>
+                <p className="leading-7 text-neutral-300">
+                  {program.description}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
@@ -130,41 +135,39 @@ function HomePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-3xl border border-white/10 bg-neutral-900 p-7">
-              <h3 className="mb-3 text-xl font-bold text-white">
-                Structured Coaching
-              </h3>
-              <p className="leading-7 text-neutral-300">
-                Sessions are planned with clear outcomes instead of random drills.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-neutral-900 p-7">
-              <h3 className="mb-3 text-xl font-bold text-white">
-                Player-Focused Development
-              </h3>
-              <p className="leading-7 text-neutral-300">
-                Training is designed to improve technical ability and game understanding.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-neutral-900 p-7">
-              <h3 className="mb-3 text-xl font-bold text-white">
-                Easy Booking Experience
-              </h3>
-              <p className="leading-7 text-neutral-300">
-                Browse sessions, reserve your place, and manage bookings easily.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-neutral-900 p-7">
-              <h3 className="mb-3 text-xl font-bold text-white">
-                Long-Term Progress
-              </h3>
-              <p className="leading-7 text-neutral-300">
-                We focus on continuous development, not just one good session.
-              </p>
-            </div>
+            {[
+              {
+                title: "Structured Coaching",
+                description:
+                  "Sessions are planned with clear outcomes instead of random drills.",
+              },
+              {
+                title: "Player-Focused Development",
+                description:
+                  "Training is designed to improve technical ability and game understanding.",
+              },
+              {
+                title: "Easy Booking Experience",
+                description:
+                  "Browse sessions, reserve your place, and manage bookings easily.",
+              },
+              {
+                title: "Long-Term Progress",
+                description:
+                  "We focus on continuous development, not just one good session.",
+              },
+            ].map((item) => (
+              <Card key={item.title} className="border-white/10 bg-neutral-900">
+                <CardContent className="p-7">
+                  <h3 className="mb-3 text-xl font-bold text-white">
+                    {item.title}
+                  </h3>
+                  <p className="leading-7 text-neutral-300">
+                    {item.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -183,18 +186,19 @@ function HomePage() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              to="/register"
-              className="rounded-full bg-yellow-400 px-6 py-3 text-sm font-bold text-black transition hover:bg-yellow-300"
-            >
-              Register Now
+            <Link to="/register">
+              <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
+                Register Now
+              </Button>
             </Link>
 
-            <Link
-              to="/training-sessions"
-              className="rounded-full border border-black px-6 py-3 text-sm font-bold text-black transition hover:bg-black hover:text-white"
-            >
-              Browse Sessions
+            <Link to="/training-sessions">
+              <Button
+                variant="outline"
+                className="rounded-full border-black bg-transparent text-black hover:bg-black hover:text-white"
+              >
+                Browse Sessions
+              </Button>
             </Link>
           </div>
         </div>

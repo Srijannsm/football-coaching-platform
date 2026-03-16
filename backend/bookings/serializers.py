@@ -133,3 +133,40 @@ class BookingCancelSerializer(serializers.ModelSerializer):
         model = Booking
         fields = ["id", "status"]
         read_only_fields = ["id", "status"]
+
+class DashboardNextBookingSerializer(serializers.ModelSerializer):
+    program_title = serializers.CharField(
+        source="session.program.title",
+        read_only=True,
+    )
+    session_date = serializers.DateField(source="session.session_date", read_only=True)
+    start_time = serializers.TimeField(source="session.start_time", read_only=True)
+    end_time = serializers.TimeField(source="session.end_time", read_only=True)
+    location = serializers.CharField(source="session.location", read_only=True)
+    coach_full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = [
+            "id",
+            "status",
+            "program_title",
+            "session_date",
+            "start_time",
+            "end_time",
+            "location",
+            "coach_full_name",
+        ]
+
+    def get_coach_full_name(self, obj):
+        full_name = (
+            f"{obj.session.coach.first_name} {obj.session.coach.last_name}".strip()
+        )
+        return full_name or obj.session.coach.username
+
+
+class PlayerDashboardSerializer(serializers.Serializer):
+    user = serializers.DictField()
+    stats = serializers.DictField()
+    next_booking = DashboardNextBookingSerializer(allow_null=True)
+    recent_bookings = BookingListSerializer(many=True)

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import Button from "./ui/Button";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ function Navbar() {
   };
 
   const navLinkClass = ({ isActive }) =>
-    `text-sm font-medium transition ${
-      isActive ? "text-yellow-400" : "text-white hover:text-yellow-400"
+    `text-sm font-medium transition ${isActive ? "text-yellow-400" : "text-white hover:text-yellow-400"
     }`;
 
   return (
@@ -44,34 +44,40 @@ function Navbar() {
           </NavLink>
 
           {token && (
-            <NavLink to="/my-bookings" className={navLinkClass}>
-              My Bookings
+            <NavLink to="/player-dashboard" className={navLinkClass}>
+              Dashboard
             </NavLink>
           )}
 
           {!token ? (
             <>
-              <NavLink
-                to="/login"
-                className="text-sm font-semibold text-white transition hover:text-yellow-400"
-              >
-                Login
+              <NavLink to="/login">
+                <Button
+                  size="sm"
+                  className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                >
+                  Login
+                </Button>
               </NavLink>
 
-              <NavLink
-                to="/register"
-                className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-bold text-black transition hover:bg-yellow-300"
-              >
-                Join Now
+              <NavLink to="/register">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                >
+                  Join Now
+                </Button>
               </NavLink>
             </>
           ) : (
-            <button
+            <Button
+              size="sm"
               onClick={handleLogout}
-              className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-bold text-black transition hover:bg-yellow-300"
+              className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
             >
               Logout
-            </button>
+            </Button>
           )}
         </div>
 
@@ -89,12 +95,7 @@ function Navbar() {
       {mobileMenuOpen && (
         <div className="border-t border-white/10 bg-neutral-950/95 px-6 py-4 md:hidden">
           <div className="flex flex-col gap-4">
-            <NavLink
-              to="/"
-              end
-              className={navLinkClass}
-              onClick={handleCloseMenu}
-            >
+            <NavLink to="/" end className={navLinkClass} onClick={handleCloseMenu}>
               Home
             </NavLink>
 
@@ -108,39 +109,43 @@ function Navbar() {
 
             {token && (
               <NavLink
-                to="/my-bookings"
+                to="/player-dashboard"
                 className={navLinkClass}
                 onClick={handleCloseMenu}
               >
-                My Bookings
+                Dashboard
               </NavLink>
             )}
 
             {!token ? (
               <div className="flex flex-col gap-3 pt-2">
-                <NavLink
-                  to="/login"
-                  onClick={handleCloseMenu}
-                  className="rounded-full border border-white/10 px-4 py-3 text-center text-sm font-semibold text-white transition hover:border-yellow-400 hover:text-yellow-400"
-                >
-                  Login
+                <NavLink to="/login" onClick={handleCloseMenu}>
+                  <Button
+                    fullWidth
+                    variant="outline"
+                    className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                  >
+                    Login
+                  </Button>
                 </NavLink>
 
-                <NavLink
-                  to="/register"
-                  onClick={handleCloseMenu}
-                  className="rounded-full bg-yellow-400 px-4 py-3 text-center text-sm font-bold text-black transition hover:bg-yellow-300"
-                >
-                  Join Now
+                <NavLink to="/register" onClick={handleCloseMenu}>
+                  <Button
+                    fullWidth
+                    className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                  >
+                    Join Now
+                  </Button>
                 </NavLink>
               </div>
             ) : (
-              <button
+              <Button
+                fullWidth
                 onClick={handleLogout}
-                className="mt-2 rounded-full bg-yellow-400 px-4 py-3 text-sm font-bold text-black transition hover:bg-yellow-300"
+                className="mt-2 rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
               >
                 Logout
-              </button>
+              </Button>
             )}
           </div>
         </div>

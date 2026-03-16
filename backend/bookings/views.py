@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils import timezone
 from datetime import datetime
 
@@ -9,6 +10,7 @@ from .serializers import (
     BookingCreateSerializer,
     BookingListSerializer,
     BookingCancelSerializer,
+    PlayerDashboardSerializer,
 )
 
 class BookingListView(generics.ListAPIView):
@@ -97,3 +99,67 @@ class BookingCancelView(generics.UpdateAPIView):
 
         serializer = self.get_serializer(booking)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class PlayerDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if user.role != "player":
+            return Response(
+                {"detail": "Only players can access the player dashboard."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not hasattr(user, "player_profile"):
+            return Response(
+                {"detail": "Player profile does not exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        today = timezone.localdate()
+
+        bookings = Booking.objects.select_related(
+            "player__user",
+            "session__program",
+            "session__coach",
+        ).filter(player=user.player_profile)
+
+        active_bookings = bookings.exclude(status=Booking.STATUS_CANCELLED)
+
+        upcoming_bookings = active_bookings.filter(session__session_date__gte=today)
+
+        next_booking = upcoming_bookings.order_by(
+            "session__session_date",
+            "session__start_time",
+        ).first()
+
+        recent_bookings = bookings.order_by("-booked_at")[:5]
+
+        dashboard_data = {
+            "user": {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "username": user.username,
+            },
+            "stats": {
+                "total_bookings": bookings.count(),
+                "upcoming_bookings": upcoming_bookings.count(),
+                "cancelled_bookings": bookings.filter(
+                    status=Booking.STATUS_CANCELLED
+                ).count(),
+                "confirmed_bookings": bookings.filter(
+                    status=Booking.STATUS_CONFIRMED
+                ).count(),
+                "attended_sessions": bookings.filter(
+                    status=Booking.STATUS_ATTENDED
+                ).count(),
+            },
+            "next_booking": next_booking,
+            "recent_bookings": recent_bookings,
+        }
+
+        serializer = PlayerDashboardSerializer(dashboard_data)
+        return Response(serializer.data)

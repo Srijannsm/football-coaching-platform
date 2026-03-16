@@ -13,6 +13,7 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(required=True)
 
     age = serializers.IntegerField(required=False, allow_null=True)
+    image = serializers.ImageField(required=False, allow_null=True)
     preferred_foot = serializers.ChoiceField(
         choices=PlayerProfile.FOOT_CHOICES, required=False, allow_blank=True
     )
@@ -33,6 +34,7 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
             "password",
             "confirm_password",
             "age",
+            "image",
             "preferred_foot",
             "primary_position",
             "secondary_position",
@@ -40,7 +42,7 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
             "weight_kg",
         ]
         read_only_fields = ["id"]
-    
+
     def validate(self, attrs):
         if attrs["password"] != attrs["confirm_password"]:
             raise serializers.ValidationError(
@@ -69,6 +71,7 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
 
         player_profile_data = {
             "age": validated_data.pop("age", None),
+            "image": validated_data.pop("image", None),
             "preferred_foot": validated_data.pop("preferred_foot", ""),
             "primary_position": validated_data.pop("primary_position", ""),
             "secondary_position": validated_data.pop("secondary_position", ""),
@@ -84,9 +87,7 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
             validated_data["email"] = validated_data["email"].strip().lower()
 
         user = User.objects.create_user(
-            role=User.ROLE_PLAYER,
-            password=password,
-            **validated_data
+            role=User.ROLE_PLAYER, password=password, **validated_data
         )
 
         PlayerProfile.objects.create(user=user, **player_profile_data)
@@ -146,3 +147,93 @@ class MeSerializer(serializers.ModelSerializer):
         if hasattr(obj, "player_profile"):
             return obj.player_profile.id
         return None
+
+
+class PlayerProfileUpdateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", required=True)
+    last_name = serializers.CharField(source="user.last_name", required=True)
+    email = serializers.EmailField(source="user.email", required=True)
+    phone_number = serializers.CharField(
+        source="user.phone_number",
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    image = serializers.ImageField(required=False, allow_null=True)
+    remove_image = serializers.BooleanField(
+        write_only=True, required=False, default=False
+    )
+
+    class Meta:
+        model = PlayerProfile
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "age",
+            "image",
+            "remove_image",
+            "preferred_foot",
+            "player_rating",
+            "primary_position",
+            "secondary_position",
+            "height_cm",
+            "weight_kg",
+        ]
+        read_only_fields = ["id", "username", "player_rating"]
+
+    def validate(self, attrs):
+        user_data = attrs.get("user", {})
+        email = user_data.get("email")
+
+        if email:
+            email = email.strip().lower()
+            user_data["email"] = email
+
+            existing_user = User.objects.filter(email__iexact=email).exclude(
+                id=self.instance.user.id
+            )
+            if existing_user.exists():
+                raise serializers.ValidationError(
+                    {"email": "A user with this email already exists."}
+                )
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        remove_image = validated_data.pop("remove_image", False)
+
+        user = instance.user
+        user.first_name = user_data.get("first_name", user.first_name)
+        user.last_name = user_data.get("last_name", user.last_name)
+        user.email = user_data.get("email", user.email)
+        user.phone_number = user_data.get("phone_number", user.phone_number)
+        user.save()
+
+        instance.age = validated_data.get("age", instance.age)
+        instance.preferred_foot = validated_data.get(
+            "preferred_foot", instance.preferred_foot
+        )
+        instance.primary_position = validated_data.get(
+            "primary_position", instance.primary_position
+        )
+        instance.secondary_position = validated_data.get(
+            "secondary_position", instance.secondary_position
+        )
+        instance.height_cm = validated_data.get("height_cm", instance.height_cm)
+        instance.weight_kg = validated_data.get("weight_kg", instance.weight_kg)
+
+        if remove_image:
+            if instance.image:
+                instance.image.delete(save=False)
+            instance.image = None
+        elif "image" in validated_data:
+            instance.image = validated_data.get("image")
+
+        instance.save()
+        return instance
