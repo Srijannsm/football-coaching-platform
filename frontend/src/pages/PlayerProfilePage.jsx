@@ -7,6 +7,7 @@ import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import { Card, CardContent } from "../components/ui/Card";
 import ImageUploadField from "../components/ui/ImageUploadField";
+import { useToast } from "../context/ToastContext";
 
 const preferredFootOptions = [
   { value: "", label: "Select preferred foot" },
@@ -17,6 +18,7 @@ const preferredFootOptions = [
 
 function PlayerProfilePage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -172,7 +174,8 @@ function PlayerProfilePage() {
       setProfileImagePreview(response.data.image || "");
       setProfileImageFile(null);
       setRemoveImage(false);
-      setSuccessMessage("Profile updated successfully.");
+      // setSuccessMessage("Profile updated successfully.");
+      showToast("Profile Updated successfully.", "success");
     } catch (err) {
       console.error("Failed to update profile:", err);
 
@@ -222,7 +225,18 @@ function PlayerProfilePage() {
       <Navbar />
 
       <section className="border-b border-white/10 bg-gradient-to-b from-neutral-900 to-neutral-950">
+      
         <div className="mx-auto max-w-4xl px-6 py-16 lg:px-10">
+          <div className="mb-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate(-1)}
+            className="rounded-full"
+          >
+            ←
+          </Button>
+        </div>
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
             Player Profile
           </p>

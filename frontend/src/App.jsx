@@ -7,24 +7,66 @@ import SessionDetailPage from "./pages/SessionDetailPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
 import PlayerDashboardPage from "./pages/PlayerDashboardPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
-import { Toaster } from "react-hot-toast";
+import { ToastProvider } from "./context/ToastContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
 
 function App() {
   return (
     <>
-      <Toaster position="top-right" />
+      <ToastProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/training-sessions" element={<TrainingSessionsPage />} />
             <Route path="/training-sessions/:id" element={<SessionDetailPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/my-bookings" element={<MyBookingsPage />} />
-            <Route path="/player-dashboard" element={<PlayerDashboardPage />} />
-            <Route path="/player-profile" element={<PlayerProfilePage />} />
+            <Route
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <LoginPage />
+                </PublicOnlyRoute>
+              }
+            />
+
+            <Route
+              path="/register"
+              element={
+                <PublicOnlyRoute>
+                  <RegisterPage />
+                </PublicOnlyRoute>
+              }
+            />
+
+            <Route
+              path="/player-dashboard"
+              element={
+                <ProtectedRoute>
+                  <PlayerDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/my-bookings"
+              element={
+                <ProtectedRoute>
+                  <MyBookingsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/player-profile"
+              element={
+                <ProtectedRoute>
+                  <PlayerProfilePage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </BrowserRouter>
+      </ToastProvider>
     </>
   );
 }

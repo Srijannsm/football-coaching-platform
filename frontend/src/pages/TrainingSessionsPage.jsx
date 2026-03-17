@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
@@ -9,9 +9,12 @@ import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
+import { useToast } from "../context/ToastContext";
 
 function TrainingSessionsPage() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [sessions, setSessions] = useState([]);
   const [user, setUser] = useState(null);
@@ -45,6 +48,7 @@ function TrainingSessionsPage() {
       } else {
         setSessions([]);
       }
+
     } catch (err) {
       console.error("Failed to load training sessions:", err);
       setError("Failed to load training sessions.");
@@ -52,25 +56,25 @@ function TrainingSessionsPage() {
       setLoading(false);
     }
   }
-
+  
   async function fetchCurrentUser() {
     const token = localStorage.getItem("accessToken");
-
+    
     if (!token) {
       setUser(null);
       setIsAuthenticated(false);
       return;
     }
-
+    
     // Token exists, so treat user as authenticated unless backend proves otherwise
     setIsAuthenticated(true);
-
+    
     try {
       const response = await api.get("/me/");
       setUser(response.data);
     } catch (err) {
       console.error("Failed to fetch current user:", err);
-
+      
       if (err.response?.status === 401) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -80,40 +84,43 @@ function TrainingSessionsPage() {
       }
     }
   }
-
+  
   useEffect(() => {
     fetchSessions();
     fetchCurrentUser();
   }, []);
-
+  
   async function handleBookSession(sessionId) {
     const selectedSession = sessions.find((session) => session.id === sessionId);
-
+    
     if (selectedSession?.is_booked_by_current_user) {
       setBookingError("You have already booked this session.");
       return;
     }
-
+    
     const token = localStorage.getItem("accessToken");
-
+    
     if (!token) {
-      navigate("/login");
+      navigate("/login", {
+        state: { from: location },
+      });
       return;
     }
-
+    
     try {
       setBookingMessage("");
       setBookingError("");
       setBookingSessionId(sessionId);
-
+      
       await api.post("/bookings/", { session: sessionId });
-
-      setBookingMessage("Session booked successfully.");
+      
+      // setBookingMessage("Session booked successfully.");
+      showToast("Booking successful.", "success");
       await fetchSessions();
       await fetchCurrentUser();
     } catch (err) {
       console.error("Booking failed:", err);
-
+      
       if (err.response?.status === 401) {
         setBookingError("Your session expired. Please log in again.");
         localStorage.removeItem("accessToken");
@@ -463,10 +470,10 @@ function TrainingSessionsPage() {
                       <Button
                         type="button"
                         className={`w-full rounded-full ${isAlreadyBooked || isFull || isBookingThisSession
-                            ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
-                            : isAuthenticated
-                              ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                              : "border border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                          ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
+                          : isAuthenticated
+                            ? "bg-yellow-400 text-black hover:bg-yellow-300"
+                            : "border border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
                           }`}
                         disabled={isAlreadyBooked || isFull || isBookingThisSession}
                         onClick={() => handleBookSession(session.id)}

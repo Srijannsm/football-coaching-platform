@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../api/axios";
 import Button from "../components/ui/Button";
@@ -7,10 +7,13 @@ import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
+import { useToast } from "../context/ToastContext";
 
 function SessionDetailPage() {
+  const { showToast } = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
@@ -84,7 +87,9 @@ function SessionDetailPage() {
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      navigate("/login");
+      navigate("/login", {
+        state: { from: location },
+      });
       return;
     }
 
@@ -97,7 +102,8 @@ function SessionDetailPage() {
         session: session.id,
       });
 
-      setBookingMessage("Session booked successfully.");
+      // setBookingMessage("Session booked successfully.");
+      showToast("Booking successful.", "success");
       await fetchSessionDetail();
       await fetchCurrentUser();
     } catch (err) {
@@ -284,10 +290,10 @@ function SessionDetailPage() {
                 onClick={handleBookSession}
                 disabled={isAlreadyBooked || isFull || bookingLoading}
                 className={`mt-8 w-full rounded-full ${isAlreadyBooked || isFull || bookingLoading
-                    ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
-                    : isAuthenticated
-                      ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                      : "border border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                  ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
+                  : isAuthenticated
+                    ? "bg-yellow-400 text-black hover:bg-yellow-300"
+                    : "border border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
                   }`}
               >
                 {isAlreadyBooked

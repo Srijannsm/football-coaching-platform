@@ -1,20 +1,28 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import api from "../api/axios";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { Card, CardContent } from "../components/ui/Card";
+import { useToast } from "../context/ToastContext";
 
 function LoginPage() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
-
+  
+  const { showToast } = useToast();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const fromLocation = location.state?.from;
+  const from = fromLocation
+  ? `${fromLocation.pathname}${fromLocation.search || ""}`
+  : "/player-dashboard";
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -41,7 +49,9 @@ function LoginPage() {
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
-      navigate("/");
+      navigate(from, { replace: true });
+      // showToast("Login successful.", "success");
+
     } catch (err) {
       console.error("Login failed:", err);
 

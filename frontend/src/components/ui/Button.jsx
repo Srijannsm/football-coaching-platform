@@ -14,10 +14,11 @@ function Button({
 
   const variants = {
     primary: "bg-black text-white hover:bg-gray-900",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+    secondary: "bg-gray-400 text-gray-900 hover:bg-gray-100",
     outline: "border border-gray-300 text-gray-900 hover:bg-gray-50",
     danger: "bg-red-600 text-white hover:bg-red-700",
     success: "bg-green-600 text-white hover:bg-green-700",
+    login: "bg-emrald-800 text-white hover:bg-lime-600",
   };
 
   const sizes = {

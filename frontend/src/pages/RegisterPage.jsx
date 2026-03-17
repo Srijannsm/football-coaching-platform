@@ -6,6 +6,7 @@ import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import { Card, CardContent } from "../components/ui/Card";
 import ImageUploadField from "../components/ui/ImageUploadField";
+import { useToast } from "../context/ToastContext";
 
 const initialFormData = {
   username: "",
@@ -32,6 +33,7 @@ const preferredFootOptions = [
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState(initialFormData);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -199,11 +201,14 @@ function RegisterPage() {
         },
       });
 
-      setSuccessMessage("Registration successful. Redirecting to login...");
+      // setSuccessMessage("Registration successful. Redirecting to login...");
 
       setTimeout(() => {
         navigate("/login");
       }, 1200);
+
+      showToast("Registration successful.", "success");
+
     } catch (err) {
       console.error("Registration error:", err);
 

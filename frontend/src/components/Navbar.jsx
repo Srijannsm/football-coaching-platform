@@ -54,19 +54,9 @@ function Navbar() {
               <NavLink to="/login">
                 <Button
                   size="sm"
-                  className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                  className="rounded-full bg-emerald-800 text-black hover:bg-lime-600"
                 >
                   Login
-                </Button>
-              </NavLink>
-
-              <NavLink to="/register">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
-                >
-                  Join Now
                 </Button>
               </NavLink>
             </>
@@ -74,7 +64,7 @@ function Navbar() {
             <Button
               size="sm"
               onClick={handleLogout}
-              className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+              className="rounded-full bg-red-800 text-black hover:bg-red-500"
             >
               Logout
             </Button>

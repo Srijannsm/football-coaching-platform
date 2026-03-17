@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
+import { useToast } from "../context/ToastContext";
 
 function MyBookingsPage() {
+  const { showToast } = useToast();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelBookingId, setCancelBookingId] = useState(null);
@@ -16,17 +19,32 @@ function MyBookingsPage() {
     try {
       const response = await api.get("/my-bookings/");
       setBookings(response.data.results || response.data);
+    } catch (err) {
+      setError("Failed to load your bookings. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
   async function cancelBooking(id) {
+  try {
+    // setError("");
     setCancelBookingId(id);
+
     await api.put(`/my-bookings/${id}/cancel/`);
     await fetchBookings();
+
+    showToast("Booking cancelled successfully.", "success");
+  } catch (err) {
+    const message =
+      err.response?.data?.detail || "Failed to cancel booking. Please try again.";
+
+    setError(message);
+    showToast(message, "error");
+  } finally {
     setCancelBookingId(null);
   }
+}
 
   useEffect(() => {
     fetchBookings();
@@ -54,10 +72,21 @@ function MyBookingsPage() {
       <Navbar />
 
       <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate(-1)}
+            className="rounded-full"
+          >
+            ←
+          </Button>
+        </div>
         <h1 className="mb-2 text-4xl font-bold">My Bookings</h1>
         <p className="mb-10 text-neutral-400">
           Manage your booked training sessions.
         </p>
+
 
         {bookings.length === 0 ? (
           <EmptyState
