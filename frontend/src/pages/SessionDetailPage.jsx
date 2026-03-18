@@ -293,7 +293,7 @@ function SessionDetailPage() {
                   ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
                   : isAuthenticated
                     ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                    : "border border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                    : "border border-white/10 bg-emerald-800 text-black hover:bg-lime-600"
                   }`}
               >
                 {isAlreadyBooked

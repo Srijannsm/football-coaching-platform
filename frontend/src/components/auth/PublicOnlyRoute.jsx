@@ -3,7 +3,7 @@ import { isAuthenticated } from "../../utils/auth";
 
 function PublicOnlyRoute({ children }) {
   if (isAuthenticated()) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/player-dashboard" replace />;
   }
 
   return children;

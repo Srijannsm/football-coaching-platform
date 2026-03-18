@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import api from "../api/axios";
-import Alert from "../components/ui/Alert";
+import { getPlayerDashboard } from "../services/playerDashboardService";
 import EmptyState from "../components/ui/EmptyState";
 import StatCard from "../components/ui/StatCard";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -10,8 +9,6 @@ import Button from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
 
 function PlayerDashboardPage() {
-    const navigate = useNavigate();
-
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -19,15 +16,10 @@ function PlayerDashboardPage() {
     async function fetchDashboard() {
         try {
             setError("");
-            const response = await api.get("/bookings/dashboard/");
-            setDashboard(response.data);
+            const data = await getPlayerDashboard();
+            setDashboard(data);
         } catch (err) {
             console.error("Failed to load dashboard:", err);
-
-            if (err.response?.status === 401) {
-                navigate("/login");
-                return;
-            }
 
             if (err.response?.data?.detail) {
                 setError(err.response.data.detail);
@@ -128,120 +120,157 @@ function PlayerDashboardPage() {
             </section>
 
             <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-                    <StatCard label="Total Bookings" value={stats.total_bookings} />
-                    <StatCard label="Upcoming" value={stats.upcoming_bookings} />
-                    <StatCard label="Confirmed" value={stats.confirmed_bookings} />
-                    <StatCard label="Cancelled" value={stats.cancelled_bookings} />
-                    <StatCard label="Attended" value={stats.attended_sessions} />
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-5">
+                    <StatCard label="Total Bookings" value={stats?.total_bookings ?? 0} />
+                    <StatCard label="Upcoming" value={stats?.upcoming_bookings ?? 0} />
+                    <StatCard label="Confirmed" value={stats?.confirmed_bookings ?? 0} />
+                    <StatCard label="Cancelled" value={stats?.cancelled_bookings ?? 0} />
+                    <StatCard label="Attended" value={stats?.attended_sessions ?? 0} />
                 </div>
             </section>
 
-            <section className="mx-auto grid max-w-7xl gap-6 px-6 pb-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-10">
-                <Card className="border-white/10 bg-white/5 shadow-xl backdrop-blur">
-                    <CardContent className="p-6">
-                        <h2 className="text-2xl font-extrabold text-white">Next Session</h2>
+            <section className="mx-auto max-w-7xl px-6 pb-14 lg:px-10">
+                <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                    <Card className="border-white/10 bg-white/5 shadow-xl backdrop-blur">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between gap-4">
+                                <h2 className="text-2xl font-extrabold text-white">
+                                    Next Session
+                                </h2>
 
-                        {next_booking ? (
-                            <div className="mt-6 space-y-4">
-                                <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-5">
+                                {next_booking && <StatusBadge status={next_booking.status} />}
+                            </div>
+
+                            {next_booking ? (
+                                <div className="mt-6 rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-5">
                                     <p className="text-sm font-semibold uppercase tracking-wide text-yellow-400">
                                         {next_booking.program_title}
                                     </p>
 
-                                    <div className="mt-4 space-y-3 text-sm text-neutral-300">
-                                        <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
-                                            <span className="text-neutral-400">Coach</span>
-                                            <span className="text-right font-semibold text-white">
+                                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                                        <div className="rounded-xl border border-white/10 bg-neutral-900/60 p-4">
+                                            <p className="text-xs uppercase tracking-wide text-neutral-400">
+                                                Coach
+                                            </p>
+                                            <p className="mt-2 font-semibold text-white">
                                                 {next_booking.coach_full_name}
-                                            </span>
+                                            </p>
                                         </div>
 
-                                        <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
-                                            <span className="text-neutral-400">Date</span>
-                                            <span className="text-right font-semibold text-white">
+                                        <div className="rounded-xl border border-white/10 bg-neutral-900/60 p-4">
+                                            <p className="text-xs uppercase tracking-wide text-neutral-400">
+                                                Date
+                                            </p>
+                                            <p className="mt-2 font-semibold text-white">
                                                 {next_booking.session_date}
-                                            </span>
+                                            </p>
                                         </div>
 
-                                        <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
-                                            <span className="text-neutral-400">Time</span>
-                                            <span className="text-right font-semibold text-white">
+                                        <div className="rounded-xl border border-white/10 bg-neutral-900/60 p-4">
+                                            <p className="text-xs uppercase tracking-wide text-neutral-400">
+                                                Time
+                                            </p>
+                                            <p className="mt-2 font-semibold text-white">
                                                 {next_booking.start_time} - {next_booking.end_time}
-                                            </span>
+                                            </p>
                                         </div>
 
-                                        <div className="flex items-center justify-between gap-4">
-                                            <span className="text-neutral-400">Location</span>
-                                            <span className="text-right font-semibold text-white">
+                                        <div className="rounded-xl border border-white/10 bg-neutral-900/60 p-4">
+                                            <p className="text-xs uppercase tracking-wide text-neutral-400">
+                                                Location
+                                            </p>
+                                            <p className="mt-2 font-semibold text-white">
                                                 {next_booking.location}
-                                            </span>
+                                            </p>
                                         </div>
+                                    </div>
+
+                                    <div className="mt-6 flex flex-wrap gap-3">
+                                        <Link to="/my-bookings">
+                                            <Button
+                                                variant="outline"
+                                                className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                                            >
+                                                View All My Bookings
+                                            </Button>
+                                        </Link>
+
+                                        <Link to="/training-sessions">
+                                            <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
+                                                Book Another Session
+                                            </Button>
+                                        </Link>
                                     </div>
                                 </div>
+                            ) : (
+                                <div className="mt-6 rounded-2xl border border-white/10 bg-neutral-900/70 p-6">
+                                    <p className="text-neutral-300">
+                                        You have no upcoming sessions right now.
+                                    </p>
 
-                                <Link to="/my-bookings">
-                                    <Button
-                                        variant="outline"
-                                        className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
-                                    >
-                                        View All My Bookings
-                                    </Button>
+                                    <Link to="/training-sessions">
+                                        <Button className="mt-4 rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
+                                            Book a Session
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-white/10 bg-white/5 shadow-xl backdrop-blur">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between gap-4">
+                                <h2 className="text-2xl font-extrabold text-white">
+                                    Recent Bookings
+                                </h2>
+
+                                <Link to="/my-bookings" className="text-sm text-yellow-400 hover:text-yellow-300">
+                                    View all
                                 </Link>
                             </div>
-                        ) : (
-                            <div className="mt-6 rounded-2xl border border-white/10 bg-neutral-900/70 p-6">
-                                <p className="text-neutral-300">
-                                    You have no upcoming sessions right now.
-                                </p>
-                                <Link to="/training-sessions">
-                                    <Button className="mt-4 rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                                        Book a Session
-                                    </Button>
-                                </Link>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
 
-                <Card className="border-white/10 bg-white/5 shadow-xl backdrop-blur">
-                    <CardContent className="p-6">
-                        <h2 className="text-2xl font-extrabold text-white">Recent Bookings</h2>
+                            {recent_bookings?.length ? (
+                                <div className="mt-6 space-y-4">
+                                    {recent_bookings.map((booking) => (
+                                        <div
+                                            key={booking.id}
+                                            className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <h3 className="text-lg font-bold text-white">
+                                                        {booking.program_title}
+                                                    </h3>
+                                                    <p className="mt-1 text-sm text-neutral-400">
+                                                        {booking.session_date} • {booking.start_time}
+                                                    </p>
+                                                </div>
 
-                        {recent_bookings?.length ? (
-                            <div className="mt-6 space-y-4">
-                                {recent_bookings.map((booking) => (
-                                    <div
-                                        key={booking.id}
-                                        className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4"
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-white">
-                                                    {booking.program_title}
-                                                </h3>
-                                                <p className="mt-1 text-sm text-neutral-400">
-                                                    {booking.session_date} • {booking.start_time}
-                                                </p>
+                                                <StatusBadge status={booking.status} />
                                             </div>
 
-                                            <StatusBadge status={booking.status} />
+                                            <div className="mt-4 space-y-1 text-sm text-neutral-300">
+                                                <p>Coach: {booking.coach_full_name}</p>
+                                                <p>Location: {booking.location}</p>
+                                            </div>
                                         </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="mt-6 rounded-2xl border border-white/10 bg-neutral-900/70 p-6">
+                                    <p className="text-neutral-300">No bookings yet.</p>
 
-                                        <div className="mt-3 text-sm text-neutral-300">
-                                            <p>Coach: {booking.coach_full_name}</p>
-                                            <p>Location: {booking.location}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="mt-6 rounded-2xl border border-white/10 bg-neutral-900/70 p-6">
-                                <p className="text-neutral-300">No bookings yet.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                                    <Link to="/training-sessions">
+                                        <Button className="mt-4 rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
+                                            Browse Sessions
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </section>
         </div>
     );

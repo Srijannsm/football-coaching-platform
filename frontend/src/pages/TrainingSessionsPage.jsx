@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import api from "../api/axios";
+import { getTrainingSessions } from "../services/trainingSessionService";
+import { createBooking } from "../services/bookingService";
+import { getCurrentUser } from "../services/authService";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -39,16 +41,8 @@ function TrainingSessionsPage() {
   async function fetchSessions() {
     try {
       setError("");
-      const response = await api.get("/training-sessions/");
-
-      if (Array.isArray(response.data)) {
-        setSessions(response.data);
-      } else if (Array.isArray(response.data.results)) {
-        setSessions(response.data.results);
-      } else {
-        setSessions([]);
-      }
-
+      const sessionsData = await getTrainingSessions();
+      setSessions(sessionsData);
     } catch (err) {
       console.error("Failed to load training sessions:", err);
       setError("Failed to load training sessions.");
@@ -56,71 +50,68 @@ function TrainingSessionsPage() {
       setLoading(false);
     }
   }
-  
+
   async function fetchCurrentUser() {
     const token = localStorage.getItem("accessToken");
-    
+
     if (!token) {
       setUser(null);
       setIsAuthenticated(false);
       return;
     }
-    
-    // Token exists, so treat user as authenticated unless backend proves otherwise
+
     setIsAuthenticated(true);
-    
+
     try {
-      const response = await api.get("/me/");
-      setUser(response.data);
+      const userData = await getCurrentUser();
+      setUser(userData);
     } catch (err) {
       console.error("Failed to fetch current user:", err);
-      
+
       if (err.response?.status === 401) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        clearAuthData();
         setUser(null);
         setIsAuthenticated(false);
       }
     }
   }
-  
+
   useEffect(() => {
     fetchSessions();
     fetchCurrentUser();
   }, []);
-  
+
   async function handleBookSession(sessionId) {
     const selectedSession = sessions.find((session) => session.id === sessionId);
-    
+
     if (selectedSession?.is_booked_by_current_user) {
       setBookingError("You have already booked this session.");
       return;
     }
-    
+
     const token = localStorage.getItem("accessToken");
-    
+
     if (!token) {
       navigate("/login", {
         state: { from: location },
       });
       return;
     }
-    
+
     try {
       setBookingMessage("");
       setBookingError("");
       setBookingSessionId(sessionId);
-      
-      await api.post("/bookings/", { session: sessionId });
-      
+
+      await createBooking(sessionId);
+
       // setBookingMessage("Session booked successfully.");
       showToast("Booking successful.", "success");
       await fetchSessions();
       await fetchCurrentUser();
     } catch (err) {
       console.error("Booking failed:", err);
-      
+
       if (err.response?.status === 401) {
         setBookingError("Your session expired. Please log in again.");
         localStorage.removeItem("accessToken");
@@ -473,7 +464,7 @@ function TrainingSessionsPage() {
                           ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
                           : isAuthenticated
                             ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                            : "border border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                            : "border border-white/10 bg-emerald-800 text-black hover:bg-lime-600"
                           }`}
                         disabled={isAlreadyBooked || isFull || isBookingThisSession}
                         onClick={() => handleBookSession(session.id)}

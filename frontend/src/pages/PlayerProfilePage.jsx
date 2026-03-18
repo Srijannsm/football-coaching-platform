@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import api from "../api/axios";
+import {
+  getPlayerProfile,
+  updatePlayerProfile,
+} from "../services/playerProfileService";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
@@ -36,7 +39,6 @@ function PlayerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
@@ -44,35 +46,30 @@ function PlayerProfilePage() {
 
   const darkInputClass =
     "border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10";
-  const darkLabelClass = "text-white font-semibold";
+  const darkLabelClass = "font-semibold text-white";
 
   async function fetchProfile() {
     try {
       setError("");
-      const response = await api.get("/player/profile/");
+      const profile = await getPlayerProfile();
 
       setFormData({
-        first_name: response.data.first_name || "",
-        last_name: response.data.last_name || "",
-        email: response.data.email || "",
-        phone_number: response.data.phone_number || "",
-        age: response.data.age ?? "",
-        preferred_foot: response.data.preferred_foot || "",
-        primary_position: response.data.primary_position || "",
-        secondary_position: response.data.secondary_position || "",
-        height_cm: response.data.height_cm ?? "",
-        weight_kg: response.data.weight_kg ?? "",
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        email: profile.email || "",
+        phone_number: profile.phone_number || "",
+        age: profile.age ?? "",
+        preferred_foot: profile.preferred_foot || "",
+        primary_position: profile.primary_position || "",
+        secondary_position: profile.secondary_position || "",
+        height_cm: profile.height_cm ?? "",
+        weight_kg: profile.weight_kg ?? "",
       });
 
-      setProfileImagePreview(response.data.image || "");
+      setProfileImagePreview(profile.image || "");
       setRemoveImage(false);
     } catch (err) {
       console.error("Failed to load profile:", err);
-
-      if (err.response?.status === 401) {
-        navigate("/login");
-        return;
-      }
 
       if (err.response?.data?.detail) {
         setError(err.response.data.detail);
@@ -97,7 +94,6 @@ function PlayerProfilePage() {
     }));
 
     if (error) setError("");
-    if (successMessage) setSuccessMessage("");
   }
 
   function handleImageSelect(file, validationError) {
@@ -108,7 +104,6 @@ function PlayerProfilePage() {
 
     setImageError("");
     setError("");
-    setSuccessMessage("");
 
     if (file) {
       setRemoveImage(false);
@@ -122,7 +117,6 @@ function PlayerProfilePage() {
     setProfileImagePreview("");
     setRemoveImage(true);
     setImageError("");
-    setSuccessMessage("");
     setError("");
   }
 
@@ -132,7 +126,6 @@ function PlayerProfilePage() {
     try {
       setSaving(true);
       setError("");
-      setSuccessMessage("");
 
       const payload = new FormData();
 
@@ -152,30 +145,30 @@ function PlayerProfilePage() {
         payload.append("image", profileImageFile);
       }
 
-      const response = await api.patch("/player/profile/", payload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const updatedProfile = await updatePlayerProfile({
+        formData,
+        profileImageFile,
+        removeImage,
       });
 
       setFormData({
-        first_name: response.data.first_name || "",
-        last_name: response.data.last_name || "",
-        email: response.data.email || "",
-        phone_number: response.data.phone_number || "",
-        age: response.data.age ?? "",
-        preferred_foot: response.data.preferred_foot || "",
-        primary_position: response.data.primary_position || "",
-        secondary_position: response.data.secondary_position || "",
-        height_cm: response.data.height_cm ?? "",
-        weight_kg: response.data.weight_kg ?? "",
+        first_name: updatedProfile.first_name || "",
+        last_name: updatedProfile.last_name || "",
+        email: updatedProfile.email || "",
+        phone_number: updatedProfile.phone_number || "",
+        age: updatedProfile.age ?? "",
+        preferred_foot: updatedProfile.preferred_foot || "",
+        primary_position: updatedProfile.primary_position || "",
+        secondary_position: updatedProfile.secondary_position || "",
+        height_cm: updatedProfile.height_cm ?? "",
+        weight_kg: updatedProfile.weight_kg ?? "",
       });
 
-      setProfileImagePreview(response.data.image || "");
+      setProfileImagePreview(updatedProfile.image || "");
       setProfileImageFile(null);
       setRemoveImage(false);
-      // setSuccessMessage("Profile updated successfully.");
-      showToast("Profile Updated successfully.", "success");
+
+      showToast("Profile updated successfully.", "success");
     } catch (err) {
       console.error("Failed to update profile:", err);
 
@@ -209,7 +202,9 @@ function PlayerProfilePage() {
         <div className="mx-auto max-w-4xl px-6 py-24 lg:px-10">
           <Card className="border-white/10 bg-white/5 backdrop-blur">
             <CardContent className="p-10 text-center">
-              <h2 className="text-2xl font-bold text-white">Loading profile...</h2>
+              <h2 className="text-2xl font-bold text-white">
+                Loading profile...
+              </h2>
               <p className="mt-3 text-neutral-400">
                 Please wait while we fetch your player profile.
               </p>
@@ -225,18 +220,18 @@ function PlayerProfilePage() {
       <Navbar />
 
       <section className="border-b border-white/10 bg-gradient-to-b from-neutral-900 to-neutral-950">
-      
         <div className="mx-auto max-w-4xl px-6 py-16 lg:px-10">
           <div className="mb-6">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate(-1)}
-            className="rounded-full"
-          >
-            ←
-          </Button>
-        </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
+            >
+              ← Back
+            </Button>
+          </div>
+
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
             Player Profile
           </p>
@@ -262,12 +257,6 @@ function PlayerProfilePage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-10 pb-14 lg:px-10">
-        {successMessage && (
-          <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4 text-emerald-300">
-            {successMessage}
-          </div>
-        )}
-
         {error && (
           <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-red-300">
             {error}
@@ -278,8 +267,6 @@ function PlayerProfilePage() {
           <CardContent className="p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-8">
               <section>
-                {/* <h3 className="mb-4 text-lg font-bold text-white">Profile Picture</h3> */}
-
                 <ImageUploadField
                   label="Profile Picture"
                   previewUrl={profileImagePreview}
@@ -412,7 +399,7 @@ function PlayerProfilePage() {
                 </Button>
 
                 <Link
-                  to="/player-dashboard"
+                  to="/dashboard"
                   className="rounded-full border border-white/10 px-6 py-3 text-sm font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
                 >
                   Cancel
