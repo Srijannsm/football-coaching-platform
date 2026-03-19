@@ -10,21 +10,26 @@ function Button({
   ...props
 }) {
   const baseStyles =
-    "inline-flex items-center justify-center rounded-xl font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-black/20 disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex items-center justify-center rounded-full font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-60";
 
   const variants = {
-    primary: "bg-black text-white hover:bg-gray-900",
-    secondary: "bg-gray-400 text-gray-900 hover:bg-gray-100",
-    outline: "border border-gray-300 text-gray-900 hover:bg-gray-50",
+    primary:
+      "bg-brand-primary text-black shadow-[var(--shadow-soft)] hover:bg-brand-primary-hover",
+    secondary:
+      "bg-app-surface-2 text-app-text hover:bg-app-surface",
+    outline:
+      "border border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary",
+    ghost: "bg-transparent text-app-text hover:bg-app-surface-2",
     danger: "bg-red-600 text-white hover:bg-red-700",
+    "danger-outline":
+      "border border-red-200 bg-app-card text-red-700 hover:bg-red-50",
     success: "bg-green-600 text-white hover:bg-green-700",
-    login: "bg-emrald-800 text-white hover:bg-lime-600",
   };
 
   const sizes = {
-    sm: "px-3 py-2 text-sm",
-    md: "px-4 py-2.5 text-sm",
-    lg: "px-5 py-3 text-base",
+    sm: "px-4 py-2.5 text-sm",
+    md: "px-5 py-3 text-sm",
+    lg: "px-6 py-3.5 text-base",
   };
 
   const widthClass = fullWidth ? "w-full" : "";
@@ -33,7 +38,7 @@ function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
+      className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size]} ${widthClass} ${className}`}
       {...props}
     >
       {loading ? "Please wait..." : children}

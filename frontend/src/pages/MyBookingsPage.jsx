@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
+import StatCard from "../components/ui/StatCard";
 import { useToast } from "../context/ToastContext";
 import { getMyBookings, cancelBooking } from "../services/bookingService";
 import { formatDate } from "../utils/formatDate";
@@ -20,20 +21,13 @@ const STATUS_FILTERS = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
-function StatCard({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-neutral-900 p-5">
-      <p className="text-sm text-neutral-400">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
-    </div>
-  );
-}
-
 function BookingMetaItem({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-neutral-800/60 px-4 py-3">
-      <p className="text-xs uppercase tracking-wide text-neutral-500">{label}</p>
-      <p className="mt-1 text-sm font-medium text-neutral-200">{value}</p>
+    <div className="rounded-[1rem] border border-app-border bg-app-surface-2 px-4 py-3">
+      <p className="text-xs uppercase tracking-wide text-app-text-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium text-app-text">{value}</p>
     </div>
   );
 }
@@ -42,7 +36,7 @@ function StatusFilterBar({ value, onChange }) {
   return (
     <div className="mb-8">
       <div className="mb-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
           Filter by Status
         </p>
       </div>
@@ -58,8 +52,8 @@ function StatusFilterBar({ value, onChange }) {
               onClick={() => onChange(filter.value)}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                 isActive
-                  ? "border-yellow-400 bg-yellow-400 text-black"
-                  : "border-white/10 bg-neutral-900 text-neutral-300 hover:border-yellow-400/30 hover:text-white"
+                  ? "border-brand-primary bg-brand-primary text-black"
+                  : "border-app-border bg-app-card text-app-text-soft hover:border-brand-primary hover:text-app-text"
               }`}
             >
               {filter.label}
@@ -76,22 +70,20 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
 
   return (
     <Card
-      className={`overflow-hidden border-white/10 bg-neutral-900 transition ${
-        faded ? "opacity-65" : "hover:border-yellow-400/20"
-      }`}
+      className={`overflow-hidden transition ${faded ? "opacity-70" : "hover:-translate-y-0.5"}`}
     >
       <CardContent className="p-0">
         <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex-1">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-yellow-400">
+                <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-brand-primary">
                   Training Booking
                 </p>
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="text-xl font-bold tracking-tight text-app-text">
                   {booking.program_title}
                 </h3>
-                <p className="mt-2 text-sm text-neutral-400">
+                <p className="mt-2 text-sm text-app-text-soft">
                   Manage your reserved training session details below.
                 </p>
               </div>
@@ -128,16 +120,13 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
                 loading={isCancelling}
                 disabled={isCancelling}
                 variant="danger"
-                className="w-full rounded-full"
+                className="w-full"
               >
                 Cancel Booking
               </Button>
 
               <Link to="/training-sessions" className="w-full">
-                <Button
-                  variant="secondary"
-                  className="w-full rounded-full border border-white/10"
-                >
+                <Button variant="outline" className="w-full">
                   Browse Sessions
                 </Button>
               </Link>
@@ -146,8 +135,8 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
         </div>
 
         {isCancelled && (
-          <div className="border-t border-white/5 bg-neutral-950/40 px-6 py-4">
-            <p className="text-sm text-neutral-500">
+          <div className="border-t border-app-border bg-app-surface px-6 py-4">
+            <p className="text-sm text-app-text-muted">
               This booking has been cancelled and is kept here for your record.
             </p>
           </div>
@@ -159,7 +148,6 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
 
 function MyBookingsPage() {
   const { showToast } = useToast();
-  const navigate = useNavigate();
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -228,22 +216,22 @@ function MyBookingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="app-shell">
         <Navbar />
-        <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mx-auto max-w-6xl px-6 pt-32 pb-16">
           <div className="mb-8">
-            <div className="h-10 w-40 animate-pulse rounded-full bg-neutral-800" />
+            <div className="h-10 w-40 animate-pulse rounded-full bg-app-surface-2" />
           </div>
 
-          <div className="mb-10 rounded-3xl border border-white/10 bg-neutral-900 p-8">
-            <div className="h-6 w-48 animate-pulse rounded bg-neutral-800" />
-            <div className="mt-4 h-4 w-80 animate-pulse rounded bg-neutral-800" />
+          <div className="mb-10 rounded-[1.5rem] border border-app-border bg-app-card p-8">
+            <div className="h-6 w-48 animate-pulse rounded bg-app-surface-2" />
+            <div className="mt-4 h-4 w-80 animate-pulse rounded bg-app-surface-2" />
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="h-28 animate-pulse rounded-2xl bg-neutral-900" />
-            <div className="h-28 animate-pulse rounded-2xl bg-neutral-900" />
-            <div className="h-28 animate-pulse rounded-2xl bg-neutral-900" />
+            <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
+            <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
+            <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
           </div>
         </div>
       </div>
@@ -251,36 +239,28 @@ function MyBookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="app-shell">
       <Navbar />
 
-      <div className="mx-auto max-w-6xl px-6 py-16">
-
-        <section className="mb-10 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 p-8">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-yellow-400">
+      <div className="mx-auto max-w-6xl px-6 pt-32 pb-16">
+        <section className="mb-10 rounded-[1.75rem] border border-app-border bg-app-surface p-8">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
             Player Dashboard
           </p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="text-4xl font-black tracking-tight text-app-text sm:text-5xl">
             My Bookings
           </h1>
-          <p className="mt-3 max-w-2xl text-neutral-400">
+          <p className="mt-3 max-w-2xl text-app-text-soft">
             View your upcoming sessions, keep track of cancelled bookings, and
             manage your football training schedule in one place.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/training-sessions">
-              <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                Browse Sessions
-              </Button>
+              <Button>Browse Sessions</Button>
             </Link>
             <Link to="/player-dashboard">
-              <Button
-                variant="secondary"
-                className="rounded-full border border-white/10"
-              >
-                Go to Dashboard
-              </Button>
+              <Button variant="outline">Go to Dashboard</Button>
             </Link>
           </div>
         </section>
@@ -305,51 +285,43 @@ function MyBookingsPage() {
         )}
 
         {bookings.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-neutral-900/60 p-8">
-            <EmptyState
-              title="No bookings yet"
-              description="You have not booked any training sessions yet. Start exploring available sessions and reserve your place."
-              action={
-                <Link to="/training-sessions">
-                  <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                    Browse Sessions
-                  </Button>
-                </Link>
-              }
-            />
-          </div>
+          <EmptyState
+            title="No bookings yet"
+            description="You have not booked any training sessions yet. Start exploring available sessions and reserve your place."
+            action={
+              <Link to="/training-sessions">
+                <Button>Browse Sessions</Button>
+              </Link>
+            }
+          />
         ) : !hasFilteredResults ? (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-neutral-900/60 p-8">
-            <EmptyState
-              title="No matching bookings"
-              description={`There are no bookings with the status "${statusFilter}".`}
-              action={
-                <Button
-                  variant="secondary"
-                  className="rounded-full border border-white/10"
-                  onClick={() => setStatusFilter("all")}
-                >
-                  Clear Filter
-                </Button>
-              }
-            />
-          </div>
+          <EmptyState
+            title="No matching bookings"
+            description={`There are no bookings with the status "${statusFilter}".`}
+            action={
+              <Button variant="outline" onClick={() => setStatusFilter("all")}>
+                Clear Filter
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-14">
             {upcomingBookings.length > 0 && (
               <section>
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
                       Active Bookings
                     </p>
-                    <h2 className="text-2xl font-bold">Upcoming Sessions</h2>
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <h2 className="text-2xl font-bold tracking-tight text-app-text">
+                      Upcoming Sessions
+                    </h2>
+                    <p className="mt-1 text-sm text-app-text-muted">
                       These are your current active session bookings.
                     </p>
                   </div>
 
-                  <div className="rounded-full border border-white/10 bg-neutral-900 px-4 py-2 text-sm text-neutral-300">
+                  <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
                     {upcomingBookings.length} active booking
                     {upcomingBookings.length !== 1 ? "s" : ""}
                   </div>
@@ -372,18 +344,18 @@ function MyBookingsPage() {
               <section>
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-app-text-muted">
                       Booking History
                     </p>
-                    <h2 className="text-2xl font-bold text-neutral-300">
+                    <h2 className="text-2xl font-bold tracking-tight text-app-text">
                       Cancelled Sessions
                     </h2>
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <p className="mt-1 text-sm text-app-text-muted">
                       Your cancelled sessions are shown here for reference.
                     </p>
                   </div>
 
-                  <div className="rounded-full border border-white/10 bg-neutral-900 px-4 py-2 text-sm text-neutral-300">
+                  <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
                     {cancelledBookings.length} cancelled booking
                     {cancelledBookings.length !== 1 ? "s" : ""}
                   </div>

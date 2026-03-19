@@ -15,9 +15,9 @@ import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
 
 function DetailItem({ label, value }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4">
-      <p className="text-sm font-medium text-neutral-400">{label}</p>
-      <p className="mt-2 text-lg font-bold text-white">{value}</p>
+    <div className="rounded-[1.25rem] border border-app-border bg-app-surface-2 p-4">
+      <p className="text-sm font-medium text-app-text-muted">{label}</p>
+      <p className="mt-2 text-lg font-bold text-app-text">{value}</p>
     </div>
   );
 }
@@ -25,11 +25,11 @@ function DetailItem({ label, value }) {
 function SummaryRow({ label, value, bordered = true }) {
   return (
     <div
-      className={`flex items-center justify-between gap-4 ${bordered ? "border-b border-white/10 pb-4" : "pb-2"
+      className={`flex items-center justify-between gap-4 ${bordered ? "border-b border-app-border pb-4" : "pb-2"
         }`}
     >
-      <span className="text-neutral-400">{label}</span>
-      <span className="font-bold text-white">{value}</span>
+      <span className="text-app-text-soft">{label}</span>
+      <span className="font-bold text-app-text">{value}</span>
     </div>
   );
 }
@@ -110,7 +110,7 @@ function SessionDetailPage() {
       setBookingError("");
       setBookingLoading(true);
 
-      await createBooking({ session: session.id });
+      await createBooking( session.id );
       await loadPageData();
 
       showToast("Booking successful.", "success");
@@ -123,7 +123,7 @@ function SessionDetailPage() {
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
         navigate("/login", {
-          state: { redirectTo: location.pathname },
+          state: { from: location },
         });
         return;
       }
@@ -162,23 +162,11 @@ function SessionDetailPage() {
     return "Book Session";
   }, [isAlreadyBooked, isFull, bookingLoading, isAuthenticated]);
 
-  const bookingButtonClassName = useMemo(() => {
-    if (isAlreadyBooked || isFull || bookingLoading) {
-      return "mt-8 w-full cursor-not-allowed rounded-full bg-neutral-700 text-neutral-300 hover:bg-neutral-700";
-    }
-
-    if (!isAuthenticated) {
-      return "mt-8 w-full rounded-full border border-white/10 bg-emerald-800 text-white hover:bg-emerald-700";
-    }
-
-    return "mt-8 w-full rounded-full bg-yellow-400 text-black hover:bg-yellow-300";
-  }, [isAlreadyBooked, isFull, bookingLoading, isAuthenticated]);
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="app-shell">
         <Navbar />
-        <div className="mx-auto max-w-5xl px-6 py-24 lg:px-10">
+        <div className="mx-auto max-w-5xl px-6 py-28 lg:px-10">
           <EmptyState
             title="Loading session details..."
             description="Please wait while we fetch the full session information."
@@ -190,18 +178,15 @@ function SessionDetailPage() {
 
   if (error || !session) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="app-shell">
         <Navbar />
-        <div className="mx-auto max-w-5xl px-6 py-24 lg:px-10">
+        <div className="mx-auto max-w-5xl px-6 py-28 lg:px-10">
           <EmptyState
             title="Session Detail"
             description={error || "Session not found."}
-            className="border-red-500/20"
             action={
               <Link to="/training-sessions">
-                <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                  Back to Sessions
-                </Button>
+                <Button>Back to Sessions</Button>
               </Link>
             }
           />
@@ -211,23 +196,18 @@ function SessionDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="app-shell">
       <Navbar />
 
-      <section className="mx-auto max-w-6xl px-6 py-10 lg:px-10">
+      <section className="mx-auto max-w-6xl px-6 pt-32 pb-12 lg:px-10">
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <Link to="/training-sessions">
-            <Button
-              variant="outline"
-              className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
-            >
-              ← Back to Sessions
-            </Button>
+            <Button variant="outline">← Back to Sessions</Button>
           </Link>
 
           <StatusBadge status={badgeStatus} />
 
-          <span className="rounded-full bg-yellow-400/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-yellow-400">
+          <span className="rounded-full bg-brand-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-app-text">
             {session.session_type || "Training"}
           </span>
         </div>
@@ -238,7 +218,7 @@ function SessionDetailPage() {
           </Alert>
         )}
 
-        <Card className="overflow-hidden border-white/10 bg-white/5 shadow-xl backdrop-blur">
+        <Card className="overflow-hidden">
           {session.hero_image ? (
             <img
               src={session.hero_image}
@@ -246,18 +226,18 @@ function SessionDetailPage() {
               className="h-72 w-full object-cover md:h-96"
             />
           ) : (
-            <div className="flex h-72 w-full items-center justify-center bg-neutral-900 text-sm text-neutral-500 md:h-96">
+            <div className="flex h-72 w-full items-center justify-center border-b border-app-border bg-app-surface-2 text-sm text-app-text-muted md:h-96">
               No session image
             </div>
           )}
 
           <CardContent className="grid gap-8 p-6 md:p-8 lg:grid-cols-[1.5fr_1fr]">
             <div>
-              <h1 className="text-3xl font-extrabold md:text-4xl">
+              <h1 className="text-3xl font-black tracking-tight text-app-text md:text-4xl">
                 {session.program_title || "Training Session"}
               </h1>
 
-              <p className="mt-4 text-lg leading-8 text-neutral-300">
+              <p className="mt-4 text-lg leading-8 text-app-text-soft">
                 {session.notes?.trim()
                   ? session.notes
                   : "Join this academy session to improve your football development with structured coaching and a professional training environment."}
@@ -286,46 +266,53 @@ function SessionDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-neutral-900/80 p-6">
-              <h2 className="text-2xl font-extrabold text-white">
-                Booking Summary
-              </h2>
+            <Card className="shadow-none">
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold tracking-tight text-app-text">
+                  Booking Summary
+                </h2>
 
-              <div className="mt-6 space-y-4 text-sm text-neutral-300">
-                <SummaryRow label="Price" value={`Rs. ${session.price}`} />
-                <SummaryRow label="Max Players" value={session.max_players} />
-                <SummaryRow
-                  label="Booked Players"
-                  value={session.booked_players_count}
-                />
-                <SummaryRow
-                  label="Available Slots"
-                  value={session.available_slots}
-                  bordered={false}
-                />
-              </div>
+                <div className="mt-6 space-y-4 text-sm">
+                  <SummaryRow label="Price" value={`Rs. ${session.price}`} />
+                  <SummaryRow label="Max Players" value={session.max_players} />
+                  <SummaryRow
+                    label="Booked Players"
+                    value={session.booked_players_count}
+                  />
+                  <SummaryRow
+                    label="Available Slots"
+                    value={session.available_slots}
+                    bordered={false}
+                  />
+                </div>
 
-              <Button
-                type="button"
-                onClick={handleBookSession}
-                disabled={isAlreadyBooked || isFull || bookingLoading}
-                className={bookingButtonClassName}
-              >
-                {bookingButtonText}
-              </Button>
+                <Button
+                  type="button"
+                  onClick={handleBookSession}
+                  disabled={isAlreadyBooked || isFull || bookingLoading}
+                  variant={
+                    isAlreadyBooked || isFull || bookingLoading
+                      ? "secondary"
+                      : "primary"
+                  }
+                  className="mt-8 w-full"
+                >
+                  {bookingButtonText}
+                </Button>
 
-              {!isAuthenticated && (
-                <p className="mt-4 text-sm text-neutral-400">
-                  Log in to reserve your place in this session.
-                </p>
-              )}
+                {!isAuthenticated && (
+                  <p className="mt-4 text-sm text-app-text-muted">
+                    Log in to reserve your place in this session.
+                  </p>
+                )}
 
-              {isAuthenticated && user?.first_name && (
-                <p className="mt-4 text-sm text-neutral-400">
-                  Booking as {user.first_name}.
-                </p>
-              )}
-            </div>
+                {isAuthenticated && user?.first_name && (
+                  <p className="mt-4 text-sm text-app-text-muted">
+                    Booking as {user.first_name}.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </CardContent>
         </Card>
       </section>

@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import api from "../api/axios";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import { useToast } from "../context/ToastContext";
 
@@ -11,7 +12,7 @@ function LoginPage() {
     username: "",
     password: "",
   });
-  
+
   const { showToast } = useToast();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,8 +22,8 @@ function LoginPage() {
 
   const fromLocation = location.state?.from;
   const from = fromLocation
-  ? `${fromLocation.pathname}${fromLocation.search || ""}`
-  : "/player-dashboard";
+    ? `${fromLocation.pathname}${fromLocation.search || ""}`
+    : "/player-dashboard";
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -49,9 +50,8 @@ function LoginPage() {
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
+      showToast("Login successful.", "success");
       navigate(from, { replace: true });
-      // showToast("Login successful.", "success");
-
     } catch (err) {
       console.error("Login failed:", err);
 
@@ -66,73 +66,77 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
-      <div className="grid min-h-screen lg:grid-cols-2">
-        <div className="hidden lg:flex flex-col justify-between border-r border-white/10 bg-gradient-to-br from-neutral-950 via-neutral-900 to-black p-12">
+    <div className="app-shell">
+      <div className="grid min-h-screen lg:grid-cols-[1fr_1.05fr]">
+        <div className="hidden border-r border-app-border bg-app-surface px-10 py-12 lg:flex lg:flex-col lg:justify-between">
           <div>
-            <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               Football Academy
             </p>
 
-            <h1 className="max-w-xl text-5xl font-extrabold leading-tight">
+            <h1 className="max-w-xl text-5xl font-black leading-tight tracking-tight text-app-text">
               Welcome back to your training journey.
             </h1>
 
-            <p className="mt-6 max-w-lg text-lg leading-8 text-neutral-300">
+            <p className="mt-6 max-w-lg text-lg leading-8 text-app-text-soft">
               Log in to manage bookings, explore sessions, and continue building
               your game with structured academy coaching.
             </p>
           </div>
 
           <div className="grid gap-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <h3 className="mb-2 text-lg font-bold text-white">
-                Book Sessions Easily
-              </h3>
-              <p className="text-sm leading-7 text-neutral-300">
-                Browse available training sessions and reserve your place in a
-                few clicks.
-              </p>
-            </div>
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="text-lg font-bold text-app-text">
+                  Book sessions easily
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-app-text-soft">
+                  Browse available training sessions and reserve your place in a
+                  few clicks.
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <h3 className="mb-2 text-lg font-bold text-white">
-                Track Your Progress
-              </h3>
-              <p className="text-sm leading-7 text-neutral-300">
-                View your booked sessions, manage cancellations, and stay
-                organized as a player.
-              </p>
-            </div>
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="text-lg font-bold text-app-text">
+                  Track your progress
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-app-text-soft">
+                  View your booked sessions, manage cancellations, and stay
+                  organized as a player.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         <div className="flex items-center justify-center px-6 py-12 lg:px-10">
-          <Card className="w-full max-w-md rounded-3xl border-white/10 bg-white/5 shadow-2xl backdrop-blur">
+          <Card className="w-full max-w-md">
             <CardContent className="p-8 md:p-10">
               <Link
                 to="/"
-                className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm font-medium text-neutral-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
+                className="mb-6 inline-flex items-center gap-2 rounded-full border border-app-border bg-app-card px-4 py-2 text-sm font-medium text-app-text-soft transition hover:border-brand-primary hover:text-app-text"
               >
                 <span className="text-base">←</span>
                 <span>Back to home</span>
               </Link>
+
               <div className="mb-8">
-                <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
                   Player Login
                 </p>
-                <h2 className="text-3xl font-extrabold text-white">Sign in</h2>
-                <p className="mt-3 text-sm leading-6 text-neutral-400">
+                <h2 className="text-3xl font-bold tracking-tight text-app-text">
+                  Sign in
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-app-text-soft">
                   Enter your credentials to access your academy account.
                 </p>
               </div>
 
               {error && (
-                <div
-                  className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
-                  role="alert"
-                >
-                  {error}
+                <div className="mb-6">
+                  <Alert variant="error">{error}</Alert>
                 </div>
               )}
 
@@ -142,12 +146,10 @@ function LoginPage() {
                   type="text"
                   name="username"
                   label="Username"
-                  labelClassName="text-white font-semibold"
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Enter your username"
                   required
-                  className="border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10"
                 />
 
                 <Input
@@ -155,12 +157,10 @@ function LoginPage() {
                   type="password"
                   name="password"
                   label="Password"
-                  labelClassName="text-white font-semibold"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
                   required
-                  className="border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10"
                 />
 
                 <Button
@@ -168,17 +168,16 @@ function LoginPage() {
                   loading={loading}
                   disabled={loading}
                   fullWidth
-                  className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
                 >
                   Login
                 </Button>
               </form>
 
-              <p className="mt-6 text-center text-sm text-neutral-400">
+              <p className="mt-6 text-center text-sm text-app-text-soft">
                 Don&apos;t have an account?{" "}
                 <Link
                   to="/register"
-                  className="font-semibold text-yellow-400 hover:text-yellow-300"
+                  className="font-semibold text-brand-primary hover:text-app-text"
                 >
                   Register
                 </Link>

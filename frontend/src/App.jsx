@@ -7,6 +7,7 @@ import SessionDetailPage from "./pages/SessionDetailPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
 import PlayerDashboardPage from "./pages/PlayerDashboardPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
+import EditPlayerProfile from "./pages/EditPlayerProfile";
 import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
@@ -61,6 +62,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PlayerProfilePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/edit-player-profile"
+              element={
+                <ProtectedRoute>
+                  <EditPlayerProfile />
                 </ProtectedRoute>
               }
             />

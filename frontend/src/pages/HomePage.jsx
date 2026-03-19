@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
@@ -8,9 +9,11 @@ import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import { createEnquiry } from "../services/enquiryService";
 import { useToast } from "../context/ToastContext";
+import Footer from "../components/Footer";
 
 function HomePage() {
   const { showToast } = useToast();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -28,6 +31,10 @@ function HomePage() {
     "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
   ];
 
@@ -95,55 +102,82 @@ function HomePage() {
     }
   }
 
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [location]);
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
-      <Navbar />
+    <div className="app-shell">
+      <Navbar mode="overlay" />
 
       <section
-        className="relative flex min-h-[90vh] items-center bg-cover bg-center"
+        className="relative min-h-[88vh] overflow-hidden px-6 pt-20 pb-28 lg:px-10 lg:pt-28 lg:pb-36"
         style={{
           backgroundImage:
-            "url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80')",
+            "linear-gradient(90deg, rgba(17, 17, 17, 0.72) 0%, rgba(17, 17, 17, 0.56) 38%, rgba(17, 17, 17, 0.28) 100%), url('https://i.pinimg.com/1200x/81/d9/b5/81d9b59b6a53801b9c94bbb5df584cc2.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       >
-        <div className="absolute inset-0 bg-black/65" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-app-bg" />
 
-        <div className="relative mx-auto flex w-full max-w-7xl px-6 py-24 lg:px-10">
+        <div className="relative mx-auto max-w-7xl">
           <div className="max-w-3xl">
-            <p className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.22em] text-brand-primary-soft">
               Elite Football Development
             </p>
 
-            <h1 className="mb-6 text-5xl font-extrabold leading-tight text-white md:text-6xl">
-              Train Smarter. Play Better. Perform With Confidence.
+            <h1 className="text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Train smarter, improve faster, and perform with confidence.
             </h1>
 
-            <p className="mb-8 max-w-2xl text-lg leading-8 text-neutral-200">
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/85">
               Professional football coaching designed to improve technique,
               movement, decision-making, and match confidence for every player.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap gap-4">
               <Link to="/register">
-                <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                  Join Academy
-                </Button>
+                <Button size="lg">Join Academy</Button>
               </Link>
 
               <Link to="/training-sessions">
                 <Button
                   variant="outline"
-                  className="rounded-full border-white/70 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                  size="lg"
+                  className="border-white/40 bg-white/10 text-white hover:border-white hover:bg-white/15 hover:text-white"
                 >
                   View Training Sessions
                 </Button>
               </Link>
             </div>
+
+            <div className="mt-10 flex flex-wrap gap-3 text-sm text-white/75">
+              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
+                Structured coaching
+              </span>
+              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
+                Flexible bookings
+              </span>
+              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
+                Player-first development
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="relative z-10 -mt-12 px-6 lg:px-10">
+      <section className="relative z-10 -mt-14 px-6 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 xl:grid-cols-4">
           {[
             { value: "100+", label: "Training Sessions" },
@@ -151,58 +185,13 @@ function HomePage() {
             { value: "All Levels", label: "Youth to Competitive Players" },
             { value: "Flexible", label: "Easy Online Booking" },
           ].map((item) => (
-            <Card key={item.label} className="bg-white text-black shadow-xl">
-              <CardContent className="p-6 text-center">
-                <h3 className="mb-2 text-3xl font-extrabold">{item.value}</h3>
-                <p className="text-sm text-neutral-600">{item.label}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 py-24 lg:px-10">
-        <div className="mx-auto mb-14 max-w-3xl text-center">
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
-            Programs
-          </p>
-          <h2 className="mb-4 text-4xl font-extrabold text-white">
-            Training Designed Around Real Player Development
-          </h2>
-          <p className="text-lg leading-8 text-neutral-300">
-            Choose from structured sessions that target technical growth,
-            physical sharpness, and match performance.
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {[
-            {
-              title: "Group Training",
-              description:
-                "Improve technical ability, awareness, and decision-making in high-quality academy group sessions.",
-            },
-            {
-              title: "1-to-1 Coaching",
-              description:
-                "Focused individual coaching built around your strengths, weaknesses, and performance goals.",
-            },
-            {
-              title: "Goalkeeper Training",
-              description:
-                "Specialist goalkeeper sessions covering handling, reactions, positioning, footwork, and confidence.",
-            },
-          ].map((program) => (
-            <Card
-              key={program.title}
-              className="border-white/10 bg-white/5 backdrop-blur"
-            >
-              <CardContent className="p-8">
-                <h3 className="mb-4 text-2xl font-bold text-white">
-                  {program.title}
+            <Card key={item.label} className="h-full">
+              <CardContent className="p-5">
+                <h3 className="text-2xl font-extrabold tracking-tight text-app-text">
+                  {item.value}
                 </h3>
-                <p className="leading-7 text-neutral-300">
-                  {program.description}
+                <p className="mt-2 text-sm leading-6 text-app-text-soft">
+                  {item.label}
                 </p>
               </CardContent>
             </Card>
@@ -210,30 +199,78 @@ function HomePage() {
         </div>
       </section>
 
+      <section className="px-6 pt-24 pb-16 lg:px-10 lg:pt-28 lg:pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto mb-14 max-w-3xl text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+              Programs
+            </p>
+            <h2 className="text-3xl font-bold tracking-tight text-app-text sm:text-4xl">
+              Training designed around real player development
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-app-text-soft">
+              Choose from structured sessions that target technical growth,
+              physical sharpness, and match performance.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {[
+              {
+                title: "Group Training",
+                description:
+                  "Improve technical ability, awareness, and decision-making in high-quality academy group sessions.",
+              },
+              {
+                title: "1-to-1 Coaching",
+                description:
+                  "Focused individual coaching built around your strengths, weaknesses, and performance goals.",
+              },
+              {
+                title: "Goalkeeper Training",
+                description:
+                  "Specialist goalkeeper sessions covering handling, reactions, positioning, footwork, and confidence.",
+              },
+            ].map((program) => (
+              <Card key={program.title} className="h-full">
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold tracking-tight text-app-text">
+                    {program.title}
+                  </h3>
+                  <p className="mt-4 leading-7 text-app-text-soft">
+                    {program.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section
         id="about"
-        className="bg-black/60 px-6 py-24 lg:px-10 scroll-mt-24"
+        className="scroll-mt-24 bg-app-surface py-16 lg:py-24"
       >
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-2 lg:items-center lg:px-10">
           <div>
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               About Us
             </p>
-            <h2 className="mb-5 text-4xl font-extrabold text-white">
-              Building Better Players Through Structured Football Coaching
+            <h2 className="text-3xl font-bold tracking-tight text-app-text sm:text-4xl">
+              Building better players through structured football coaching
             </h2>
-            <p className="mb-5 leading-8 text-neutral-300">
+            <p className="mt-5 leading-8 text-app-text-soft">
               Football Academy is focused on developing players through
               professional coaching, structured training environments, and
               consistent football education.
             </p>
-            <p className="mb-8 leading-8 text-neutral-300">
+            <p className="mt-4 leading-8 text-app-text-soft">
               We help players improve technical ability, movement, match
               awareness, confidence, and discipline through sessions designed
               for long-term progress rather than short-term results.
             </p>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {[
                 "Professional coaching approach",
                 "Player-first development",
@@ -242,7 +279,7 @@ function HomePage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-white/10 bg-neutral-900 p-4 text-neutral-200"
+                  className="rounded-2xl border border-app-border bg-app-card p-4 text-sm font-medium text-app-text-soft shadow-[var(--shadow-soft)]"
                 >
                   {item}
                 </div>
@@ -250,7 +287,7 @@ function HomePage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900">
+          <div className="overflow-hidden rounded-[2rem] border border-app-border bg-app-card shadow-[var(--shadow-premium)]">
             <img
               src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80"
               alt="Football coaching session"
@@ -262,47 +299,49 @@ function HomePage() {
 
       <section
         id="gallery"
-        className="mx-auto max-w-7xl px-6 py-24 lg:px-10 scroll-mt-24"
+        className="scroll-mt-24 px-6 py-16 lg:px-10 lg:py-24"
       >
-        <div className="mx-auto mb-14 max-w-3xl text-center">
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
-            Gallery
-          </p>
-          <h2 className="mb-4 text-4xl font-extrabold text-white">
-            A Look Inside Our Training Environment
-          </h2>
-          <p className="text-lg leading-8 text-neutral-300">
-            See the intensity, focus, and professionalism behind our football
-            development sessions.
-          </p>
-        </div>
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto mb-14 max-w-3xl text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+              Gallery
+            </p>
+            <h2 className="text-3xl font-bold tracking-tight text-app-text sm:text-4xl">
+              A look inside our training environment
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-app-text-soft">
+              See the intensity, focus, and professionalism behind our football
+              development sessions.
+            </p>
+          </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {galleryImages.map((image, index) => (
-            <div
-              key={index}
-              className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900"
-            >
-              <img
-                src={image}
-                alt={`Football Academy gallery ${index + 1}`}
-                className="h-72 w-full object-cover transition duration-300 hover:scale-105"
-              />
-            </div>
-          ))}
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {galleryImages.map((image, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-[var(--shadow-soft)]"
+              >
+                <img
+                  src={image}
+                  alt={`Football Academy gallery ${index + 1}`}
+                  className="h-72 w-full object-cover transition duration-300 hover:scale-105"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="bg-black/60 py-24">
+      <section className="bg-app-surface py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="mx-auto mb-14 max-w-3xl text-center">
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               Why Choose Us
             </p>
-            <h2 className="mb-4 text-4xl font-extrabold text-white">
-              More Than Training Sessions
+            <h2 className="text-3xl font-bold tracking-tight text-app-text sm:text-4xl">
+              More than training sessions
             </h2>
-            <p className="text-lg leading-8 text-neutral-300">
+            <p className="mt-4 text-lg leading-8 text-app-text-soft">
               We help players build the habits, discipline, and confidence
               needed to perform better in real matches.
             </p>
@@ -331,12 +370,12 @@ function HomePage() {
                   "We focus on continuous development, not just one good session.",
               },
             ].map((item) => (
-              <Card key={item.title} className="border-white/10 bg-neutral-900">
+              <Card key={item.title} className="h-full">
                 <CardContent className="p-7">
-                  <h3 className="mb-3 text-xl font-bold text-white">
+                  <h3 className="text-xl font-bold tracking-tight text-app-text">
                     {item.title}
                   </h3>
-                  <p className="leading-7 text-neutral-300">
+                  <p className="mt-3 leading-7 text-app-text-soft">
                     {item.description}
                   </p>
                 </CardContent>
@@ -348,63 +387,53 @@ function HomePage() {
 
       <section
         id="contact"
-        className="mx-auto max-w-7xl px-6 py-24 lg:px-10 scroll-mt-24"
+        className="scroll-mt-24 px-6 py-16 lg:px-10 lg:py-24"
       >
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               Contact Us
             </p>
-            <h2 className="mb-5 text-4xl font-extrabold text-white">
-              Enquire About Training, Programs, or Player Development
+            <h2 className="text-3xl font-bold tracking-tight text-app-text sm:text-4xl">
+              Enquire about training, programs, or player development
             </h2>
-            <p className="mb-6 leading-8 text-neutral-300">
+            <p className="mt-5 leading-8 text-app-text-soft">
               Whether you are looking for academy training, individual coaching,
               or more information about available programs, send us a message
               and we will get back to you.
             </p>
 
-            <div className="space-y-4 text-neutral-300">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-neutral-400">Phone</p>
-                <p className="mt-2 font-semibold text-white">+977-98XXXXXXXX</p>
+            <div className="mt-8 space-y-4">
+              <div className="rounded-[1.25rem] border border-app-border bg-app-card p-5 shadow-[var(--shadow-soft)]">
+                <p className="text-sm text-app-text-muted">Phone</p>
+                <p className="mt-2 font-semibold text-app-text">
+                  +977-98XXXXXXXX
+                </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-neutral-400">Email</p>
-                <p className="mt-2 font-semibold text-white">
+              <div className="rounded-[1.25rem] border border-app-border bg-app-card p-5 shadow-[var(--shadow-soft)]">
+                <p className="text-sm text-app-text-muted">Email</p>
+                <p className="mt-2 font-semibold text-app-text">
                   academy@example.com
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-neutral-400">Location</p>
-                <p className="mt-2 font-semibold text-white">
+              <div className="rounded-[1.25rem] border border-app-border bg-app-card p-5 shadow-[var(--shadow-soft)]">
+                <p className="text-sm text-app-text-muted">Location</p>
+                <p className="mt-2 font-semibold text-app-text">
                   Your academy training location
                 </p>
               </div>
             </div>
           </div>
 
-          <Card className="border-white/10 bg-white/5 backdrop-blur">
+          <Card>
             <CardContent className="p-8">
-              <h3 className="mb-6 text-2xl font-bold text-white">
-                Send an Enquiry
+              <h3 className="text-2xl font-bold tracking-tight text-app-text">
+                Send an enquiry
               </h3>
 
-              {formError && (
-                <div className="mb-4">
-                  <Alert variant="error">{formError}</Alert>
-                </div>
-              )}
-
-              {formSuccess && (
-                <div className="mb-4">
-                  <Alert variant="success">{formSuccess}</Alert>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                 <Input
                   label="Full Name"
                   name="name"
@@ -442,7 +471,7 @@ function HomePage() {
                 />
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-white">
+                  <label className="mb-2 block text-sm font-semibold text-app-text">
                     Message
                   </label>
                   <textarea
@@ -451,7 +480,7 @@ function HomePage() {
                     onChange={handleChange}
                     rows="5"
                     placeholder="Tell us what you are looking for..."
-                    className="w-full rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-yellow-400"
+                    className="w-full rounded-2xl border border-app-border bg-app-card px-4 py-3 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
                     required
                   />
                 </div>
@@ -460,7 +489,7 @@ function HomePage() {
                   type="submit"
                   loading={submitting}
                   disabled={submitting}
-                  className="w-full rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                  className="w-full"
                 >
                   Send Enquiry
                 </Button>
@@ -470,31 +499,26 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="bg-gradient-to-b from-neutral-950 to-stone-900 px-6 py-24 lg:px-10">
-        <div className="mx-auto max-w-4xl rounded-3xl bg-white p-10 text-center text-black shadow-2xl">
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-600">
+      <section className="px-6 py-16 lg:px-10 lg:py-24">
+        <div className="mx-auto max-w-4xl rounded-[2rem] border border-app-border bg-app-card p-10 text-center shadow-[var(--shadow-premium)]">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
             Start Today
           </p>
-          <h2 className="mb-4 text-4xl font-extrabold">
-            Ready to Take Your Game to the Next Level?
+          <h2 className="text-3xl font-bold tracking-tight text-app-text sm:text-4xl">
+            Ready to take your game to the next level?
           </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg leading-8 text-neutral-600">
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-app-text-soft">
             Join the academy, explore available sessions, and begin your player
             development journey.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link to="/register">
-              <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                Register Now
-              </Button>
+              <Button size="lg">Register Now</Button>
             </Link>
 
             <Link to="/training-sessions">
-              <Button
-                variant="outline"
-                className="rounded-full border-black bg-transparent text-black hover:bg-black hover:text-white"
-              >
+              <Button variant="outline" size="lg">
                 Browse Sessions
               </Button>
             </Link>
@@ -502,24 +526,7 @@ function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 bg-black px-6 py-12 lg:px-10">
-        <div className="mx-auto max-w-7xl text-center">
-          <h3 className="mb-3 text-2xl font-extrabold text-white">
-            Football Academy
-          </h3>
-          <p className="mx-auto mb-6 max-w-2xl leading-7 text-neutral-400">
-            Professional football coaching for players who want to improve
-            technique, confidence, and performance.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-6 text-sm font-semibold text-yellow-400">
-            <a href="/#about">About Us</a>
-            <a href="/#gallery">Gallery</a>
-            <a href="/#contact">Contact</a>
-            <Link to="/training-sessions">Sessions</Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

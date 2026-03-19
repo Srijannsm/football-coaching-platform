@@ -12,6 +12,28 @@ import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
 import { useToast } from "../context/ToastContext";
+import { formatDate } from "../utils/formatDate";
+import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
+
+function SessionInfoRow({ label, value, bordered = true }) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-4 ${bordered ? "border-b border-app-border pb-3" : ""
+        }`}
+    >
+      <span className="text-sm font-medium text-app-text-muted">{label}</span>
+      <span className="text-right text-sm font-semibold text-app-text">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function clearAuthData() {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
+}
 
 function TrainingSessionsPage() {
   const { showToast } = useToast();
@@ -26,17 +48,12 @@ function TrainingSessionsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bookingMessage, setBookingMessage] = useState("");
   const [bookingError, setBookingError] = useState("");
   const [bookingSessionId, setBookingSessionId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const darkInputClass =
-    "border-white/10 bg-neutral-900 text-white placeholder:text-neutral-500 focus:border-yellow-400 focus:ring-yellow-400/10";
-  const darkLabelClass = "text-white font-semibold";
 
   async function fetchSessions() {
     try {
@@ -99,14 +116,12 @@ function TrainingSessionsPage() {
     }
 
     try {
-      setBookingMessage("");
       setBookingError("");
       setBookingSessionId(sessionId);
 
-      await createBooking(sessionId);
-
-      // setBookingMessage("Session booked successfully.");
+      await createBooking( sessionId );
       showToast("Booking successful.", "success");
+
       await fetchSessions();
       await fetchCurrentUser();
     } catch (err) {
@@ -114,12 +129,10 @@ function TrainingSessionsPage() {
 
       if (err.response?.status === 401) {
         setBookingError("Your session expired. Please log in again.");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        clearAuthData();
         setUser(null);
         setIsAuthenticated(false);
-        navigate("/login");
+        navigate("/login", { state: { from: location } });
         return;
       }
 
@@ -156,7 +169,7 @@ function TrainingSessionsPage() {
     return sessions.filter((session) => {
       const programTitle = session.program_title?.toLowerCase() || "";
       const coachName = session.coach_full_name?.toLowerCase() || "";
-      const location = session.location?.toLowerCase() || "";
+      const locationName = session.location?.toLowerCase() || "";
       const sessionType = session.session_type || "";
       const isFull = session.is_full;
 
@@ -166,7 +179,7 @@ function TrainingSessionsPage() {
         !search ||
         programTitle.includes(search) ||
         coachName.includes(search) ||
-        location.includes(search);
+        locationName.includes(search);
 
       const matchesType = typeFilter === "all" || sessionType === typeFilter;
 
@@ -181,9 +194,9 @@ function TrainingSessionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="app-shell">
         <Navbar />
-        <div className="mx-auto flex max-w-7xl items-center justify-center px-6 py-24 lg:px-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-center px-6 py-28 lg:px-10">
           <EmptyState
             title="Loading training sessions..."
             description="Please wait while we fetch the latest academy sessions."
@@ -196,13 +209,13 @@ function TrainingSessionsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="app-shell">
         <Navbar />
-        <div className="mx-auto flex max-w-7xl items-center justify-center px-6 py-24 lg:px-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-center px-6 py-28 lg:px-10">
           <EmptyState
-            title="Football Academy"
+            title="Training Sessions"
             description={error}
-            className="w-full max-w-xl border-red-500/20"
+            className="w-full max-w-xl"
           />
         </div>
       </div>
@@ -210,23 +223,23 @@ function TrainingSessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="app-shell">
       <Navbar />
 
-      <section className="border-b border-white/10 bg-gradient-to-b from-neutral-900 to-neutral-950">
-        <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
+      <section className="bg-app-surface pt-32 pb-14">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="max-w-3xl">
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               Training Sessions
             </p>
 
-            <h1 className="mb-4 text-4xl font-extrabold md:text-5xl">
-              Book Your Next Session
+            <h1 className="text-4xl font-black tracking-tight text-app-text md:text-5xl">
+              Book your next session
             </h1>
 
-            <p className="text-lg leading-8 text-neutral-300">
+            <p className="mt-4 text-lg leading-8 text-app-text-soft">
               {isAuthenticated
-                ? `Welcome${user?.first_name ? `, ${user.first_name}` : ""}. Browse available sessions, filter results, and reserve your place.`
+                ? `Welcome${user?.first_name ? `, ${user.first_name}` : ""}. Browse available sessions, refine your search, and reserve your place.`
                 : "Browse available academy sessions, explore training options, and log in when you're ready to book."}
             </p>
           </div>
@@ -234,52 +247,37 @@ function TrainingSessionsPage() {
           <div className="mt-8 flex flex-wrap gap-4">
             {isAuthenticated ? (
               <Link to="/my-bookings">
-                <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                  My Bookings
-                </Button>
+                <Button>My Bookings</Button>
               </Link>
             ) : (
               <Link to="/login">
-                <Button className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300">
-                  Login to Book
-                </Button>
+                <Button>Login to Book</Button>
               </Link>
             )}
           </div>
 
-          {bookingMessage && (
-            <Alert variant="success" className="mt-6">
-              {bookingMessage}
-            </Alert>
-          )}
-
           {bookingError && (
-            <Alert variant="error" className="mt-6">
-              {bookingError}
-            </Alert>
+            <div className="mt-6 max-w-2xl">
+              <Alert variant="error">{bookingError}</Alert>
+            </div>
           )}
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
-        <Card className="border-white/10 bg-white/5 shadow-xl backdrop-blur">
+        <Card>
           <CardContent className="p-6">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="text-2xl font-extrabold text-white">
+                <h2 className="text-2xl font-bold tracking-tight text-app-text">
                   Find the right session
                 </h2>
-                <p className="mt-2 text-sm text-neutral-400">
+                <p className="mt-2 text-sm text-app-text-soft">
                   Search by program, coach, or location and refine using filters.
                 </p>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClearFilters}
-                className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
-              >
+              <Button type="button" variant="outline" onClick={handleClearFilters}>
                 Clear Filters
               </Button>
             </div>
@@ -289,17 +287,14 @@ function TrainingSessionsPage() {
                 <Input
                   type="text"
                   label="Search"
-                  labelClassName={darkLabelClass}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by program, coach, or location"
-                  className={darkInputClass}
                 />
               </div>
 
               <Select
                 label="Session Type"
-                labelClassName={darkLabelClass}
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 options={[
@@ -309,12 +304,10 @@ function TrainingSessionsPage() {
                     label: type.replaceAll("_", " "),
                   })),
                 ]}
-                className={darkInputClass}
               />
 
               <Select
                 label="Availability"
-                labelClassName={darkLabelClass}
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 options={[
@@ -322,17 +315,14 @@ function TrainingSessionsPage() {
                   { value: "open", label: "Open" },
                   { value: "full", label: "Full" },
                 ]}
-                className={darkInputClass}
               />
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-neutral-400">
-              <span>
-                Showing{" "}
-                <span className="font-bold text-white">{filteredSessions.length}</span>{" "}
-                of <span className="font-bold text-white">{sessions.length}</span>{" "}
-                sessions
-              </span>
+            <div className="mt-5 text-sm text-app-text-soft">
+              Showing{" "}
+              <span className="font-bold text-app-text">{filteredSessions.length}</span>{" "}
+              of <span className="font-bold text-app-text">{sessions.length}</span>{" "}
+              sessions
             </div>
           </CardContent>
         </Card>
@@ -344,11 +334,7 @@ function TrainingSessionsPage() {
             title="No matching sessions found"
             description="Try adjusting your search or filters to see more sessions."
             action={
-              <Button
-                type="button"
-                onClick={handleClearFilters}
-                className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
-              >
+              <Button type="button" onClick={handleClearFilters}>
                 Reset Filters
               </Button>
             }
@@ -369,11 +355,11 @@ function TrainingSessionsPage() {
               return (
                 <Card
                   key={session.id}
-                  className="border-white/10 bg-white/5 shadow-xl backdrop-blur transition hover:-translate-y-1 hover:border-yellow-400/30"
+                  className="transition duration-200 hover:-translate-y-1"
                 >
                   <CardContent className="p-6">
                     {session.hero_image ? (
-                      <div className="mb-5 overflow-hidden rounded-2xl">
+                      <div className="mb-5 overflow-hidden rounded-[1.25rem]">
                         <img
                           src={session.hero_image}
                           alt={session.program_title || "Training session"}
@@ -381,18 +367,18 @@ function TrainingSessionsPage() {
                         />
                       </div>
                     ) : (
-                      <div className="mb-5 flex h-48 w-full items-center justify-center rounded-2xl bg-neutral-900 text-sm text-neutral-500">
+                      <div className="mb-5 flex h-48 w-full items-center justify-center rounded-[1.25rem] border border-app-border bg-app-surface-2 text-sm text-app-text-muted">
                         No session image
                       </div>
                     )}
 
                     <div className="mb-5 flex items-start justify-between gap-3">
                       <div>
-                        <p className="mb-2 inline-block rounded-full bg-yellow-400/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-yellow-400">
+                        <p className="mb-2 inline-flex rounded-full bg-brand-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-app-text">
                           {session.session_type || "Training"}
                         </p>
 
-                        <h2 className="text-2xl font-extrabold text-white">
+                        <h2 className="text-2xl font-bold tracking-tight text-app-text">
                           {session.program_title || "Training Session"}
                         </h2>
                       </div>
@@ -400,52 +386,35 @@ function TrainingSessionsPage() {
                       <StatusBadge status={badgeStatus} />
                     </div>
 
-                    <div className="space-y-3 text-sm text-neutral-300">
-                      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-3">
-                        <span className="font-medium text-neutral-400">Coach</span>
-                        <span className="text-right text-white">
-                          {session.coach_full_name || "Not assigned"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-3">
-                        <span className="font-medium text-neutral-400">Date</span>
-                        <span className="text-right text-white">
-                          {session.session_date}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-3">
-                        <span className="font-medium text-neutral-400">Time</span>
-                        <span className="text-right text-white">
-                          {session.start_time} - {session.end_time}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-3">
-                        <span className="font-medium text-neutral-400">
-                          Location
-                        </span>
-                        <span className="text-right text-white">
-                          {session.location || "Not set"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-3">
-                        <span className="font-medium text-neutral-400">Price</span>
-                        <span className="text-right text-white">
-                          Rs. {session.price}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="font-medium text-neutral-400">
-                          Available Slots
-                        </span>
-                        <span className="text-right text-white">
-                          {session.available_slots}
-                        </span>
-                      </div>
+                    <div className="space-y-3">
+                      <SessionInfoRow
+                        label="Coach"
+                        value={session.coach_full_name || "Not assigned"}
+                      />
+                      <SessionInfoRow
+                        label="Date"
+                        value={formatDate(session.session_date)}
+                      />
+                      <SessionInfoRow
+                        label="Time"
+                        value={formatSessionTimeRange(
+                          session.start_time,
+                          session.end_time
+                        )}
+                      />
+                      <SessionInfoRow
+                        label="Location"
+                        value={session.location || "Not set"}
+                      />
+                      <SessionInfoRow
+                        label="Price"
+                        value={`Rs. ${session.price}`}
+                      />
+                      <SessionInfoRow
+                        label="Available Slots"
+                        value={session.available_slots}
+                        bordered={false}
+                      />
                     </div>
 
                     <div className="mt-6 flex gap-3">
@@ -453,20 +422,20 @@ function TrainingSessionsPage() {
                         type="button"
                         variant="outline"
                         onClick={() => navigate(`/training-sessions/${session.id}`)}
-                        className="w-full rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                        className="w-full"
                       >
                         View Details
                       </Button>
 
                       <Button
                         type="button"
-                        className={`w-full rounded-full ${isAlreadyBooked || isFull || isBookingThisSession
-                          ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
-                          : isAuthenticated
-                            ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                            : "border border-white/10 bg-emerald-800 text-black hover:bg-lime-600"
-                          }`}
+                        className="w-full"
                         disabled={isAlreadyBooked || isFull || isBookingThisSession}
+                        variant={
+                          isAlreadyBooked || isFull || isBookingThisSession
+                            ? "secondary"
+                            : "primary"
+                        }
                         onClick={() => handleBookSession(session.id)}
                       >
                         {isAlreadyBooked

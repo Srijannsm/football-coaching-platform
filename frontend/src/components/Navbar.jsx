@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Button from "./ui/Button";
 
-function Navbar() {
+function Navbar({ mode = "solid" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("accessToken");
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(mode === "overlay");
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -20,211 +24,310 @@ function Navbar() {
   };
 
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setMobileMenuOpen(false);
       }
     };
 
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDiff = currentScrollY - lastScrollY;
+
+      if (mode === "overlay") {
+        setIsAtTop(currentScrollY < 40);
+      } else {
+        setIsAtTop(false);
+      }
+
+      if (mobileMenuOpen) {
+        setIsHidden(false);
+        lastScrollY = currentScrollY;
+        return;
+      }
+
+      if (Math.abs(scrollDiff) < 8) {
+        return;
+      }
+
+      if (currentScrollY < 40) {
+        setIsHidden(false);
+      } else if (scrollDiff > 0 && currentScrollY > 120) {
+        setIsHidden(true);
+      } else if (scrollDiff < 0) {
+        setIsHidden(false);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    handleScroll();
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [mobileMenuOpen, mode]);
 
   const navLinkClass = ({ isActive }) =>
-    `relative text-sm font-medium transition ${isActive ? "text-yellow-400" : "text-neutral-200 hover:text-yellow-400"
+    `relative text-sm font-medium transition-colors duration-200 ${isAtTop
+      ? isActive
+        ? "text-white"
+        : "text-white/80 hover:text-white"
+      : isActive
+        ? "text-brand-primary"
+        : "text-app-text-soft hover:text-app-text"
+    } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${isActive
+      ? isAtTop
+        ? "after:bg-white"
+        : "after:bg-brand-primary"
+      : "after:bg-transparent"
     }`;
 
   const mobileNavLinkClass = ({ isActive }) =>
-    `rounded-xl px-3 py-2 text-sm font-medium transition ${isActive
-      ? "bg-yellow-400/10 text-yellow-400"
-      : "text-neutral-200 hover:bg-white/5 hover:text-yellow-400"
+    `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${isActive
+      ? "bg-brand-primary-soft text-app-text"
+      : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
     }`;
 
+  function handleGoHome(event) {
+    if (location.pathname === "/") {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setMobileMenuOpen(false);
+    }
+  }
+
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 bg-neutral-950/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
-        <NavLink
-          to="/"
-          onClick={handleCloseMenu}
-          className="flex items-center gap-3"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-400 text-sm font-black text-black shadow-lg shadow-yellow-400/20">
-            FA
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
+        }`}
+    >
+      <div
+        className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${isAtTop
+          ? "border-white/12 bg-white/8 text-white backdrop-blur-md"
+          : "border-app-border bg-app-surface/88 text-app-text backdrop-blur-xl"
+          }`}
+      >
+        <div className="flex w-full items-center px-5 py-3 lg:px-8">
+          <div className="flex flex-1">
+            <NavLink
+              to="/"
+              onClick={(event) => {
+                handleCloseMenu();
+                handleGoHome(event);
+              }}
+              className="flex items-center gap-3"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-sm font-black text-black shadow-[var(--shadow-soft)]">
+                FA
+              </div>
+
+              <div className="leading-tight">
+                <p
+                  className={`text-base font-extrabold tracking-tight sm:text-lg ${isAtTop ? "text-white" : "text-app-text"
+                    }`}
+                >
+                  Football Academy
+                </p>
+                <p
+                  className={`hidden text-xs sm:block ${isAtTop ? "text-white/70" : "text-app-text-muted"
+                    }`}
+                >
+                  Train. Book. Improve.
+                </p>
+              </div>
+            </NavLink>
           </div>
 
-          <div className="leading-tight">
-            <p className="text-base font-extrabold tracking-tight text-white sm:text-lg">
-              Football Academy
-            </p>
-            <p className="hidden text-xs text-neutral-400 sm:block">
-              Train. Book. Improve.
-            </p>
-          </div>
-        </NavLink>
-
-        <div className="hidden items-center gap-6 md:flex">
-          <NavLink to="/" end className={navLinkClass}>
-            Home
-          </NavLink>
-
-          <NavLink to="/training-sessions" className={navLinkClass}>
-            Sessions
-          </NavLink>
-
-          <a href="/#about" className="text-sm font-medium text-neutral-200 transition hover:text-yellow-400">
-            About Us
-          </a>
-
-          <a href="/#gallery" className="text-sm font-medium text-neutral-200 transition hover:text-yellow-400">
-            Gallery
-          </a>
-
-          <a href="/#contact" className="text-sm font-medium text-neutral-200 transition hover:text-yellow-400">
-            Contact Us
-          </a>
-
-        </div>
-
-        <div className="hidden items-center gap-3 md:flex">
-          {!token ? (
-            <>
-              <NavLink to="/login">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
-                >
-                  Login
-                </Button>
-              </NavLink>
-
-              <NavLink to="/register">
-                <Button
-                  size="sm"
-                  className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
-                >
-                  Join Academy
-                </Button>
-              </NavLink>
-            </>
-          ) : (
-            <>
-              <NavLink to="/player-dashboard">
-                <Button
-                  size="sm"
-                  className="rounded-full border-white/10 bg-transparent text-white hover:border-red-400 hover:text-red-400"
-                >
-                  Dashboard
-                </Button>
-              </NavLink>
-
-              <Button
-                size="sm"
-                onClick={handleLogout}
-                variant="outline"
-                className="rounded-full border-white/10 bg-transparent text-white hover:border-red-400 hover:text-red-400"
-              >
-                Logout
-              </Button>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((prev) => !prev)}
-          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white transition hover:border-yellow-400 hover:text-yellow-400 md:hidden"
-          aria-label="Toggle navigation menu"
-          aria-expanded={mobileMenuOpen}
-        >
-          <span className="text-lg">{mobileMenuOpen ? "✕" : "☰"}</span>
-        </button>
-      </div>
-
-      {mobileMenuOpen && (
-        <div className="border-t border-white/10 bg-neutral-950/95 px-6 py-5 md:hidden">
-          <div className="flex flex-col gap-2">
+          <div className="hidden flex-1 items-center justify-center gap-8 md:flex">
             <NavLink
               to="/"
               end
-              className={mobileNavLinkClass}
-              onClick={handleCloseMenu}
+              className={navLinkClass}
+              onClick={handleGoHome}
             >
               Home
             </NavLink>
 
-            <NavLink
-              to="/training-sessions"
-              className={mobileNavLinkClass}
-              onClick={handleCloseMenu}
-            >
+            <NavLink to="/training-sessions" className={navLinkClass}>
               Sessions
             </NavLink>
 
-            {token && (
-              <>
-                <NavLink
-                  to="/player-dashboard"
-                  className={mobileNavLinkClass}
-                  onClick={handleCloseMenu}
-                >
-                  Dashboard
-                </NavLink>
+            <a
+              href="/#about"
+              className={`text-sm font-medium transition-colors duration-200 ${isAtTop
+                ? "text-white/80 hover:text-white"
+                : "text-app-text-soft hover:text-app-text"
+                }`}
+            >
+              About Us
+            </a>
 
-                <NavLink
-                  to="/my-bookings"
-                  className={mobileNavLinkClass}
-                  onClick={handleCloseMenu}
-                >
-                  My Bookings
-                </NavLink>
+            <a
+              href="/#gallery"
+              className={`text-sm font-medium transition-colors duration-200 ${isAtTop
+                ? "text-white/80 hover:text-white"
+                : "text-app-text-soft hover:text-app-text"
+                }`}
+            >
+              Gallery
+            </a>
 
-                <NavLink
-                  to="/player-profile"
-                  className={mobileNavLinkClass}
-                  onClick={handleCloseMenu}
-                >
-                  Profile
-                </NavLink>
-              </>
-            )}
+            <a
+              href="/#contact"
+              className={`text-sm font-medium transition-colors duration-200 ${isAtTop
+                ? "text-white/80 hover:text-white"
+                : "text-app-text-soft hover:text-app-text"
+                }`}
+            >
+              Contact Us
+            </a>
           </div>
 
-          <div className="mt-5 border-t border-white/10 pt-5">
+          <div className="hidden flex-1 items-center justify-end gap-3 md:flex">
             {!token ? (
-              <div className="flex flex-col gap-3">
-                <NavLink to="/login" onClick={handleCloseMenu}>
+              <>
+                <NavLink to="/login">
                   <Button
-                    fullWidth
                     variant="outline"
-                    className="rounded-full border-white/10 bg-transparent text-white hover:border-yellow-400 hover:text-yellow-400"
+                    size="sm"
+                    className={
+                      isAtTop
+                        ? "border-white/25 bg-white/8 text-white hover:border-white/40 hover:bg-white/14 hover:text-white"
+                        : ""
+                    }
                   >
                     Login
                   </Button>
                 </NavLink>
 
-                <NavLink to="/register" onClick={handleCloseMenu}>
+                <NavLink to="/register">
+                  <Button size="sm">Join Academy</Button>
+                </NavLink>
+              </>
+            ) : (
+              <>
+                <NavLink to="/player-dashboard">
                   <Button
-                    fullWidth
-                    className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                    variant="outline"
+                    size="sm"
+                    className={
+                      isAtTop
+                        ? "border-white/25 bg-white/8 text-white hover:border-white/40 hover:bg-white/14 hover:text-white"
+                        : ""
+                    }
                   >
-                    Join Academy
+                    Dashboard
                   </Button>
                 </NavLink>
-              </div>
-            ) : (
-              <Button
-                fullWidth
-                onClick={handleLogout}
-                variant="outline"
-                className="rounded-full border-white/10 bg-transparent text-white hover:border-red-400 hover:text-red-400"
-              >
-                Logout
-              </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handleLogout}
+                  variant="danger-outline"
+                  className={isAtTop ? "bg-white/92" : ""}
+                >
+                  Logout
+                </Button>
+              </>
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className={`ml-auto inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${isAtTop
+              ? "border-white/20 bg-white/10 text-white hover:border-white/40"
+              : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
+              }`}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="text-lg">{mobileMenuOpen ? "✕" : "☰"}</span>
+          </button>
         </div>
-      )}
+
+        {mobileMenuOpen && (
+          <div className="border-t border-app-border bg-app-surface px-5 py-5 md:hidden">
+            <div className="flex flex-col gap-2">
+              <NavLink
+                to="/"
+                end
+                className={mobileNavLinkClass}
+                onClick={handleCloseMenu}
+              >
+                Home
+              </NavLink>
+
+              <NavLink
+                to="/training-sessions"
+                className={mobileNavLinkClass}
+                onClick={handleCloseMenu}
+              >
+                Sessions
+              </NavLink>
+
+              {token && (
+                <>
+                  <NavLink
+                    to="/player-dashboard"
+                    className={mobileNavLinkClass}
+                    onClick={handleCloseMenu}
+                  >
+                    Dashboard
+                  </NavLink>
+
+                  <NavLink
+                    to="/my-bookings"
+                    className={mobileNavLinkClass}
+                    onClick={handleCloseMenu}
+                  >
+                    My Bookings
+                  </NavLink>
+
+                  <NavLink
+                    to="/player-profile"
+                    className={mobileNavLinkClass}
+                    onClick={handleCloseMenu}
+                  >
+                    Profile
+                  </NavLink>
+                </>
+              )}
+            </div>
+
+            <div className="mt-5 border-t border-app-border pt-5">
+              {!token ? (
+                <div className="flex flex-col gap-3">
+                  <NavLink to="/login" onClick={handleCloseMenu}>
+                    <Button fullWidth variant="outline">
+                      Login
+                    </Button>
+                  </NavLink>
+
+                  <NavLink to="/register" onClick={handleCloseMenu}>
+                    <Button fullWidth>Join Academy</Button>
+                  </NavLink>
+                </div>
+              ) : (
+                <Button
+                  fullWidth
+                  onClick={handleLogout}
+                  variant="danger-outline"
+                >
+                  Logout
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

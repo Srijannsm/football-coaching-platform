@@ -1,39 +1,39 @@
 function StatusBadge({ status, className = "" }) {
-    const normalized = String(status || "").toLowerCase();
+  const normalized = String(status || "").toLowerCase();
 
-    const styles = {
-        open: "bg-emerald-500/10 text-emerald-300",
-        full: "bg-red-500/10 text-red-300",
-        booked: "bg-blue-500/10 text-blue-300",
-        cancelled: "bg-red-500/10 text-red-300",
-        attended: "bg-emerald-500/10 text-emerald-300",
-        confirmed: "bg-yellow-400/10 text-yellow-300",
-        pending: "bg-yellow-400/10 text-yellow-300",
-        missed: "bg-orange-500/10 text-orange-300",
-        default: "bg-neutral-700/40 text-neutral-200",
-    };
+  const styles = {
+    open: "bg-green-100 text-green-700",
+    full: "bg-red-100 text-red-700",
+    booked: "bg-blue-100 text-blue-700",
+    cancelled: "bg-red-100 text-red-700",
+    attended: "bg-green-100 text-green-700",
+    confirmed: "bg-amber-100 text-amber-700",
+    pending: "bg-amber-100 text-amber-700",
+    missed: "bg-orange-100 text-orange-700",
+    default: "bg-app-surface-2 text-app-text-soft",
+  };
 
-    const labelMap = {
-        open: "Open",
-        full: "Full",
-        booked: "Booked",
-        cancelled: "Cancelled",
-        attended: "Attended",
-        confirmed: "Confirmed",
-        pending: "Pending",
-        missed: "Missed",
-    };
+  const labelMap = {
+    open: "Open",
+    full: "Full",
+    booked: "Booked",
+    cancelled: "Cancelled",
+    attended: "Attended",
+    confirmed: "Confirmed",
+    pending: "Pending",
+    missed: "Missed",
+  };
 
-    const badgeClass = styles[normalized] || styles.default;
-    const label = labelMap[normalized] || status;
+  const badgeClass = styles[normalized] || styles.default;
+  const label = labelMap[normalized] || status;
 
-    return (
-        <span
-            className={`rounded-full px-3 py-1 text-xs font-bold ${badgeClass} ${className}`}
-        >
-            {label}
-        </span>
-    );
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${badgeClass} ${className}`}
+    >
+      {label}
+    </span>
+  );
 }
 
 export default StatusBadge;

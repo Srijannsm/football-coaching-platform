@@ -1,5 +1,3 @@
-import { ui } from "../utils/ui";
-
 function Input({
   label,
   error,
@@ -10,17 +8,25 @@ function Input({
 }) {
   return (
     <div>
-      {label && <label className={`${ui.label} ${labelClassName}`}>{label}</label>}
+      {label && (
+        <label
+          className={`mb-2 block text-sm font-semibold text-app-text ${labelClassName}`}
+        >
+          {label}
+        </label>
+      )}
 
       <input
         type={type}
-        className={`${ui.input} ${
-          error ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""
+        className={`h-12 w-full rounded-2xl border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary ${
+          error
+            ? "border-red-500 focus:border-red-500"
+            : "border-app-border"
         } ${className}`}
         {...props}
       />
 
-      {error && <p className={ui.errorText}>{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

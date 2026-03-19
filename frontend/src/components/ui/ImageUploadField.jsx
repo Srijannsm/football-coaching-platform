@@ -36,13 +36,13 @@ function ImageUploadField({
 
   return (
     <div>
-      <label className="mb-3 block text-sm font-semibold text-white">
+      <label className="mb-3 block text-sm font-semibold text-app-text">
         {label}
       </label>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div
-          className={`${sizeClasses[size]} overflow-hidden rounded-full border border-white/10 bg-neutral-900`}
+          className={`${sizeClasses[size]} overflow-hidden rounded-full border border-app-border bg-app-surface-2`}
         >
           {previewUrl ? (
             <img
@@ -51,14 +51,14 @@ function ImageUploadField({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-neutral-500">
+            <div className="flex h-full w-full items-center justify-center text-xs text-app-text-muted">
               No Image
             </div>
           )}
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-neutral-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-app-border bg-app-card px-4 py-2 text-sm font-medium text-app-text transition hover:border-brand-primary hover:text-brand-primary">
             <span>Upload Image</span>
             <input
               type="file"
@@ -72,7 +72,7 @@ function ImageUploadField({
             <button
               type="button"
               onClick={onRemove}
-              className="inline-flex items-center rounded-full border border-red-500/20 px-4 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/10"
+              className="inline-flex items-center rounded-full border border-red-200 bg-app-card px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
             >
               Remove Image
             </button>
@@ -81,10 +81,10 @@ function ImageUploadField({
       </div>
 
       {helperText && (
-        <p className="mt-3 text-xs text-neutral-500">{helperText}</p>
+        <p className="mt-3 text-xs text-app-text-muted">{helperText}</p>
       )}
 
-      {error && <p className="mt-2 text-sm text-red-300">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }
