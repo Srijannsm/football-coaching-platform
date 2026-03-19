@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Button from "./ui/Button";
+import ThemeToggle from "./ThemeToggle";
 
 function Navbar({ mode = "solid" }) {
   const navigate = useNavigate();
@@ -11,28 +12,52 @@ function Navbar({ mode = "solid" }) {
   const [isHidden, setIsHidden] = useState(false);
   const [isAtTop, setIsAtTop] = useState(mode === "overlay");
 
-  const handleLogout = () => {
+  function closeMobileMenu() {
+    setMobileMenuOpen(false);
+  }
+
+  function handleLogout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-    setMobileMenuOpen(false);
+    closeMobileMenu();
     navigate("/");
-  };
+  }
 
-  const handleCloseMenu = () => {
-    setMobileMenuOpen(false);
-  };
+  function handleGoHome(event) {
+    if (location.pathname === "/") {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      closeMobileMenu();
+    }
+  }
+
+  function handleAnchorNavigation(event, sectionId) {
+    if (location.pathname === "/") {
+      event.preventDefault();
+      const section = document.getElementById(sectionId);
+
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      closeMobileMenu();
+      return;
+    }
+
+    closeMobileMenu();
+  }
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
 
-    const handleResize = () => {
+    function handleResize() {
       if (window.innerWidth >= 768) {
         setMobileMenuOpen(false);
       }
-    };
+    }
 
-    const handleScroll = () => {
+    function handleScroll() {
       const currentScrollY = window.scrollY;
       const scrollDiff = currentScrollY - lastScrollY;
 
@@ -48,9 +73,7 @@ function Navbar({ mode = "solid" }) {
         return;
       }
 
-      if (Math.abs(scrollDiff) < 8) {
-        return;
-      }
+      if (Math.abs(scrollDiff) < 8) return;
 
       if (currentScrollY < 40) {
         setIsHidden(false);
@@ -61,7 +84,7 @@ function Navbar({ mode = "solid" }) {
       }
 
       lastScrollY = currentScrollY;
-    };
+    }
 
     handleScroll();
 
@@ -75,69 +98,75 @@ function Navbar({ mode = "solid" }) {
   }, [mobileMenuOpen, mode]);
 
   const navLinkClass = ({ isActive }) =>
-    `relative text-sm font-medium transition-colors duration-200 ${isAtTop
-      ? isActive
-        ? "text-white"
-        : "text-white/80 hover:text-white"
-      : isActive
-        ? "text-brand-primary"
-        : "text-app-text-soft hover:text-app-text"
-    } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${isActive
-      ? isAtTop
-        ? "after:bg-white"
-        : "after:bg-brand-primary"
-      : "after:bg-transparent"
+    `relative text-sm font-medium transition-colors duration-200 ${
+      isAtTop
+        ? isActive
+          ? "text-white"
+          : "text-white/80 hover:text-white"
+        : isActive
+          ? "text-brand-primary"
+          : "text-app-text-soft hover:text-app-text"
+    } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${
+      isActive
+        ? isAtTop
+          ? "after:bg-white"
+          : "after:bg-brand-primary"
+        : "after:bg-transparent"
     }`;
+
+  const desktopAnchorClass = `text-sm font-medium transition-colors duration-200 ${
+    isAtTop
+      ? "text-white/80 hover:text-white"
+      : "text-app-text-soft hover:text-app-text"
+  }`;
 
   const mobileNavLinkClass = ({ isActive }) =>
-    `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${isActive
-      ? "bg-brand-primary-soft text-app-text"
-      : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
+    `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
+      isActive
+        ? "bg-brand-primary-soft text-app-text"
+        : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
     }`;
-
-  function handleGoHome(event) {
-    if (location.pathname === "/") {
-      event.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setMobileMenuOpen(false);
-    }
-  }
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-        }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${
+        isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
+      }`}
     >
       <div
-        className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${isAtTop
-          ? "border-white/12 bg-white/8 text-white backdrop-blur-md"
-          : "border-app-border bg-app-surface/88 text-app-text backdrop-blur-xl"
-          }`}
+        className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${
+          isAtTop
+            ? "border-white/12 bg-white/8 text-white backdrop-blur-md"
+            : "border-app-border bg-app-surface/88 text-app-text backdrop-blur-xl"
+        }`}
       >
-        <div className="flex w-full items-center px-5 py-3 lg:px-8">
-          <div className="flex flex-1">
+        <div className="flex items-center gap-4 px-5 py-3 lg:px-8">
+          {/* Brand */}
+          <div className="flex min-w-0 flex-1">
             <NavLink
               to="/"
               onClick={(event) => {
-                handleCloseMenu();
+                closeMobileMenu();
                 handleGoHome(event);
               }}
-              className="flex items-center gap-3"
+              className="flex min-w-0 items-center gap-3"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-sm font-black text-black shadow-[var(--shadow-soft)]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-primary text-sm font-black text-black shadow-[var(--shadow-soft)]">
                 FA
               </div>
 
-              <div className="leading-tight">
+              <div className="min-w-0 leading-tight">
                 <p
-                  className={`text-base font-extrabold tracking-tight sm:text-lg ${isAtTop ? "text-white" : "text-app-text"
-                    }`}
+                  className={`truncate text-base font-extrabold tracking-tight sm:text-lg ${
+                    isAtTop ? "text-white" : "text-app-text"
+                  }`}
                 >
                   Football Academy
                 </p>
                 <p
-                  className={`hidden text-xs sm:block ${isAtTop ? "text-white/70" : "text-app-text-muted"
-                    }`}
+                  className={`hidden text-xs sm:block ${
+                    isAtTop ? "text-white/70" : "text-app-text-muted"
+                  }`}
                 >
                   Train. Book. Improve.
                 </p>
@@ -145,7 +174,8 @@ function Navbar({ mode = "solid" }) {
             </NavLink>
           </div>
 
-          <div className="hidden flex-1 items-center justify-center gap-8 md:flex">
+          {/* Desktop nav */}
+          <div className="hidden items-center justify-center gap-8 md:flex">
             <NavLink
               to="/"
               end
@@ -161,36 +191,33 @@ function Navbar({ mode = "solid" }) {
 
             <a
               href="/#about"
-              className={`text-sm font-medium transition-colors duration-200 ${isAtTop
-                ? "text-white/80 hover:text-white"
-                : "text-app-text-soft hover:text-app-text"
-                }`}
+              onClick={(event) => handleAnchorNavigation(event, "about")}
+              className={desktopAnchorClass}
             >
               About Us
             </a>
 
             <a
               href="/#gallery"
-              className={`text-sm font-medium transition-colors duration-200 ${isAtTop
-                ? "text-white/80 hover:text-white"
-                : "text-app-text-soft hover:text-app-text"
-                }`}
+              onClick={(event) => handleAnchorNavigation(event, "gallery")}
+              className={desktopAnchorClass}
             >
               Gallery
             </a>
 
             <a
               href="/#contact"
-              className={`text-sm font-medium transition-colors duration-200 ${isAtTop
-                ? "text-white/80 hover:text-white"
-                : "text-app-text-soft hover:text-app-text"
-                }`}
+              onClick={(event) => handleAnchorNavigation(event, "contact")}
+              className={desktopAnchorClass}
             >
               Contact Us
             </a>
           </div>
 
-          <div className="hidden flex-1 items-center justify-end gap-3 md:flex">
+          {/* Desktop actions */}
+          <div className="hidden items-center gap-3 md:flex">
+            <ThemeToggle />
+
             {!token ? (
               <>
                 <NavLink to="/login">
@@ -239,13 +266,15 @@ function Navbar({ mode = "solid" }) {
             )}
           </div>
 
+          {/* Mobile menu button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className={`ml-auto inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${isAtTop
-              ? "border-white/20 bg-white/10 text-white hover:border-white/40"
-              : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
-              }`}
+            className={`ml-auto inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${
+              isAtTop
+                ? "border-white/20 bg-white/10 text-white hover:border-white/40"
+                : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
+            }`}
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -255,12 +284,19 @@ function Navbar({ mode = "solid" }) {
 
         {mobileMenuOpen && (
           <div className="border-t border-app-border bg-app-surface px-5 py-5 md:hidden">
+            <div className="mb-5">
+              <ThemeToggle />
+            </div>
+
             <div className="flex flex-col gap-2">
               <NavLink
                 to="/"
                 end
                 className={mobileNavLinkClass}
-                onClick={handleCloseMenu}
+                onClick={(event) => {
+                  handleGoHome(event);
+                  closeMobileMenu();
+                }}
               >
                 Home
               </NavLink>
@@ -268,33 +304,57 @@ function Navbar({ mode = "solid" }) {
               <NavLink
                 to="/training-sessions"
                 className={mobileNavLinkClass}
-                onClick={handleCloseMenu}
+                onClick={closeMobileMenu}
               >
                 Sessions
               </NavLink>
+
+              <a
+                href="/#about"
+                onClick={(event) => handleAnchorNavigation(event, "about")}
+                className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+              >
+                About Us
+              </a>
+
+              <a
+                href="/#gallery"
+                onClick={(event) => handleAnchorNavigation(event, "gallery")}
+                className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+              >
+                Gallery
+              </a>
+
+              <a
+                href="/#contact"
+                onClick={(event) => handleAnchorNavigation(event, "contact")}
+                className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+              >
+                Contact Us
+              </a>
 
               {token && (
                 <>
                   <NavLink
                     to="/player-dashboard"
                     className={mobileNavLinkClass}
-                    onClick={handleCloseMenu}
+                    onClick={closeMobileMenu}
                   >
                     Dashboard
                   </NavLink>
 
                   <NavLink
-                    to="/my-bookings"
+                    to="/player-dashboard/bookings"
                     className={mobileNavLinkClass}
-                    onClick={handleCloseMenu}
+                    onClick={closeMobileMenu}
                   >
                     My Bookings
                   </NavLink>
 
                   <NavLink
-                    to="/player-profile"
+                    to="/player-dashboard/profile"
                     className={mobileNavLinkClass}
-                    onClick={handleCloseMenu}
+                    onClick={closeMobileMenu}
                   >
                     Profile
                   </NavLink>
@@ -305,13 +365,13 @@ function Navbar({ mode = "solid" }) {
             <div className="mt-5 border-t border-app-border pt-5">
               {!token ? (
                 <div className="flex flex-col gap-3">
-                  <NavLink to="/login" onClick={handleCloseMenu}>
+                  <NavLink to="/login" onClick={closeMobileMenu}>
                     <Button fullWidth variant="outline">
                       Login
                     </Button>
                   </NavLink>
 
-                  <NavLink to="/register" onClick={handleCloseMenu}>
+                  <NavLink to="/register" onClick={closeMobileMenu}>
                     <Button fullWidth>Join Academy</Button>
                   </NavLink>
                 </div>

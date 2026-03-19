@@ -20,10 +20,12 @@ function Button({
     outline:
       "border border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary",
     ghost: "bg-transparent text-app-text hover:bg-app-surface-2",
-    danger: "bg-red-600 text-white hover:bg-red-700",
+    danger:
+      "bg-app-danger text-white hover:opacity-90",
     "danger-outline":
-      "border border-red-200 bg-app-card text-red-700 hover:bg-red-50",
-    success: "bg-green-600 text-white hover:bg-green-700",
+      "border border-app-danger/20 bg-app-card text-app-danger hover:bg-app-danger/8",
+    success:
+      "bg-app-success text-white hover:opacity-90",
   };
 
   const sizes = {

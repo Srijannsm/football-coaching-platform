@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -70,7 +69,9 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
 
   return (
     <Card
-      className={`overflow-hidden transition ${faded ? "opacity-70" : "hover:-translate-y-0.5"}`}
+      className={`overflow-hidden transition ${
+        faded ? "opacity-70" : "hover:-translate-y-0.5"
+      }`}
     >
       <CardContent className="p-0">
         <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-start lg:justify-between">
@@ -146,6 +147,24 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
   );
 }
 
+function BookingsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="h-40 animate-pulse rounded-[1.5rem] bg-app-card" />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
+        <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
+        <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
+      </div>
+
+      <div className="h-16 animate-pulse rounded-[1.25rem] bg-app-card" />
+      <div className="h-64 animate-pulse rounded-[1.5rem] bg-app-card" />
+      <div className="h-64 animate-pulse rounded-[1.5rem] bg-app-card" />
+    </div>
+  );
+}
+
 function MyBookingsPage() {
   const { showToast } = useToast();
 
@@ -202,7 +221,7 @@ function MyBookingsPage() {
     return bookings.filter((booking) => booking.status === statusFilter);
   }, [bookings, statusFilter]);
 
-  const upcomingBookings = useMemo(
+  const activeBookings = useMemo(
     () => filteredBookings.filter((booking) => booking.status !== "cancelled"),
     [filteredBookings]
   );
@@ -215,168 +234,149 @@ function MyBookingsPage() {
   const hasFilteredResults = filteredBookings.length > 0;
 
   if (loading) {
-    return (
-      <div className="app-shell">
-        <Navbar />
-        <div className="mx-auto max-w-6xl px-6 pt-32 pb-16">
-          <div className="mb-8">
-            <div className="h-10 w-40 animate-pulse rounded-full bg-app-surface-2" />
-          </div>
-
-          <div className="mb-10 rounded-[1.5rem] border border-app-border bg-app-card p-8">
-            <div className="h-6 w-48 animate-pulse rounded bg-app-surface-2" />
-            <div className="mt-4 h-4 w-80 animate-pulse rounded bg-app-surface-2" />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
-            <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
-            <div className="h-28 animate-pulse rounded-[1.25rem] bg-app-surface-2" />
-          </div>
-        </div>
-      </div>
-    );
+    return <BookingsSkeleton />;
   }
 
   return (
-    <div className="app-shell">
-      <Navbar />
+    <div className="space-y-6">
+      {/* Intro card */}
+      <Card className="border-brand-primary/10 bg-gradient-to-r from-brand-primary/5 via-transparent to-transparent">
+        {/* <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+                Booking Management
+              </p>
+              <h2 className="text-2xl font-black tracking-tight text-app-text md:text-3xl">
+                My Bookings
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-app-text-soft md:text-base">
+                View your active sessions, track cancelled bookings, and manage
+                your football training schedule in one place.
+              </p>
+            </div>
 
-      <div className="mx-auto max-w-6xl px-6 pt-32 pb-16">
-        <section className="mb-10 rounded-[1.75rem] border border-app-border bg-app-surface p-8">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
-            Player Dashboard
-          </p>
-          <h1 className="text-4xl font-black tracking-tight text-app-text sm:text-5xl">
-            My Bookings
-          </h1>
-          <p className="mt-3 max-w-2xl text-app-text-soft">
-            View your upcoming sessions, keep track of cancelled bookings, and
-            manage your football training schedule in one place.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/training-sessions">
-              <Button>Browse Sessions</Button>
-            </Link>
-            <Link to="/player-dashboard">
-              <Button variant="outline">Go to Dashboard</Button>
-            </Link>
-          </div>
-        </section>
-
-        {error && (
-          <div className="mb-6">
-            <Alert variant="error">{error}</Alert>
-          </div>
-        )}
-
-        <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard label="Total Bookings" value={bookings.length} />
-          <StatCard label="Upcoming Sessions" value={upcomingBookings.length} />
-          <StatCard
-            label="Cancelled Sessions"
-            value={cancelledBookings.length}
-          />
-        </section>
-
-        {bookings.length > 0 && (
-          <StatusFilterBar value={statusFilter} onChange={setStatusFilter} />
-        )}
-
-        {bookings.length === 0 ? (
-          <EmptyState
-            title="No bookings yet"
-            description="You have not booked any training sessions yet. Start exploring available sessions and reserve your place."
-            action={
+            <div className="flex flex-wrap gap-3">
               <Link to="/training-sessions">
                 <Button>Browse Sessions</Button>
               </Link>
-            }
-          />
-        ) : !hasFilteredResults ? (
-          <EmptyState
-            title="No matching bookings"
-            description={`There are no bookings with the status "${statusFilter}".`}
-            action={
-              <Button variant="outline" onClick={() => setStatusFilter("all")}>
-                Clear Filter
-              </Button>
-            }
-          />
-        ) : (
-          <div className="space-y-14">
-            {upcomingBookings.length > 0 && (
-              <section>
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
-                      Active Bookings
-                    </p>
-                    <h2 className="text-2xl font-bold tracking-tight text-app-text">
-                      Upcoming Sessions
-                    </h2>
-                    <p className="mt-1 text-sm text-app-text-muted">
-                      These are your current active session bookings.
-                    </p>
-                  </div>
 
-                  <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
-                    {upcomingBookings.length} active booking
-                    {upcomingBookings.length !== 1 ? "s" : ""}
-                  </div>
-                </div>
-
-                <div className="space-y-5">
-                  {upcomingBookings.map((booking) => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      onCancel={handleCancelBooking}
-                      isCancelling={cancelBookingId === booking.id}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {cancelledBookings.length > 0 && (
-              <section>
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-app-text-muted">
-                      Booking History
-                    </p>
-                    <h2 className="text-2xl font-bold tracking-tight text-app-text">
-                      Cancelled Sessions
-                    </h2>
-                    <p className="mt-1 text-sm text-app-text-muted">
-                      Your cancelled sessions are shown here for reference.
-                    </p>
-                  </div>
-
-                  <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
-                    {cancelledBookings.length} cancelled booking
-                    {cancelledBookings.length !== 1 ? "s" : ""}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {cancelledBookings.map((booking) => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      onCancel={handleCancelBooking}
-                      isCancelling={false}
-                      faded
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+              <Link to="/player-dashboard">
+                <Button variant="outline">Dashboard Home</Button>
+              </Link>
+            </div>
           </div>
-        )}
+        </CardContent> */}
+      </Card>
+
+      {/* Error */}
+      {error && <Alert variant="error">{error}</Alert>}
+
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard label="Total Bookings" value={bookings.length} />
+        <StatCard label="Active Sessions" value={activeBookings.length} />
+        <StatCard label="Cancelled Sessions" value={cancelledBookings.length} />
       </div>
+
+      {/* Filters */}
+      {bookings.length > 0 && (
+        <StatusFilterBar value={statusFilter} onChange={setStatusFilter} />
+      )}
+
+      {/* Empty / filtered empty / sections */}
+      {bookings.length === 0 ? (
+        <EmptyState
+          title="No bookings yet"
+          description="You have not booked any training sessions yet. Start exploring available sessions and reserve your place."
+          action={
+            <Link to="/training-sessions">
+              <Button>Browse Sessions</Button>
+            </Link>
+          }
+        />
+      ) : !hasFilteredResults ? (
+        <EmptyState
+          title="No matching bookings"
+          description={`There are no bookings with the status "${statusFilter}".`}
+          action={
+            <Button variant="outline" onClick={() => setStatusFilter("all")}>
+              Clear Filter
+            </Button>
+          }
+        />
+      ) : (
+        <div className="space-y-14">
+          {activeBookings.length > 0 && (
+            <section>
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+                    Active Bookings
+                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight text-app-text">
+                    Current Sessions
+                  </h2>
+                  <p className="mt-1 text-sm text-app-text-muted">
+                    These are your currently active training bookings.
+                  </p>
+                </div>
+
+                <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
+                  {activeBookings.length} active booking
+                  {activeBookings.length !== 1 ? "s" : ""}
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                {activeBookings.map((booking) => (
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onCancel={handleCancelBooking}
+                    isCancelling={cancelBookingId === booking.id}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {cancelledBookings.length > 0 && (
+            <section>
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-app-text-muted">
+                    Booking History
+                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight text-app-text">
+                    Cancelled Sessions
+                  </h2>
+                  <p className="mt-1 text-sm text-app-text-muted">
+                    Your cancelled sessions are shown here for reference.
+                  </p>
+                </div>
+
+                <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
+                  {cancelledBookings.length} cancelled booking
+                  {cancelledBookings.length !== 1 ? "s" : ""}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {cancelledBookings.map((booking) => (
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onCancel={handleCancelBooking}
+                    isCancelling={false}
+                    faded
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }

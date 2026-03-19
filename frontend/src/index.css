@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
-@theme {
+/* --------------------------------------------------
+   DEFAULT THEME TOKENS
+-------------------------------------------------- */
+:root {
   /* Brand */
   --color-brand-primary: #d4a017;
   --color-brand-primary-hover: #e0b63a;
@@ -36,6 +39,77 @@
   --shadow-soft: 0 6px 18px rgba(17, 24, 39, 0.05);
 }
 
+/* --------------------------------------------------
+   DARK THEME
+-------------------------------------------------- */
+[data-theme="dark"] {
+  /* Brand */
+  --color-brand-primary: #f4b400;
+  --color-brand-primary-hover: #ffca28;
+  --color-brand-primary-soft: #3a2d09;
+
+  /* Background stack */
+  --color-app-bg: #0b1220;
+  --color-app-surface: #111827;
+  --color-app-surface-2: #0f172a;
+  --color-app-card: #172033;
+
+  /* Text */
+  --color-app-text: #f9fafb;
+  --color-app-text-soft: #cbd5e1;
+  --color-app-text-muted: #94a3b8;
+
+  /* Borders */
+  --color-app-border: #243041;
+  --color-app-border-strong: #334155;
+
+  /* Status / utility */
+  --color-app-success: #22c55e;
+  --color-app-danger: #ef4444;
+  --color-app-warning: #f59e0b;
+  --color-app-info: #3b82f6;
+
+  /* Shadows */
+  --shadow-premium: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* --------------------------------------------------
+   PITCH THEME
+-------------------------------------------------- */
+
+/* --------------------------------------------------
+   TAILWIND THEME MAPPING
+-------------------------------------------------- */
+@theme {
+  --color-brand-primary: var(--color-brand-primary);
+  --color-brand-primary-hover: var(--color-brand-primary-hover);
+  --color-brand-primary-soft: var(--color-brand-primary-soft);
+
+  --color-app-bg: var(--color-app-bg);
+  --color-app-surface: var(--color-app-surface);
+  --color-app-surface-2: var(--color-app-surface-2);
+  --color-app-card: var(--color-app-card);
+
+  --color-app-text: var(--color-app-text);
+  --color-app-text-soft: var(--color-app-text-soft);
+  --color-app-text-muted: var(--color-app-text-muted);
+
+  --color-app-border: var(--color-app-border);
+  --color-app-border-strong: var(--color-app-border-strong);
+
+  --color-app-success: var(--color-app-success);
+  --color-app-danger: var(--color-app-danger);
+  --color-app-warning: var(--color-app-warning);
+  --color-app-info: var(--color-app-info);
+
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-premium: var(--shadow-premium);
+  --shadow-soft: var(--shadow-soft);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -59,6 +133,9 @@ body {
   color: var(--color-app-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 a {
@@ -75,6 +152,9 @@ a {
   min-height: 100vh;
   background-color: var(--color-app-bg);
   color: var(--color-app-text);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 @keyframes fade-in {
@@ -105,4 +185,11 @@ a {
 
 .toast-enter {
   animation: toast-enter 0.28s ease-out;
+}
+
+* {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
 }

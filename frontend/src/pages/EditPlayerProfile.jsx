@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import {
   getPlayerProfile,
   updatePlayerProfile,
@@ -20,7 +19,16 @@ const preferredFootOptions = [
   { value: "both", label: "Both" },
 ];
 
-function PlayerProfilePage() {
+function EditProfileSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="h-40 animate-pulse rounded-[1.5rem] bg-app-card" />
+      <div className="h-[640px] animate-pulse rounded-[1.5rem] bg-app-card" />
+    </div>
+  );
+}
+
+function EditPlayerProfile() {
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -47,6 +55,8 @@ function PlayerProfilePage() {
   async function fetchProfile() {
     try {
       setError("");
+      setLoading(true);
+
       const profile = await getPlayerProfile();
 
       setFormData({
@@ -174,179 +184,164 @@ function PlayerProfilePage() {
   }
 
   if (loading) {
-    return (
-      <div className="app-shell">
-        <Navbar />
-        <div className="mx-auto max-w-4xl px-6 pt-32 pb-24 lg:px-10">
-          <Card>
-            <CardContent className="p-10 text-center">
-              <h2 className="text-2xl font-bold text-app-text">
-                Loading profile...
-              </h2>
-              <p className="mt-3 text-app-text-soft">
-                Please wait while we fetch your player profile.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <EditProfileSkeleton />;
   }
 
   return (
-    <div className="app-shell">
-      <Navbar />
+    <div className="space-y-6">
+      {/* Intro card */}
+      <Card className="border-brand-primary/10 bg-gradient-to-r from-brand-primary/5 via-transparent to-transparent">
+        {/* <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+                Profile Settings
+              </p>
+              <h2 className="text-2xl font-black tracking-tight text-app-text md:text-3xl">
+                Edit Your Profile
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-app-text-soft md:text-base">
+                Keep your personal and football details up to date so your
+                academy profile stays accurate and useful across the platform.
+              </p>
+            </div>
 
-      <section className="bg-app-surface pt-32 pb-14">
-        <div className="mx-auto max-w-4xl px-6 lg:px-10">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
-            Player Profile
-          </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/player-dashboard/profile">
+                <Button variant="outline">View Profile</Button>
+              </Link>
 
-          <h1 className="text-4xl font-black tracking-tight text-app-text md:text-5xl">
-            Edit Your Profile
-          </h1>
-
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-app-text-soft">
-            Keep your personal and football details up to date so your academy
-            profile stays accurate.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/player-dashboard">
-              <Button variant="outline">Back to Dashboard</Button>
-            </Link>
+              <Link to="/player-dashboard">
+                <Button variant="outline">Back to Dashboard</Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </CardContent> */}
+      </Card>
 
-      <section className="mx-auto max-w-4xl px-6 py-10 pb-14 lg:px-10">
-        {error && (
-          <div className="mb-6">
-            <Alert variant="error">{error}</Alert>
-          </div>
-        )}
+      {/* Error state */}
+      {error && <Alert variant="error">{error}</Alert>}
 
-        <Card>
-          <CardContent className="p-6 md:p-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <section>
-                <ImageUploadField
-                  label="Profile Picture"
-                  previewUrl={profileImagePreview}
-                  onFileSelect={handleImageSelect}
-                  onRemove={handleRemoveImage}
-                  error={imageError}
-                  helperText="JPG, PNG, or WEBP. Maximum size 2MB."
+      {/* Form */}
+      <Card>
+        <CardContent className="p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <section>
+              <ImageUploadField
+                label="Profile Picture"
+                previewUrl={profileImagePreview}
+                onFileSelect={handleImageSelect}
+                onRemove={handleRemoveImage}
+                error={imageError}
+                helperText="JPG, PNG, or WEBP. Maximum size 2MB."
+              />
+            </section>
+
+            <section>
+              <h3 className="mb-4 text-lg font-bold text-app-text">
+                Personal Information
+              </h3>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Input
+                  name="first_name"
+                  label="First Name"
+                  value={formData.first_name}
+                  onChange={handleChange}
                 />
-              </section>
 
-              <section>
-                <h3 className="mb-4 text-lg font-bold text-app-text">
-                  Personal Information
-                </h3>
+                <Input
+                  name="last_name"
+                  label="Last Name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                />
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Input
-                    name="first_name"
-                    label="First Name"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                  />
+                <Input
+                  type="email"
+                  name="email"
+                  label="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
 
-                  <Input
-                    name="last_name"
-                    label="Last Name"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    type="email"
-                    name="email"
-                    label="Email"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    name="phone_number"
-                    label="Phone Number"
-                    value={formData.phone_number}
-                    onChange={handleChange}
-                  />
-                </div>
-              </section>
-
-              <section>
-                <h3 className="mb-4 text-lg font-bold text-app-text">
-                  Football Details
-                </h3>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Input
-                    type="number"
-                    name="age"
-                    label="Age"
-                    value={formData.age}
-                    onChange={handleChange}
-                  />
-
-                  <Select
-                    name="preferred_foot"
-                    label="Preferred Foot"
-                    value={formData.preferred_foot}
-                    onChange={handleChange}
-                    options={preferredFootOptions}
-                  />
-
-                  <Input
-                    name="primary_position"
-                    label="Primary Position"
-                    value={formData.primary_position}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    name="secondary_position"
-                    label="Secondary Position"
-                    value={formData.secondary_position}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    type="number"
-                    name="height_cm"
-                    label="Height (cm)"
-                    value={formData.height_cm}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    type="number"
-                    name="weight_kg"
-                    label="Weight (kg)"
-                    value={formData.weight_kg}
-                    onChange={handleChange}
-                  />
-                </div>
-              </section>
-
-              <div className="flex flex-wrap gap-4">
-                <Button type="submit" loading={saving} disabled={saving}>
-                  Save Changes
-                </Button>
-
-                <Link to="/player-dashboard">
-                  <Button variant="outline">Cancel</Button>
-                </Link>
+                <Input
+                  name="phone_number"
+                  label="Phone Number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                />
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      </section>
+            </section>
+
+            <section>
+              <h3 className="mb-4 text-lg font-bold text-app-text">
+                Football Details
+              </h3>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Input
+                  type="number"
+                  name="age"
+                  label="Age"
+                  value={formData.age}
+                  onChange={handleChange}
+                />
+
+                <Select
+                  name="preferred_foot"
+                  label="Preferred Foot"
+                  value={formData.preferred_foot}
+                  onChange={handleChange}
+                  options={preferredFootOptions}
+                />
+
+                <Input
+                  name="primary_position"
+                  label="Primary Position"
+                  value={formData.primary_position}
+                  onChange={handleChange}
+                />
+
+                <Input
+                  name="secondary_position"
+                  label="Secondary Position"
+                  value={formData.secondary_position}
+                  onChange={handleChange}
+                />
+
+                <Input
+                  type="number"
+                  name="height_cm"
+                  label="Height (cm)"
+                  value={formData.height_cm}
+                  onChange={handleChange}
+                />
+
+                <Input
+                  type="number"
+                  name="weight_kg"
+                  label="Weight (kg)"
+                  value={formData.weight_kg}
+                  onChange={handleChange}
+                />
+              </div>
+            </section>
+
+            <div className="flex flex-wrap gap-4">
+              <Button type="submit" loading={saving} disabled={saving}>
+                Save Changes
+              </Button>
+
+              <Link to="/player-dashboard/profile">
+                <Button variant="outline">Cancel</Button>
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-export default PlayerProfilePage;
+export default EditPlayerProfile;
