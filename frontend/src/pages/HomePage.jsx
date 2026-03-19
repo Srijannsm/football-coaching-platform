@@ -1,9 +1,100 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
+import { createEnquiry } from "../services/enquiryService";
+import { useToast } from "../context/ToastContext";
 
 function HomePage() {
+  const { showToast } = useToast();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+    program: "",
+  });
+
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
+
+  const galleryImages = [
+    "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
+  ];
+
+  const programOptions = [
+    { value: "", label: "Select a program (optional)" },
+    { value: "1", label: "Group Training" },
+    { value: "2", label: "1-to-1 Coaching" },
+    { value: "3", label: "Goalkeeper Training" },
+  ];
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    try {
+      setSubmitting(true);
+      setFormError("");
+      setFormSuccess("");
+
+      const payload = {
+        ...formData,
+        program: formData.program || null,
+      };
+
+      await createEnquiry(payload);
+
+      setFormSuccess("Thank you. We have received your enquiry.");
+      showToast("Enquiry sent successfully.", "success");
+
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+        program: "",
+      });
+    } catch (err) {
+      const data = err.response?.data;
+
+      if (data) {
+        const firstError =
+          data.name?.[0] ||
+          data.email?.[0] ||
+          data.phone?.[0] ||
+          data.message?.[0] ||
+          data.program?.[0] ||
+          data.detail ||
+          "Failed to send enquiry. Please try again.";
+
+        setFormError(firstError);
+        showToast(firstError, "error");
+      } else {
+        setFormError("Failed to send enquiry. Please try again.");
+        showToast("Failed to send enquiry. Please try again.", "error");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <Navbar />
@@ -119,6 +210,89 @@ function HomePage() {
         </div>
       </section>
 
+      <section
+        id="about"
+        className="bg-black/60 px-6 py-24 lg:px-10 scroll-mt-24"
+      >
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+              About Us
+            </p>
+            <h2 className="mb-5 text-4xl font-extrabold text-white">
+              Building Better Players Through Structured Football Coaching
+            </h2>
+            <p className="mb-5 leading-8 text-neutral-300">
+              Football Academy is focused on developing players through
+              professional coaching, structured training environments, and
+              consistent football education.
+            </p>
+            <p className="mb-8 leading-8 text-neutral-300">
+              We help players improve technical ability, movement, match
+              awareness, confidence, and discipline through sessions designed
+              for long-term progress rather than short-term results.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                "Professional coaching approach",
+                "Player-first development",
+                "Structured session planning",
+                "Supportive learning environment",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-white/10 bg-neutral-900 p-4 text-neutral-200"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900">
+            <img
+              src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80"
+              alt="Football coaching session"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="gallery"
+        className="mx-auto max-w-7xl px-6 py-24 lg:px-10 scroll-mt-24"
+      >
+        <div className="mx-auto mb-14 max-w-3xl text-center">
+          <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+            Gallery
+          </p>
+          <h2 className="mb-4 text-4xl font-extrabold text-white">
+            A Look Inside Our Training Environment
+          </h2>
+          <p className="text-lg leading-8 text-neutral-300">
+            See the intensity, focus, and professionalism behind our football
+            development sessions.
+          </p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {galleryImages.map((image, index) => (
+            <div
+              key={index}
+              className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900"
+            >
+              <img
+                src={image}
+                alt={`Football Academy gallery ${index + 1}`}
+                className="h-72 w-full object-cover transition duration-300 hover:scale-105"
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="bg-black/60 py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="mx-auto mb-14 max-w-3xl text-center">
@@ -172,6 +346,130 @@ function HomePage() {
         </div>
       </section>
 
+      <section
+        id="contact"
+        className="mx-auto max-w-7xl px-6 py-24 lg:px-10 scroll-mt-24"
+      >
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
+          <div>
+            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
+              Contact Us
+            </p>
+            <h2 className="mb-5 text-4xl font-extrabold text-white">
+              Enquire About Training, Programs, or Player Development
+            </h2>
+            <p className="mb-6 leading-8 text-neutral-300">
+              Whether you are looking for academy training, individual coaching,
+              or more information about available programs, send us a message
+              and we will get back to you.
+            </p>
+
+            <div className="space-y-4 text-neutral-300">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-neutral-400">Phone</p>
+                <p className="mt-2 font-semibold text-white">+977-98XXXXXXXX</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-neutral-400">Email</p>
+                <p className="mt-2 font-semibold text-white">
+                  academy@example.com
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-neutral-400">Location</p>
+                <p className="mt-2 font-semibold text-white">
+                  Your academy training location
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Card className="border-white/10 bg-white/5 backdrop-blur">
+            <CardContent className="p-8">
+              <h3 className="mb-6 text-2xl font-bold text-white">
+                Send an Enquiry
+              </h3>
+
+              {formError && (
+                <div className="mb-4">
+                  <Alert variant="error">{formError}</Alert>
+                </div>
+              )}
+
+              {formSuccess && (
+                <div className="mb-4">
+                  <Alert variant="success">{formSuccess}</Alert>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <Input
+                  label="Full Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  required
+                />
+
+                <Input
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  required
+                />
+
+                <Input
+                  label="Phone Number"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Enter your phone number"
+                  required
+                />
+
+                <Select
+                  label="Interested Program"
+                  name="program"
+                  value={formData.program}
+                  onChange={handleChange}
+                  options={programOptions}
+                />
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-white">
+                    Message
+                  </label>
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    rows="5"
+                    placeholder="Tell us what you are looking for..."
+                    className="w-full rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-yellow-400"
+                    required
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  loading={submitting}
+                  disabled={submitting}
+                  className="w-full rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+                >
+                  Send Enquiry
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       <section className="bg-gradient-to-b from-neutral-950 to-stone-900 px-6 py-24 lg:px-10">
         <div className="mx-auto max-w-4xl rounded-3xl bg-white p-10 text-center text-black shadow-2xl">
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-600">
@@ -215,10 +513,10 @@ function HomePage() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-6 text-sm font-semibold text-yellow-400">
-            <Link to="/">Home</Link>
+            <a href="/#about">About Us</a>
+            <a href="/#gallery">Gallery</a>
+            <a href="/#contact">Contact</a>
             <Link to="/training-sessions">Sessions</Link>
-            <Link to="/register">Register</Link>
-            <Link to="/login">Login</Link>
           </div>
         </div>
       </footer>

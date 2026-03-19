@@ -13,10 +13,12 @@ from .serializers import (
     PlayerDashboardSerializer,
 )
 
+
 class BookingListView(generics.ListAPIView):
     queryset = Booking.objects.filter()
     serializer_class = BookingListSerializer
     permission_classes = [AllowAny]
+
 
 class BookingCreateView(generics.CreateAPIView):
     queryset = Booking.objects.all()
@@ -43,9 +45,7 @@ class MyBookingListView(generics.ListAPIView):
             ).exclude(status=Booking.STATUS_CANCELLED)
 
         elif booking_status == "past":
-            queryset = queryset.filter(
-                session__session_date__lt=timezone.localdate()
-            )
+            queryset = queryset.filter(session__session_date__lt=timezone.localdate())
 
         elif booking_status == "cancelled":
             queryset = queryset.filter(status=Booking.STATUS_CANCELLED)
@@ -90,7 +90,9 @@ class BookingCancelView(generics.UpdateAPIView):
 
         if session_start <= timezone.localtime():
             return Response(
-                {"detail": "Cannot cancel a booking for a session that has already started or passed."},
+                {
+                    "detail": "Cannot cancel a booking for a session that has already started or passed."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -99,7 +101,8 @@ class BookingCancelView(generics.UpdateAPIView):
 
         serializer = self.get_serializer(booking)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
 class PlayerDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 

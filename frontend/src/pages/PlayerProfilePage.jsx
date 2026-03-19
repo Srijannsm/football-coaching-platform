@@ -221,16 +221,6 @@ function PlayerProfilePage() {
 
       <section className="border-b border-white/10 bg-gradient-to-b from-neutral-900 to-neutral-950">
         <div className="mx-auto max-w-4xl px-6 py-16 lg:px-10">
-          <div className="mb-6">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => navigate(-1)}
-              className="rounded-full"
-            >
-              ← Back
-            </Button>
-          </div>
 
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-yellow-400">
             Player Profile

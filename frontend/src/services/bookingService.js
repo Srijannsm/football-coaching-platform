@@ -9,7 +9,7 @@ export async function createBooking(sessionId) {
 }
 
 export async function getMyBookings() {
-  const response = await api.get("/my-bookings/");
+  const response = await api.get("/my-bookings/?status=all");
 
   if (Array.isArray(response.data)) {
     return response.data;

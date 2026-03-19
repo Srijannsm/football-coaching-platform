@@ -1,13 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import api from "../api/axios";
 import Button from "../components/ui/Button";
 import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
 import { useToast } from "../context/ToastContext";
+import { getTrainingSessionDetail } from "../services/trainingSessionService";
+import { createBooking } from "../services/bookingService";
+import { getCurrentUser } from "../services/authService";
+import { formatDate } from "../utils/formatDate";
+import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
+
+function DetailItem({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4">
+      <p className="text-sm font-medium text-neutral-400">{label}</p>
+      <p className="mt-2 text-lg font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value, bordered = true }) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-4 ${bordered ? "border-b border-white/10 pb-4" : "pb-2"
+        }`}
+    >
+      <span className="text-neutral-400">{label}</span>
+      <span className="font-bold text-white">{value}</span>
+    </div>
+  );
+}
 
 function SessionDetailPage() {
   const { showToast } = useToast();
@@ -17,21 +42,18 @@ function SessionDetailPage() {
 
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("accessToken")
-  );
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bookingMessage, setBookingMessage] = useState("");
   const [bookingError, setBookingError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
 
-  async function fetchSessionDetail() {
+  const isAuthenticated = !!localStorage.getItem("accessToken");
+
+  async function loadSessionDetail() {
     try {
       setError("");
-      const response = await api.get(`/training-sessions/${id}/`);
-      setSession(response.data);
+      const data = await getTrainingSessionDetail(id);
+      setSession(data);
     } catch (err) {
       console.error("Failed to load session detail:", err);
 
@@ -40,42 +62,35 @@ function SessionDetailPage() {
       } else {
         setError("Failed to load session details.");
       }
+    }
+  }
+
+  async function loadCurrentUser() {
+    if (!isAuthenticated) {
+      setUser(null);
+      return;
+    }
+
+    try {
+      const data = await getCurrentUser();
+      setUser(data);
+    } catch (err) {
+      console.error("Failed to fetch current user:", err);
+      setUser(null);
+    }
+  }
+
+  async function loadPageData() {
+    try {
+      setLoading(true);
+      await Promise.all([loadSessionDetail(), loadCurrentUser()]);
     } finally {
       setLoading(false);
     }
   }
 
-  async function fetchCurrentUser() {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      setUser(null);
-      setIsAuthenticated(false);
-      return;
-    }
-
-    // token exists, so keep user authenticated unless backend proves otherwise
-    setIsAuthenticated(true);
-
-    try {
-      const response = await api.get("/me/");
-      setUser(response.data);
-    } catch (err) {
-      console.error("Failed to fetch current user:", err);
-
-      if (err.response?.status === 401) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    }
-  }
-
   useEffect(() => {
-    fetchSessionDetail();
-    fetchCurrentUser();
+    loadPageData();
   }, [id]);
 
   async function handleBookSession() {
@@ -84,9 +99,7 @@ function SessionDetailPage() {
       return;
     }
 
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
+    if (!isAuthenticated) {
       navigate("/login", {
         state: { from: location },
       });
@@ -94,18 +107,13 @@ function SessionDetailPage() {
     }
 
     try {
-      setBookingMessage("");
       setBookingError("");
       setBookingLoading(true);
 
-      await api.post("/bookings/", {
-        session: session.id,
-      });
+      await createBooking({ session: session.id });
+      await loadPageData();
 
-      // setBookingMessage("Session booked successfully.");
       showToast("Booking successful.", "success");
-      await fetchSessionDetail();
-      await fetchCurrentUser();
     } catch (err) {
       console.error("Booking failed:", err);
 
@@ -114,9 +122,9 @@ function SessionDetailPage() {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
-        setUser(null);
-        setIsAuthenticated(false);
-        navigate("/login");
+        navigate("/login", {
+          state: { redirectTo: location.pathname },
+        });
         return;
       }
 
@@ -136,6 +144,35 @@ function SessionDetailPage() {
       setBookingLoading(false);
     }
   }
+
+  const isFull = session?.is_full;
+  const isAlreadyBooked = session?.is_booked_by_current_user;
+
+  const badgeStatus = useMemo(() => {
+    if (isAlreadyBooked) return "booked";
+    if (isFull) return "full";
+    return "open";
+  }, [isAlreadyBooked, isFull]);
+
+  const bookingButtonText = useMemo(() => {
+    if (isAlreadyBooked) return "Already Booked";
+    if (isFull) return "Session Full";
+    if (bookingLoading) return "Booking...";
+    if (!isAuthenticated) return "Login to Book";
+    return "Book Session";
+  }, [isAlreadyBooked, isFull, bookingLoading, isAuthenticated]);
+
+  const bookingButtonClassName = useMemo(() => {
+    if (isAlreadyBooked || isFull || bookingLoading) {
+      return "mt-8 w-full cursor-not-allowed rounded-full bg-neutral-700 text-neutral-300 hover:bg-neutral-700";
+    }
+
+    if (!isAuthenticated) {
+      return "mt-8 w-full rounded-full border border-white/10 bg-emerald-800 text-white hover:bg-emerald-700";
+    }
+
+    return "mt-8 w-full rounded-full bg-yellow-400 text-black hover:bg-yellow-300";
+  }, [isAlreadyBooked, isFull, bookingLoading, isAuthenticated]);
 
   if (loading) {
     return (
@@ -173,10 +210,6 @@ function SessionDetailPage() {
     );
   }
 
-  const isFull = session.is_full;
-  const isAlreadyBooked = session.is_booked_by_current_user;
-  const badgeStatus = isAlreadyBooked ? "booked" : isFull ? "full" : "open";
-
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <Navbar />
@@ -198,12 +231,6 @@ function SessionDetailPage() {
             {session.session_type || "Training"}
           </span>
         </div>
-
-        {bookingMessage && (
-          <Alert variant="success" className="mb-6">
-            {bookingMessage}
-          </Alert>
-        )}
 
         {bookingError && (
           <Alert variant="error" className="mb-6">
@@ -237,20 +264,25 @@ function SessionDetailPage() {
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {[
-                  ["Coach", session.coach_full_name || "Not assigned"],
-                  ["Date", session.session_date || "Not set"],
-                  ["Time", `${session.start_time} - ${session.end_time}`],
-                  ["Location", session.location || "Not set"],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4"
-                  >
-                    <p className="text-sm font-medium text-neutral-400">{label}</p>
-                    <p className="mt-2 text-lg font-bold text-white">{value}</p>
-                  </div>
-                ))}
+                <DetailItem
+                  label="Coach"
+                  value={session.coach_full_name || "Not assigned"}
+                />
+                <DetailItem
+                  label="Date"
+                  value={formatDate(session.session_date)}
+                />
+                <DetailItem
+                  label="Time"
+                  value={formatSessionTimeRange(
+                    session.start_time,
+                    session.end_time
+                  )}
+                />
+                <DetailItem
+                  label="Location"
+                  value={session.location || "Not set"}
+                />
               </div>
             </div>
 
@@ -260,51 +292,26 @@ function SessionDetailPage() {
               </h2>
 
               <div className="mt-6 space-y-4 text-sm text-neutral-300">
-                <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <span className="text-neutral-400">Price</span>
-                  <span className="font-bold text-white">Rs. {session.price}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <span className="text-neutral-400">Max Players</span>
-                  <span className="font-bold text-white">{session.max_players}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <span className="text-neutral-400">Booked Players</span>
-                  <span className="font-bold text-white">
-                    {session.booked_players_count}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 pb-2">
-                  <span className="text-neutral-400">Available Slots</span>
-                  <span className="font-bold text-white">
-                    {session.available_slots}
-                  </span>
-                </div>
+                <SummaryRow label="Price" value={`Rs. ${session.price}`} />
+                <SummaryRow label="Max Players" value={session.max_players} />
+                <SummaryRow
+                  label="Booked Players"
+                  value={session.booked_players_count}
+                />
+                <SummaryRow
+                  label="Available Slots"
+                  value={session.available_slots}
+                  bordered={false}
+                />
               </div>
 
               <Button
                 type="button"
                 onClick={handleBookSession}
                 disabled={isAlreadyBooked || isFull || bookingLoading}
-                className={`mt-8 w-full rounded-full ${isAlreadyBooked || isFull || bookingLoading
-                  ? "cursor-not-allowed bg-neutral-700 text-neutral-300 hover:bg-neutral-700"
-                  : isAuthenticated
-                    ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                    : "border border-white/10 bg-emerald-800 text-black hover:bg-lime-600"
-                  }`}
+                className={bookingButtonClassName}
               >
-                {isAlreadyBooked
-                  ? "Already Booked"
-                  : isFull
-                    ? "Session Full"
-                    : bookingLoading
-                      ? "Booking..."
-                      : isAuthenticated
-                        ? "Book Session"
-                        : "Login to Book"}
+                {bookingButtonText}
               </Button>
 
               {!isAuthenticated && (
