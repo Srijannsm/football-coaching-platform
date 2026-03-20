@@ -12,6 +12,9 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import PublicOnlyRoute from "./auth/PublicOnlyRoute";
+import AdminRoute from "./auth/AdminRoute";
+import AdminLayout from "./features/admin/components/layout/AdminLayout";
+import AdminDashboardPage from "./features/admin/pages/AdminDashboardPage";
 
 function App() {
   return (
@@ -52,6 +55,17 @@ function App() {
             <Route path="bookings" element={<MyBookingsPage />} />
             <Route path="profile" element={<PlayerProfilePage />} />
             <Route path="profile/edit" element={<EditPlayerProfile />} />
+          </Route>
+
+          <Route
+            path="/admin-dashboard"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminDashboardPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

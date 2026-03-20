@@ -31,8 +31,12 @@ class User(AbstractUser):
     def is_player(self):
         return self.role == self.ROLE_PLAYER
     
+    @property
+    def is_admin(self):
+        return self.role == self.ROLE_ADMIN
+    
     def __str__(self):
-        return f" {self.role.capitalize()} - {self.first_name} {self.last_name}"
+        return f"{self.role.capitalize()} - {self.first_name} {self.last_name}"
 
 
 class PlayerProfile(models.Model):

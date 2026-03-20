@@ -244,18 +244,6 @@ function TrainingSessionsPage() {
             </p>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            {isAuthenticated ? (
-              <Link to="/my-bookings">
-                <Button>My Bookings</Button>
-              </Link>
-            ) : (
-              <Link to="/login">
-                <Button>Login to Book</Button>
-              </Link>
-            )}
-          </div>
-
           {bookingError && (
             <div className="mt-6 max-w-2xl">
               <Alert variant="error">{bookingError}</Alert>

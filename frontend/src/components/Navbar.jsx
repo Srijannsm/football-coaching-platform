@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Button from "./ui/Button";
 import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "../hooks/useAuth";
 
 function Navbar({ mode = "solid" }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem("accessToken");
+  const { user, isAuthenticated, logout } = useAuth();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
@@ -17,11 +18,9 @@ function Navbar({ mode = "solid" }) {
   }
 
   function handleLogout() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+    logout();
     closeMobileMenu();
-    navigate("/");
+    navigate("/", { replace: true });
   }
 
   function handleGoHome(event) {
@@ -98,50 +97,46 @@ function Navbar({ mode = "solid" }) {
   }, [mobileMenuOpen, mode]);
 
   const navLinkClass = ({ isActive }) =>
-    `relative text-sm font-medium transition-colors duration-200 ${
-      isAtTop
-        ? isActive
-          ? "text-white"
-          : "text-white/80 hover:text-white"
-        : isActive
-          ? "text-brand-primary"
-          : "text-app-text-soft hover:text-app-text"
-    } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${
-      isActive
-        ? isAtTop
-          ? "after:bg-white"
-          : "after:bg-brand-primary"
-        : "after:bg-transparent"
+    `relative text-sm font-medium transition-colors duration-200 ${isAtTop
+      ? isActive
+        ? "text-white"
+        : "text-white/80 hover:text-white"
+      : isActive
+        ? "text-brand-primary"
+        : "text-app-text-soft hover:text-app-text"
+    } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${isActive
+      ? isAtTop
+        ? "after:bg-white"
+        : "after:bg-brand-primary"
+      : "after:bg-transparent"
     }`;
 
-  const desktopAnchorClass = `text-sm font-medium transition-colors duration-200 ${
-    isAtTop
+  const desktopAnchorClass = `text-sm font-medium transition-colors duration-200 ${isAtTop
       ? "text-white/80 hover:text-white"
       : "text-app-text-soft hover:text-app-text"
-  }`;
+    }`;
 
   const mobileNavLinkClass = ({ isActive }) =>
-    `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
-      isActive
-        ? "bg-brand-primary-soft text-app-text"
-        : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
+    `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${isActive
+      ? "bg-brand-primary-soft text-app-text"
+      : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
     }`;
+
+  const dashboardPath =
+    user?.role === "admin" ? "/admin-dashboard" : "/player-dashboard";
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${
-        isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
+        }`}
     >
       <div
-        className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${
-          isAtTop
+        className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${isAtTop
             ? "border-white/12 bg-white/8 text-white backdrop-blur-md"
             : "border-app-border bg-app-surface/88 text-app-text backdrop-blur-xl"
-        }`}
+          }`}
       >
         <div className="flex items-center gap-4 px-5 py-3 lg:px-8">
-          {/* Brand */}
           <div className="flex min-w-0 flex-1">
             <NavLink
               to="/"
@@ -157,16 +152,14 @@ function Navbar({ mode = "solid" }) {
 
               <div className="min-w-0 leading-tight">
                 <p
-                  className={`truncate text-base font-extrabold tracking-tight sm:text-lg ${
-                    isAtTop ? "text-white" : "text-app-text"
-                  }`}
+                  className={`truncate text-base font-extrabold tracking-tight sm:text-lg ${isAtTop ? "text-white" : "text-app-text"
+                    }`}
                 >
                   Football Academy
                 </p>
                 <p
-                  className={`hidden text-xs sm:block ${
-                    isAtTop ? "text-white/70" : "text-app-text-muted"
-                  }`}
+                  className={`hidden text-xs sm:block ${isAtTop ? "text-white/70" : "text-app-text-muted"
+                    }`}
                 >
                   Train. Book. Improve.
                 </p>
@@ -174,7 +167,6 @@ function Navbar({ mode = "solid" }) {
             </NavLink>
           </div>
 
-          {/* Desktop nav */}
           <div className="hidden items-center justify-center gap-8 md:flex">
             <NavLink
               to="/"
@@ -214,11 +206,10 @@ function Navbar({ mode = "solid" }) {
             </a>
           </div>
 
-          {/* Desktop actions */}
           <div className="hidden items-center gap-3 md:flex">
             <ThemeToggle />
 
-            {!token ? (
+            {!isAuthenticated ? (
               <>
                 <NavLink to="/login">
                   <Button
@@ -240,7 +231,7 @@ function Navbar({ mode = "solid" }) {
               </>
             ) : (
               <>
-                <NavLink to="/player-dashboard">
+                <NavLink to={dashboardPath}>
                   <Button
                     variant="outline"
                     size="sm"
@@ -266,15 +257,13 @@ function Navbar({ mode = "solid" }) {
             )}
           </div>
 
-          {/* Mobile menu button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className={`ml-auto inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${
-              isAtTop
+            className={`ml-auto inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${isAtTop
                 ? "border-white/20 bg-white/10 text-white hover:border-white/40"
                 : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
-            }`}
+              }`}
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -333,10 +322,10 @@ function Navbar({ mode = "solid" }) {
                 Contact Us
               </a>
 
-              {token && (
+              {isAuthenticated && (
                 <>
                   <NavLink
-                    to="/player-dashboard"
+                    to={dashboardPath}
                     className={mobileNavLinkClass}
                     onClick={closeMobileMenu}
                   >
@@ -363,7 +352,7 @@ function Navbar({ mode = "solid" }) {
             </div>
 
             <div className="mt-5 border-t border-app-border pt-5">
-              {!token ? (
+              {!isAuthenticated ? (
                 <div className="flex flex-col gap-3">
                   <NavLink to="/login" onClick={closeMobileMenu}>
                     <Button fullWidth variant="outline">

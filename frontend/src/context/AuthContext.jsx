@@ -1,8 +1,7 @@
-import { createContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { getRefreshToken, setTokens, clearAuthData } from "../utils/auth";
-
-export const AuthContext = createContext(null);
+import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -14,6 +13,7 @@ export function AuthProvider({ children }) {
       const refreshToken = getRefreshToken();
 
       if (!refreshToken) {
+        delete api.defaults.headers.common.Authorization;
         setUser(null);
         setIsAuthenticated(false);
         setIsAuthLoading(false);
@@ -25,16 +25,21 @@ export function AuthProvider({ children }) {
           refresh: refreshToken,
         });
 
+        const newAccessToken = refreshResponse.data.access;
+
         setTokens({
-          access: refreshResponse.data.access,
+          access: newAccessToken,
           refresh: refreshToken,
         });
+
+        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
 
         const userResponse = await api.get("/me/");
         setUser(userResponse.data);
         setIsAuthenticated(true);
       } catch (error) {
         clearAuthData();
+        delete api.defaults.headers.common.Authorization;
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -50,6 +55,7 @@ export function AuthProvider({ children }) {
     const { access, refresh } = response.data;
 
     setTokens({ access, refresh });
+    api.defaults.headers.common.Authorization = `Bearer ${access}`;
 
     const userResponse = await api.get("/me/");
     setUser(userResponse.data);
@@ -60,6 +66,7 @@ export function AuthProvider({ children }) {
 
   function logout() {
     clearAuthData();
+    delete api.defaults.headers.common.Authorization;
     setUser(null);
     setIsAuthenticated(false);
   }

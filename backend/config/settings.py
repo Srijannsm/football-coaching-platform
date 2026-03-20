@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "contents",
     "enquiries",
     "corsheaders",
+    "adminpanel",
 ]
 
 MIDDLEWARE = [

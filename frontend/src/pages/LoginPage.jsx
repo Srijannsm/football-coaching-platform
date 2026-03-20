@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import api from "../api/axios";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Alert from "../components/ui/Alert";
@@ -40,28 +40,34 @@ function LoginPage() {
     }
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    setLoading(true);
+ async function handleSubmit(event) {
+  event.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      await login(formData);
+  try {
+    const loggedInUser = await login(formData);
 
-      showToast("Login successful.", "success");
-      navigate(from, { replace: true });
-    } catch (err) {
-      console.error("Login failed:", err);
+    showToast("Login successful.", "success");
 
-      if (err.response?.data) {
-        setError("Invalid username or password.");
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+    const fallbackRoute =
+      loggedInUser?.role === "admin"
+        ? "/admin-dashboard"
+        : "/player-dashboard";
+
+    navigate(fromLocation ? from : fallbackRoute, { replace: true });
+  } catch (err) {
+    console.error("Login failed:", err);
+
+    if (err.response?.data) {
+      setError("Invalid username or password.");
+    } else {
+      setError("Something went wrong. Please try again.");
     }
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <div className="app-shell">

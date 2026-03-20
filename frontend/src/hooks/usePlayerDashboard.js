@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { getPlayerDashboard } from "../services/playerDashboardService";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { useAuth } from "./useAuth";
 
 export function usePlayerDashboard() {
+  const { isAuthenticated, isAuthLoading } = useAuth();
+
   const [dashboard, setDashboard] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,12 +27,23 @@ export function usePlayerDashboard() {
   }, []);
 
   useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setDashboard(null);
+      setError("");
+      setIsLoading(false);
+      return;
+    }
+
     fetchDashboard();
-  }, [fetchDashboard]);
+  }, [isAuthLoading, isAuthenticated, fetchDashboard]);
 
   return {
     dashboard,
-    isLoading,
+    isLoading: isAuthLoading || isLoading,
     error,
     refetch: fetchDashboard,
   };
