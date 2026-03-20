@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getPlayerProfile } from "../services/playerProfileService";
+import { usePlayerProfile } from "../hooks/usePlayerProfile";
 import Button from "../components/ui/Button";
 import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
@@ -98,72 +97,6 @@ function ChecklistItem({ done, children }) {
   );
 }
 
-function getInitials(firstName, lastName) {
-  const first = firstName?.trim()?.[0] || "";
-  const last = lastName?.trim()?.[0] || "";
-  return (first + last).toUpperCase() || "P";
-}
-
-function formatPreferredFoot(value) {
-  if (!value) return "Not provided";
-
-  const map = {
-    left: "Left",
-    right: "Right",
-    both: "Both",
-  };
-
-  return map[value] || value;
-}
-
-function getProfileCompletion(profile) {
-  const fields = [
-    profile?.first_name,
-    profile?.last_name,
-    profile?.email,
-    profile?.phone_number,
-    profile?.age,
-    profile?.preferred_foot,
-    profile?.primary_position,
-    profile?.secondary_position,
-    profile?.height_cm,
-    profile?.weight_kg,
-    profile?.image,
-  ];
-
-  const completed = fields.filter((field) => {
-    if (field === null || field === undefined) return false;
-    return String(field).trim() !== "";
-  }).length;
-
-  return Math.round((completed / fields.length) * 100);
-}
-
-function getCompletionItems(profile) {
-  return [
-    {
-      label: "Add profile photo",
-      done: !!profile?.image,
-    },
-    {
-      label: "Complete personal details",
-      done: !!profile?.first_name && !!profile?.last_name && !!profile?.email,
-    },
-    {
-      label: "Add football position",
-      done: !!profile?.primary_position,
-    },
-    {
-      label: "Set preferred foot",
-      done: !!profile?.preferred_foot,
-    },
-    {
-      label: "Complete physical stats",
-      done: !!profile?.height_cm && !!profile?.weight_kg,
-    },
-  ];
-}
-
 function ProfileSkeleton() {
   return (
     <div className="space-y-6">
@@ -193,63 +126,37 @@ function ProfileSkeleton() {
 }
 
 function PlayerProfileViewPage() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    profile,
+    isLoading,
+    error,
+    refetch,
+    completion,
+    completionItems,
+    heroSummary,
+    initials,
+    formatPreferredFoot,
+  } = usePlayerProfile();
 
-  async function fetchProfile() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const data = await getPlayerProfile();
-      setProfile(data);
-    } catch (err) {
-      console.error("Failed to load profile:", err);
-
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError("Failed to load your profile.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const completion = useMemo(() => getProfileCompletion(profile), [profile]);
-  const completionItems = useMemo(() => getCompletionItems(profile), [profile]);
-
-  const heroSummary = useMemo(() => {
-    if (!profile) return "";
-
-    const items = [
-      profile.primary_position,
-      profile.secondary_position
-        ? `Secondary: ${profile.secondary_position}`
-        : "",
-      profile.preferred_foot
-        ? `${formatPreferredFoot(profile.preferred_foot)} Foot`
-        : "",
-    ].filter(Boolean);
-
-    if (!items.length) {
-      return "Build a complete football identity by adding your playing position, preferred foot, and physical details.";
-    }
-
-    return items.join(" • ");
-  }, [profile]);
-
-  if (loading) {
+  if (isLoading) {
     return <ProfileSkeleton />;
   }
 
   if (error) {
-    return <Alert variant="error">{error}</Alert>;
+    return (
+      <EmptyState
+        title="Profile Error"
+        description={error}
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={refetch}>Try Again</Button>
+            <Link to="/player-dashboard">
+              <Button variant="outline">Back to Dashboard</Button>
+            </Link>
+          </div>
+        }
+      />
+    );
   }
 
   if (!profile) {
@@ -268,7 +175,6 @@ function PlayerProfileViewPage() {
 
   return (
     <div className="space-y-6">
-      {/* Profile summary hero card */}
       <Card className="overflow-hidden border-brand-primary/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.00))]">
         <CardContent className="p-6 md:p-8 lg:p-10">
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-center">
@@ -286,7 +192,7 @@ function PlayerProfileViewPage() {
                   />
                 ) : (
                   <div className="flex h-24 w-24 items-center justify-center rounded-[1.5rem] bg-brand-primary/10 text-3xl font-black text-brand-primary ring-4 ring-brand-primary/10">
-                    {getInitials(profile.first_name, profile.last_name)}
+                    {initials}
                   </div>
                 )}
 
@@ -361,7 +267,6 @@ function PlayerProfileViewPage() {
         </CardContent>
       </Card>
 
-      {/* Stat cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Preferred Foot"
@@ -385,7 +290,6 @@ function PlayerProfileViewPage() {
         />
       </div>
 
-      {/* Main content */}
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
         <div className="space-y-6">
           <Card>

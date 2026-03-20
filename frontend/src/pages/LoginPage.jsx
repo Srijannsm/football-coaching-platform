@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../context/useAuth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Alert from "../components/ui/Alert";
@@ -14,6 +15,7 @@ function LoginPage() {
   });
 
   const { showToast } = useToast();
+  const { login } = useAuth();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -44,11 +46,7 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post("/login/", formData);
-      const { access, refresh } = response.data;
-
-      localStorage.setItem("accessToken", access);
-      localStorage.setItem("refreshToken", refresh);
+      await login(formData);
 
       showToast("Login successful.", "success");
       navigate(from, { replace: true });

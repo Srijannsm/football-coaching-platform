@@ -10,8 +10,8 @@ import PlayerProfilePage from "./pages/PlayerProfilePage";
 import EditPlayerProfile from "./pages/EditPlayerProfile";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import { ToastProvider } from "./context/ToastContext";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import PublicOnlyRoute from "./auth/PublicOnlyRoute";
 
 function App() {
   return (

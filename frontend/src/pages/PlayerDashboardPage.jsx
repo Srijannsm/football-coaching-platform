@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { getPlayerDashboard } from "../services/playerDashboardService";
+import { usePlayerDashboard } from "../hooks/usePlayerDashboard";
 import EmptyState from "../components/ui/EmptyState";
 import StatCard from "../components/ui/StatCard";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -74,33 +74,7 @@ function DashboardSkeleton() {
 }
 
 function PlayerDashboardPage() {
-  const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  async function fetchDashboard() {
-    try {
-      setError("");
-      setLoading(true);
-
-      const data = await getPlayerDashboard();
-      setDashboard(data);
-    } catch (err) {
-      console.error("Failed to load dashboard:", err);
-
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError("Failed to load player dashboard.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+  const { dashboard, isLoading, error, refetch } = usePlayerDashboard();
 
   const firstName = dashboard?.user?.first_name || "";
   const stats = dashboard?.stats || {};
@@ -111,7 +85,7 @@ function PlayerDashboardPage() {
     return firstName ? `Welcome back, ${firstName}` : "Welcome back";
   }, [firstName]);
 
-  if (loading) {
+  if (isLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -125,7 +99,7 @@ function PlayerDashboardPage() {
             <Link to="/training-sessions">
               <Button>Browse Sessions</Button>
             </Link>
-            <Button variant="outline" onClick={fetchDashboard}>
+            <Button variant="outline" onClick={refetch}>
               Try Again
             </Button>
           </div>
@@ -136,41 +110,8 @@ function PlayerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Overview intro */}
-      <Card className="border-brand-primary/10 bg-gradient-to-r from-brand-primary/5 via-transparent to-transparent">
-        {/* <CardContent className="p-6 md:p-8">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
-                Overview
-              </p>
-              <h2 className="text-2xl font-black tracking-tight text-app-text md:text-3xl">
-                {greeting}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-app-text-soft md:text-base">
-                Track your next session, review recent bookings, and manage your
-                football academy activity from one place.
-              </p>
-            </div>
+      <Card className="border-brand-primary/10 bg-gradient-to-r from-brand-primary/5 via-transparent to-transparent" />
 
-            <div className="flex flex-wrap gap-3">
-              <Link to="/training-sessions">
-                <Button>Browse Sessions</Button>
-              </Link>
-
-              <Link to="/player-dashboard/bookings">
-                <Button variant="outline">My Bookings</Button>
-              </Link>
-
-              <Link to="/player-dashboard/profile">
-                <Button variant="outline">Player Profile</Button>
-              </Link>
-            </div>
-          </div>
-        </CardContent> */}
-      </Card>
-
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Total Bookings" value={stats.total_bookings ?? 0} />
         <StatCard label="Upcoming" value={stats.upcoming_bookings ?? 0} />
@@ -179,7 +120,6 @@ function PlayerDashboardPage() {
         <StatCard label="Attended" value={stats.attended_sessions ?? 0} />
       </div>
 
-      {/* Main dashboard cards */}
       <div className="grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card>
           <CardContent className="p-6">

@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "../../utils/auth";
+import { isAuthenticated } from "../utils/auth";
 
 function PublicOnlyRoute({ children }) {
   if (isAuthenticated()) {

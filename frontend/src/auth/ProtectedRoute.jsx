@@ -1,10 +1,19 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { isAuthenticated } from "../../utils/auth";
+import { useAuth } from "../context/useAuth";
 
 function ProtectedRoute({ children }) {
+  const { isAuthenticated, isAuthLoading } = useAuth();
   const location = useLocation();
 
-  if (!isAuthenticated()) {
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-muted-foreground">Checking session...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <Navigate
         to="/login"

@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import PermissionDenied, NotFound
+from rest_framework.response import Response
 
 from .serializers import (
     PlayerRegisterSerializer,
