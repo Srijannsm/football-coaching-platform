@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
@@ -6,7 +6,7 @@ import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import { getTrainingSessionDetail } from "../services/trainingSessionService";
 import { createBooking } from "../services/bookingService";
 import { getCurrentUser } from "../services/authService";
@@ -49,7 +49,7 @@ function SessionDetailPage() {
 
   const isAuthenticated = !!localStorage.getItem("accessToken");
 
-  async function loadSessionDetail() {
+  const loadSessionDetail = useCallback(async () => {
     try {
       setError("");
       const data = await getTrainingSessionDetail(id);
@@ -63,9 +63,9 @@ function SessionDetailPage() {
         setError("Failed to load session details.");
       }
     }
-  }
+  }, [id]);
 
-  async function loadCurrentUser() {
+  const loadCurrentUser = useCallback(async () => {
     if (!isAuthenticated) {
       setUser(null);
       return;
@@ -78,20 +78,20 @@ function SessionDetailPage() {
       console.error("Failed to fetch current user:", err);
       setUser(null);
     }
-  }
+  }, [isAuthenticated]);
 
-  async function loadPageData() {
+  const loadPageData = useCallback(async () => {
     try {
       setLoading(true);
       await Promise.all([loadSessionDetail(), loadCurrentUser()]);
     } finally {
       setLoading(false);
     }
-  }
+  }, [loadCurrentUser, loadSessionDetail]);
 
   useEffect(() => {
     loadPageData();
-  }, [id]);
+  }, [loadPageData]);
 
   async function handleBookSession() {
     if (session?.is_booked_by_current_user) {
@@ -110,7 +110,7 @@ function SessionDetailPage() {
       setBookingError("");
       setBookingLoading(true);
 
-      await createBooking( session.id );
+      await createBooking(session.id);
       await loadPageData();
 
       showToast("Booking successful.", "success");

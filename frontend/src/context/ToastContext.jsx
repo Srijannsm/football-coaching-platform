@@ -1,12 +1,17 @@
-import { createContext, useContext, useMemo, useState } from "react";
-
-const ToastContext = createContext();
+import { useCallback, useMemo, useRef, useState } from "react";
+import { ToastContext } from "./toast-context";
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
 
-  function showToast(message, type = "info", duration = 4000) {
-    const id = Date.now() + Math.random();
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, [])
+
+  const showToast = useCallback((message, type = "info", duration = 4000) => {
+    toastIdRef.current += 1;
+    const id = toastIdRef.current;
 
     const newToast = {
       id,
@@ -19,13 +24,9 @@ export function ToastProvider({ children }) {
     setTimeout(() => {
       removeToast(id);
     }, duration);
-  }
+  }, [removeToast]);
 
-  function removeToast(id) {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }
-
-  const value = useMemo(() => ({ showToast }), []);
+  const value = useMemo(() => ({ showToast }), [showToast]);
 
   return (
     <ToastContext.Provider value={value}>
@@ -69,14 +70,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast() {
-  const context = useContext(ToastContext);
-
-  if (!context) {
-    throw new Error("useToast must be used inside a ToastProvider");
-  }
-
-  return context;
 }

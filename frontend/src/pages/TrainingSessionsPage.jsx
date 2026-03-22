@@ -11,7 +11,7 @@ import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import { formatDate } from "../utils/formatDate";
 import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
 

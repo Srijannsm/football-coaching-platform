@@ -7,7 +7,7 @@ import Select from "../components/ui/Select";
 import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import ImageUploadField from "../components/ui/ImageUploadField";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 
 const initialFormData = {
   username: "",

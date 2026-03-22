@@ -6,7 +6,7 @@ import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import { Card, CardContent } from "../components/ui/Card";
 import ImageUploadField from "../components/ui/ImageUploadField";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import { useEditPlayerProfile } from "../hooks/useEditPlayerProfile";
 
 const preferredFootOptions = [

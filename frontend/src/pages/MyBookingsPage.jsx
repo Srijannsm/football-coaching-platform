@@ -6,7 +6,7 @@ import StatusBadge from "../components/ui/StatusBadge";
 import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import StatCard from "../components/ui/StatCard";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import { getMyBookings, cancelBooking } from "../services/bookingService";
 import { formatDate } from "../utils/formatDate";
 import { formatTime } from "../utils/formatTime";
@@ -49,11 +49,10 @@ function StatusFilterBar({ value, onChange }) {
               key={filter.value}
               type="button"
               onClick={() => onChange(filter.value)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                isActive
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${isActive
                   ? "border-brand-primary bg-brand-primary text-black"
                   : "border-app-border bg-app-card text-app-text-soft hover:border-brand-primary hover:text-app-text"
-              }`}
+                }`}
             >
               {filter.label}
             </button>
@@ -69,9 +68,8 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
 
   return (
     <Card
-      className={`overflow-hidden transition ${
-        faded ? "opacity-70" : "hover:-translate-y-0.5"
-      }`}
+      className={`overflow-hidden transition ${faded ? "opacity-70" : "hover:-translate-y-0.5"
+        }`}
     >
       <CardContent className="p-0">
         <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-start lg:justify-between">

@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
         const userResponse = await api.get("/me/");
         setUser(userResponse.data);
         setIsAuthenticated(true);
-      } catch (error) {
+      } catch {
         clearAuthData();
         delete api.defaults.headers.common.Authorization;
         setUser(null);

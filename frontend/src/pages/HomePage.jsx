@@ -8,7 +8,7 @@ import Select from "../components/ui/Select";
 import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import { createEnquiry } from "../services/enquiryService";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import Footer from "../components/Footer";
 
 function HomePage() {
@@ -24,8 +24,6 @@ function HomePage() {
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
 
   const galleryImages = [
     "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80",
@@ -58,8 +56,6 @@ function HomePage() {
 
     try {
       setSubmitting(true);
-      setFormError("");
-      setFormSuccess("");
 
       const payload = {
         ...formData,
@@ -68,7 +64,6 @@ function HomePage() {
 
       await createEnquiry(payload);
 
-      setFormSuccess("Thank you. We have received your enquiry.");
       showToast("Enquiry sent successfully.", "success");
 
       setFormData({
@@ -91,10 +86,8 @@ function HomePage() {
           data.detail ||
           "Failed to send enquiry. Please try again.";
 
-        setFormError(firstError);
         showToast(firstError, "error");
       } else {
-        setFormError("Failed to send enquiry. Please try again.");
         showToast("Failed to send enquiry. Please try again.", "error");
       }
     } finally {

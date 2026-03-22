@@ -8,13 +8,9 @@ const themeOptions = [
 ];
 
 function ThemeToggle({ inverted = false }) {
-  const [currentTheme, setCurrentTheme] = useState(THEMES.DEFAULT);
+  const [currentTheme, setCurrentTheme] = useState(getSavedTheme);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    setCurrentTheme(getSavedTheme());
-  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {

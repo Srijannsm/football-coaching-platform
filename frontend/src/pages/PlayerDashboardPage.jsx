@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePlayerDashboard } from "../hooks/usePlayerDashboard";
 import EmptyState from "../components/ui/EmptyState";
@@ -76,14 +75,9 @@ function DashboardSkeleton() {
 function PlayerDashboardPage() {
   const { dashboard, isLoading, error, refetch } = usePlayerDashboard();
 
-  const firstName = dashboard?.user?.first_name || "";
   const stats = dashboard?.stats || {};
   const nextBooking = dashboard?.next_booking;
   const recentBookings = dashboard?.recent_bookings || [];
-
-  const greeting = useMemo(() => {
-    return firstName ? `Welcome back, ${firstName}` : "Welcome back";
-  }, [firstName]);
 
   if (isLoading) {
     return <DashboardSkeleton />;
