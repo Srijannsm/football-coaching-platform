@@ -13,8 +13,13 @@ import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import PublicOnlyRoute from "./auth/PublicOnlyRoute";
 import AdminRoute from "./auth/AdminRoute";
-import AdminLayout from "./features/admin/components/layout/AdminLayout";
+import AdminShell from "./features/admin/components/layout/AdminShell";
 import AdminDashboardPage from "./features/admin/pages/AdminDashboardPage";
+import AdminPlayersPage from "./features/admin/pages/AdminPlayersPage";
+import AdminProgramsPage from "./features/admin/pages/AdminProgramsPage";
+import AdminSessionsPage from "./features/admin/pages/AdminSessionsPage";
+import AdminBookingsPage from "./features/admin/pages/AdminBookingsPage";
+import AdminEnquiriesPage from "./features/admin/pages/AdminEnquiriesPage";
 
 function App() {
   return (
@@ -61,11 +66,16 @@ function App() {
             path="/admin-dashboard"
             element={
               <AdminRoute>
-                <AdminLayout />
+                <AdminShell />
               </AdminRoute>
             }
           >
             <Route index element={<AdminDashboardPage />} />
+            <Route path="players" element={<AdminPlayersPage />} />
+            <Route path="programs" element={<AdminProgramsPage />} />
+            <Route path="sessions" element={<AdminSessionsPage />} />
+            <Route path="bookings" element={<AdminBookingsPage />} />
+            <Route path="enquiries" element={<AdminEnquiriesPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

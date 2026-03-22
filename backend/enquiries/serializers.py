@@ -37,6 +37,7 @@ class AdminEnquiryListSerializer(serializers.ModelSerializer):
             "name",
             "email",
             "phone",
+            "message",
             "program",
             "program_title",
             "status",

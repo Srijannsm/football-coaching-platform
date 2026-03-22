@@ -11,7 +11,6 @@ export function useAdminDashboard() {
     try {
       setIsLoading(true);
       setError("");
-
       const response = await getAdminDashboard();
       setData(response);
     } catch (err) {

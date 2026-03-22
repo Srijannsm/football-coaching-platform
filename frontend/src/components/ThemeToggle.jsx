@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { getSavedTheme, setTheme, THEMES } from "../utils/theme";
+import { useTheme } from "../context/ThemeContext";
+import { THEMES } from "../utils/theme";
 
 const themeOptions = [
-  { value: THEMES.DEFAULT, label: "Default", icon: "☀" },
+  { value: THEMES.LIGHT, label: "Light", icon: "☀" },
   { value: THEMES.DARK, label: "Dark", icon: "☾" },
-  // { value: THEMES.PITCH, label: "Pitch", icon: "⚽" },
 ];
 
 function ThemeToggle({ inverted = false }) {
-  const [currentTheme, setCurrentTheme] = useState(getSavedTheme);
+  const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -34,26 +34,23 @@ function ThemeToggle({ inverted = false }) {
     };
   }, []);
 
-  function handleThemeChange(theme) {
-    setCurrentTheme(theme);
-    setTheme(theme);
+  function handleThemeChange(nextTheme) {
+    setTheme(nextTheme);
     setOpen(false);
   }
 
   const activeTheme =
-    themeOptions.find((option) => option.value === currentTheme) ||
-    themeOptions[0];
+    themeOptions.find((option) => option.value === theme) || themeOptions[0];
 
   return (
     <div ref={wrapperRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-full border text-base shadow-[var(--shadow-soft)] transition ${
-          inverted
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-full border text-base shadow-[var(--shadow-soft)] transition ${inverted
             ? "border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/14"
             : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
-        }`}
+          }`}
         aria-label="Change theme"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -70,18 +67,17 @@ function ThemeToggle({ inverted = false }) {
 
           <div className="flex flex-col gap-1">
             {themeOptions.map((option) => {
-              const isActive = currentTheme === option.value;
+              const isActive = theme === option.value;
 
               return (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => handleThemeChange(option.value)}
-                  className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition ${
-                    isActive
+                  className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition ${isActive
                       ? "bg-brand-primary-soft text-app-text"
                       : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
-                  }`}
+                    }`}
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-base leading-none">{option.icon}</span>

@@ -5,18 +5,19 @@ function Button({
   size = "md",
   fullWidth = false,
   loading = false,
+  loadingText,
   disabled = false,
   className = "",
   ...props
 }) {
   const baseStyles =
-    "inline-flex items-center justify-center rounded-full font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex items-center justify-center gap-2 rounded-full font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-60";
 
   const variants = {
     primary:
-      "bg-brand-primary text-black shadow-[var(--shadow-soft)] hover:bg-brand-primary-hover",
+      "bg-brand-primary text-white shadow-[var(--shadow-soft)] hover:bg-brand-primary-hover",
     secondary:
-      "bg-app-surface-2 text-app-text hover:bg-app-surface",
+      "bg-app-surface-2 text-app-text hover:opacity-90",
     outline:
       "border border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary",
     ghost: "bg-transparent text-app-text hover:bg-app-surface-2",
@@ -35,15 +36,17 @@ function Button({
   };
 
   const widthClass = fullWidth ? "w-full" : "";
+  const content = loading ? loadingText || children : children;
 
   return (
     <button
       type={type}
       disabled={disabled || loading}
+      aria-busy={loading}
       className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size]} ${widthClass} ${className}`}
       {...props}
     >
-      {loading ? "Please wait..." : children}
+      {loading ? (loadingText || "Please wait...") : content}
     </button>
   );
 }
