@@ -1,3 +1,8 @@
+import {
+    LayoutDashboard,
+    Users,
+    ClipboardList,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import Navbar from "../Navbar";
@@ -7,24 +12,25 @@ const navigationItems = [
     {
         label: "Overview",
         to: "/player-dashboard",
+        icon: LayoutDashboard,
         end: true,
-        icon: "ℹ️",
     },
     {
         label: "Profile",
         to: "/player-dashboard/profile",
-        icon: "👨",
+        icon: Users,
     },
     {
         label: "Bookings",
         to: "/player-dashboard/bookings",
-        icon: "📖",
+        icon: ClipboardList,
     },
 ];
 
 function SidebarLink({
     to,
-    icon,
+    label,
+    icon: Icon,
     children,
     end = false,
     onClick,
@@ -54,7 +60,14 @@ function SidebarLink({
                             : "bg-app-surface text-app-text-soft group-hover:text-app-text"
                             }`}
                     >
-                        {icon}
+                        {Icon ? (
+                            <Icon
+                                size={18}
+                                className="shrink-0 transition group-hover:scale-[1.02]"
+                            />
+                        ) : null}
+
+                        {!collapsed ? <span className="truncate">{label}</span> : null}
                     </div>
 
                     {!collapsed ? <span className="truncate">{children}</span> : null}
