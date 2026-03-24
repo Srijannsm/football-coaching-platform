@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, PlayerProfile
+from .models import User, PlayerProfile, CoachProfile
 
 
 @admin.register(User)
@@ -46,4 +46,21 @@ class PlayerProfileAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "user":
             kwargs["queryset"] = User.objects.filter(role=User.ROLE_PLAYER)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(CoachProfile)
+class CoachProfileAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "years_experience", "coaching_level")
+    search_fields = (
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "specialties",
+    )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "user":
+            kwargs["queryset"] = User.objects.filter(role=User.ROLE_COACH)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

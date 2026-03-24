@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from django.db.models.functions import Concat
 
-from accounts.models import User
+from accounts.models import User, CoachProfile, PlayerProfile
 from bookings.models import Booking
 from enquiries.models import Enquiry
 from training.models import TrainingProgram, TrainingSession
@@ -24,6 +24,8 @@ from .serializers import (
     AdminEnquiryListSerializer,
     AdminEnquiryUpdateSerializer,
     AdminCoachOptionSerializer,
+    AdminCoachListSerializer,
+    AdminCoachUpdateSerializer,
 )
 
 
@@ -159,18 +161,16 @@ class AdminDashboardView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class AdminPlayerListView(ListAPIView):
+class AdminPlayerListView(generics.ListAPIView):
     serializer_class = AdminPlayerListSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get_queryset(self):
         queryset = (
-            User.objects.filter(role="player")
-            .select_related("player_profile")
-            .annotate(
-                full_name=Concat("first_name", Value(" "), "last_name")
-            )
-            .order_by("-date_joined")
+            PlayerProfile.objects
+            .select_related("user")
+            .filter(user__role=User.ROLE_PLAYER)
+            .order_by("-user__date_joined")
         )
 
         search = self.request.query_params.get("search", "").strip()
@@ -178,26 +178,30 @@ class AdminPlayerListView(ListAPIView):
 
         if search:
             queryset = queryset.filter(
-                Q(full_name__icontains=search)
-                | Q(username__icontains=search)
-                | Q(first_name__icontains=search)
-                | Q(last_name__icontains=search)
-                | Q(email__icontains=search)
-                | Q(phone_number__icontains=search)
-                | Q(player_profile__primary_position__icontains=search)
+                Q(user__username__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(user__phone_number__icontains=search)
+                | Q(primary_position__icontains=search)
+                | Q(preferred_foot__icontains=search)
             ).distinct()
 
         if is_active is not None:
             if is_active.lower() == "true":
-                queryset = queryset.filter(is_active=True)
+                queryset = queryset.filter(user__is_active=True)
             elif is_active.lower() == "false":
-                queryset = queryset.filter(is_active=False)
+                queryset = queryset.filter(user__is_active=False)
 
         return queryset
 
 
 class AdminPlayerDetailView(generics.RetrieveUpdateAPIView):
-    queryset = User.objects.filter(role=User.ROLE_PLAYER)
+    queryset = (
+        PlayerProfile.objects
+        .select_related("user")
+        .filter(user__role=User.ROLE_PLAYER)
+    )
     serializer_class = AdminPlayerUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
 
@@ -336,3 +340,45 @@ class AdminCoachListView(generics.ListAPIView):
             role=User.ROLE_COACH,
             is_active=True,
         ).order_by("first_name", "last_name", "username")
+
+
+class AdminCoachDirectoryListView(generics.ListAPIView):
+    serializer_class = AdminCoachListSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get_queryset(self):
+        queryset = (
+            CoachProfile.objects.select_related("user")
+            .filter(user__role=User.ROLE_COACH)
+            .order_by("-user__date_joined")
+        )
+
+        search = self.request.query_params.get("search", "").strip()
+        is_active = self.request.query_params.get("is_active")
+
+        if search:
+            queryset = queryset.filter(
+                Q(user__username__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(user__phone_number__icontains=search)
+                | Q(specialties__icontains=search)
+                | Q(coaching_level__icontains=search)
+            ).distinct()
+
+        if is_active is not None:
+            if is_active.lower() == "true":
+                queryset = queryset.filter(user__is_active=True)
+            elif is_active.lower() == "false":
+                queryset = queryset.filter(user__is_active=False)
+
+        return queryset
+
+
+class AdminCoachDetailView(generics.RetrieveUpdateAPIView):
+    queryset = CoachProfile.objects.select_related("user").filter(
+        user__role=User.ROLE_COACH
+    )
+    serializer_class = AdminCoachUpdateSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]

@@ -181,6 +181,10 @@ function Navbar({ mode = "solid" }) {
               Sessions
             </NavLink>
 
+            <NavLink to="/coaches" className={navLinkClass}>
+              Coaches
+            </NavLink>
+
             <a
               href="/#about"
               onClick={(event) => handleAnchorNavigation(event, "about")}

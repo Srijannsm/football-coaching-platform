@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
+import Button from "../../../components/ui/Button";
 import { formatDate } from "../../../utils/formatDate";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 import AdminToolbar from "../components/ui/AdminToolbar";
@@ -12,15 +12,16 @@ import AdminStatusBadge from "../components/ui/AdminStatusBadge";
 import AdminFormAlert from "../components/form/AdminFormAlert";
 import AdminInputField from "../components/form/AdminInputField";
 import AdminCheckboxField from "../components/form/AdminCheckboxField";
+import AdminTextareaField from "../components/form/AdminTextareaField";
 import AdminConfirmDialog from "../components/ui/AdminConfirmDialog";
 import AdminModal from "../components/ui/AdminModal";
 import { useAdminTable } from "../hooks/useAdminTable";
 import { normalizeApiErrors } from "../utils/normalizeApiErrors";
 import {
-  buildPlayerFormData,
-  getAdminPlayers,
-  updateAdminPlayer,
-} from "../services/adminPlayersService";
+  buildCoachFormData,
+  getAdminCoachDirectory,
+  updateAdminCoach,
+} from "../services/adminCoachesService";
 import { useDebounce } from "../hooks/useDebounce";
 
 const initialForm = {
@@ -28,8 +29,10 @@ const initialForm = {
   last_name: "",
   email: "",
   phone_number: "",
-  primary_position: "",
-  player_rating: "",
+  years_experience: "",
+  coaching_level: "",
+  specialties: "",
+  bio: "",
   is_active: true,
   image: null,
   remove_image: false,
@@ -51,17 +54,17 @@ function normalizeResponse(response) {
   };
 }
 
-function getPlayerDisplayName(player) {
+function getCoachDisplayName(coach) {
   return (
-    [player?.first_name, player?.last_name].filter(Boolean).join(" ") ||
-    player?.username ||
-    "Player"
+    [coach?.first_name, coach?.last_name].filter(Boolean).join(" ") ||
+    coach?.username ||
+    "Coach"
   );
 }
 
-function getPlayerInitials(player) {
-  const name = getPlayerDisplayName(player).trim();
-  if (!name) return "P";
+function getCoachInitials(coach) {
+  const name = getCoachDisplayName(coach).trim();
+  if (!name) return "C";
 
   const parts = name.split(" ").filter(Boolean);
   if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
@@ -69,38 +72,36 @@ function getPlayerInitials(player) {
   return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
 }
 
-function AdminPlayersPage() {
+function AdminCoachesPage() {
   const table = useAdminTable({ initialFilters: { status: "" } });
   const [searchInput, setSearchInput] = useState(table.search);
   const debouncedSearch = useDebounce(searchInput, 400);
 
-  const [players, setPlayers] = useState([]);
+  const [coaches, setCoaches] = useState([]);
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
-  const [editingPlayerId, setEditingPlayerId] = useState(null);
-  const [editingPlayer, setEditingPlayer] = useState(null);
-  const [playerToToggle, setPlayerToToggle] = useState(null);
+  const [editingCoachId, setEditingCoachId] = useState(null);
+  const [editingCoach, setEditingCoach] = useState(null);
+  const [coachToToggle, setCoachToToggle] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [form, setForm] = useState(initialForm);
   const [formErrors, setFormErrors] = useState(initialFormErrors);
   const [pageError, setPageError] = useState("");
 
-  async function loadPlayers() {
+  async function loadCoaches() {
     try {
       setIsLoading(true);
       setPageError("");
-
-      const response = await getAdminPlayers(table.queryState);
+      const response = await getAdminCoachDirectory(table.queryState);
       const normalized = normalizeResponse(response);
-
-      setPlayers(normalized.results);
+      setCoaches(normalized.results);
       setCount(normalized.count);
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to load players."));
+      setPageError(getErrorMessage(err, "Failed to load coaches."));
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +112,7 @@ function AdminPlayersPage() {
   }, [debouncedSearch]);
 
   useEffect(() => {
-    loadPlayers();
+    loadCoaches();
   }, [
     table.queryState.page,
     table.queryState.page_size,
@@ -132,16 +133,9 @@ function AdminPlayersPage() {
     };
   }, [selectedImagePreviewUrl]);
 
-  const currentImageUrl = form.remove_image
-    ? null
-    : selectedImagePreviewUrl || editingPlayer?.image_url || null;
-
-  const hasExistingImage = Boolean(editingPlayer?.image_url);
-  const hasNewSelectedImage = Boolean(form.image);
-
   function resetForm() {
-    setEditingPlayerId(null);
-    setEditingPlayer(null);
+    setEditingCoachId(null);
+    setEditingCoach(null);
     setForm(initialForm);
     setFormErrors(initialFormErrors);
   }
@@ -152,19 +146,21 @@ function AdminPlayersPage() {
     resetForm();
   }
 
-  function openEditModal(player) {
-    setEditingPlayerId(player.id);
-    setEditingPlayer(player);
+  function openEditModal(coach) {
+    setEditingCoachId(coach.id);
+    setEditingCoach(coach);
     setFormErrors(initialFormErrors);
 
     setForm({
-      first_name: player.first_name || "",
-      last_name: player.last_name || "",
-      email: player.email || "",
-      phone_number: player.phone_number || "",
-      primary_position: player.primary_position || "",
-      player_rating: player.player_rating ?? "",
-      is_active: Boolean(player.is_active),
+      first_name: coach.first_name || "",
+      last_name: coach.last_name || "",
+      email: coach.email || "",
+      phone_number: coach.phone_number || "",
+      years_experience: coach.years_experience ?? "",
+      coaching_level: coach.coaching_level || "",
+      specialties: coach.specialties || "",
+      bio: coach.bio || "",
+      is_active: Boolean(coach.is_active),
       image: null,
       remove_image: false,
     });
@@ -189,13 +185,15 @@ function AdminPlayersPage() {
       return {
         ...prev,
         [name]: nextValue,
-        ...(type === "file" && nextValue ? { remove_image: false } : {}),
+        ...(type === "file" && nextValue
+          ? { remove_image: false }
+          : {}),
       };
     });
 
     setFormErrors((prev) => ({
       ...prev,
-      nonField: "",
+      nonField: prev.nonField,
       fields: {
         ...prev.fields,
         [name]: "",
@@ -221,21 +219,21 @@ function AdminPlayersPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!editingPlayerId) return;
+    if (!editingCoachId) return;
 
     try {
       setIsSaving(true);
       setFormErrors(initialFormErrors);
 
-      const payload = buildPlayerFormData({
+      const payload = buildCoachFormData({
         ...form,
-        player_rating: form.player_rating === "" ? null : Number(form.player_rating),
+        years_experience:
+          form.years_experience === "" ? null : Number(form.years_experience),
       });
 
-      await updateAdminPlayer(editingPlayerId, payload);
-
+      await updateAdminCoach(editingCoachId, payload);
       closeEditModal();
-      await loadPlayers();
+      await loadCoaches();
     } catch (err) {
       setFormErrors(normalizeApiErrors(err));
     } finally {
@@ -243,41 +241,31 @@ function AdminPlayersPage() {
     }
   }
 
-  function handleToggleClick(player) {
-    setPlayerToToggle(player);
-  }
-
-  function handleToggleCancel() {
-    setPlayerToToggle(null);
-  }
-
   async function handleToggleConfirm() {
-    if (!playerToToggle) return;
+    if (!coachToToggle) return;
 
     try {
       setIsStatusUpdating(true);
-
-      const payload = buildPlayerFormData({
-        is_active: !playerToToggle.is_active,
+      const payload = buildCoachFormData({
+        is_active: !coachToToggle.is_active,
       });
-
-      await updateAdminPlayer(playerToToggle.id, payload);
-
-      if (editingPlayerId === playerToToggle.id) {
-        setForm((prev) => ({
-          ...prev,
-          is_active: !playerToToggle.is_active,
-        }));
-      }
-
-      setPlayerToToggle(null);
-      await loadPlayers();
+      await updateAdminCoach(coachToToggle.id, payload);
+      setCoachToToggle(null);
+      await loadCoaches();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to update player status."));
+      setPageError(getErrorMessage(err, "Failed to update coach status."));
     } finally {
       setIsStatusUpdating(false);
     }
   }
+
+  const currentImageUrl =
+    form.remove_image
+      ? null
+      : selectedImagePreviewUrl || editingCoach?.image_url || null;
+
+  const hasExistingImage = Boolean(editingCoach?.image_url);
+  const hasNewSelectedImage = Boolean(form.image);
 
   return (
     <>
@@ -285,128 +273,108 @@ function AdminPlayersPage() {
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
         <AdminToolbar
-          left={
+          left={(
             <div className="ml-auto flex items-center gap-3">
               <input
                 type="text"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search by name, email, username, phone, or position"
+                placeholder="Search by name, email, phone or specialties"
                 className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
               />
-
               <select
                 value={table.filters.status}
                 onChange={(event) => table.updateFilter("status", event.target.value)}
                 className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
               >
-                <option value="">All players</option>
+                <option value="">All coaches</option>
                 <option value="active">Active only</option>
                 <option value="inactive">Inactive only</option>
               </select>
-
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                  <span className="text-sm font-semibold">#</span>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                    Players
-                  </p>
-                  <p className="text-sm font-semibold text-app-text">
-                    {isLoading ? "Loading players..." : `${count} player${count === 1 ? "" : "s"}`}
-                  </p>
-                </div>
-              </div>
             </div>
-          }
+          )}
         />
 
         <AdminSectionCard
-          title="Player Directory"
-          description="Manage registered academy players and keep player records up to date."
+          title="Coach Directory"
+          description="Manage registered coaches and keep profiles up to date."
           contentClassName="p-0"
         >
           <AdminTable
             columns={[
-              { key: "player", label: "Player" },
-              { key: "position", label: "Position" },
-              { key: "rating", label: "Rating" },
+              { key: "coach", label: "Coach" },
+              { key: "specialties", label: "Specialties" },
+              { key: "experience", label: "Experience" },
               { key: "status", label: "Status" },
               { key: "joined", label: "Joined" },
               { key: "actions", label: "Actions" },
             ]}
-            data={players}
+            data={coaches}
             isLoading={isLoading}
-            emptyTitle="No players found"
-            emptyDescription="Try adjusting the search or status filter."
+            emptyTitle="No coaches found"
+            emptyDescription="Try adjusting search or status filter."
             className="px-5 pb-5"
-            renderRow={(player) => (
+            renderRow={(coach) => (
               <tr
-                key={player.id}
+                key={coach.id}
                 className="border-b border-app-border text-app-text transition hover:bg-app-surface-2/40"
               >
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-3">
-                    {player.image_url ? (
+                    {coach.image_url ? (
                       <img
-                        src={player.image_url}
-                        alt={getPlayerDisplayName(player)}
+                        src={coach.image_url}
+                        alt={getCoachDisplayName(coach)}
                         className="h-11 w-11 rounded-2xl border border-app-border object-cover"
                       />
                     ) : (
                       <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-app-border bg-app-surface-2 text-xs font-bold text-app-text">
-                        {getPlayerInitials(player)}
+                        {getCoachInitials(coach)}
                       </div>
                     )}
 
                     <div className="min-w-0">
                       <p className="truncate font-medium text-app-text">
-                        {getPlayerDisplayName(player)}
+                        {getCoachDisplayName(coach)}
                       </p>
                       <p className="truncate text-xs text-app-text-muted">
-                        {player.email || "No email"}
+                        {coach.email || "No email"}
                       </p>
                     </div>
                   </div>
                 </td>
 
                 <td className="px-3 py-3">
-                  <div>
-                    <p className="text-sm text-app-text">
-                      {player.primary_position || "Not set"}
-                    </p>
-                    <p className="text-xs text-app-text-muted">
-                      {player.phone_number || "No phone"}
-                    </p>
-                  </div>
+                  <p className="max-w-[280px] truncate">
+                    {coach.specialties || "Not set"}
+                  </p>
                 </td>
 
                 <td className="px-3 py-3">
-                  {player.player_rating || "0.00"}
+                  {coach.years_experience
+                    ? `${coach.years_experience} yrs`
+                    : "Not set"}
                 </td>
 
                 <td className="px-3 py-3">
-                  <AdminStatusBadge label={player.is_active ? "Active" : "Inactive"} />
+                  <AdminStatusBadge label={coach.is_active ? "Active" : "Inactive"} />
                 </td>
 
                 <td className="px-3 py-3 text-app-text-muted">
-                  {formatDate(player.date_joined)}
+                  {formatDate(coach.date_joined)}
                 </td>
 
                 <td className="px-3 py-3">
                   <AdminRowActions>
-                    <Button size="sm" onClick={() => openEditModal(player)}>
+                    <Button size="sm" onClick={() => openEditModal(coach)}>
                       Edit
                     </Button>
-
                     <Button
                       size="sm"
-                      variant={player.is_active ? "danger-outline" : "outline"}
-                      onClick={() => handleToggleClick(player)}
+                      variant={coach.is_active ? "danger-outline" : "outline"}
+                      onClick={() => setCoachToToggle(coach)}
                     >
-                      {player.is_active ? "Deactivate" : "Reactivate"}
+                      {coach.is_active ? "Deactivate" : "Reactivate"}
                     </Button>
                   </AdminRowActions>
                 </td>
@@ -429,12 +397,12 @@ function AdminPlayersPage() {
         open={isEditModalOpen}
         onClose={closeEditModal}
         size="lg"
-        title="Edit Player"
-        description="Update player profile information, image, contact details, rating, and account status."
-        footer={
+        title="Edit Coach"
+        description="Update coach profile details, photo, and account status."
+        footer={(
           <div className="flex flex-col-reverse gap-3 border-t border-app-border pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-app-text-muted">
-              Changes are saved directly to this player account.
+              Changes are saved directly to this coach profile.
             </p>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -446,34 +414,33 @@ function AdminPlayersPage() {
               >
                 Cancel
               </Button>
-
               <Button
                 type="submit"
-                form="player-form"
+                form="coach-form"
                 loading={isSaving}
                 loadingText="Updating..."
               >
-                Update Player
+                Update Coach
               </Button>
             </div>
           </div>
-        }
+        )}
       >
-        <form id="player-form" onSubmit={handleSubmit} className="space-y-6">
+        <form id="coach-form" onSubmit={handleSubmit} className="space-y-6">
           <AdminFormAlert message={formErrors.nonField} />
 
-          {editingPlayer ? (
+          {editingCoach ? (
             <div className="rounded-3xl border border-app-border bg-app-surface-2/70 p-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 {currentImageUrl ? (
                   <img
                     src={currentImageUrl}
-                    alt={getPlayerDisplayName(editingPlayer)}
+                    alt={getCoachDisplayName(editingCoach)}
                     className="h-20 w-20 rounded-3xl border border-app-border object-cover shadow-sm"
                   />
                 ) : (
                   <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-app-border bg-app-card text-lg font-bold text-app-text">
-                    {getPlayerInitials(editingPlayer)}
+                    {getCoachInitials(editingCoach)}
                   </div>
                 )}
 
@@ -482,33 +449,24 @@ function AdminPlayersPage() {
                     Editing Profile
                   </p>
                   <h3 className="mt-1 truncate text-lg font-bold text-app-text">
-                    {getPlayerDisplayName(editingPlayer)}
+                    {getCoachDisplayName(editingCoach)}
                   </h3>
                   <p className="truncate text-sm text-app-text-muted">
-                    {editingPlayer.email || "No email provided"}
+                    {editingCoach.email || "No email provided"}
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="rounded-full border border-app-border bg-app-card px-3 py-1 text-xs font-medium text-app-text-soft">
-                      Joined {formatDate(editingPlayer.date_joined)}
+                      Joined {formatDate(editingCoach.date_joined)}
                     </span>
-
                     <span className="rounded-full border border-app-border bg-app-card px-3 py-1 text-xs font-medium text-app-text-soft">
-                      {editingPlayer.is_active ? "Currently active" : "Currently inactive"}
+                      {editingCoach.is_active ? "Currently active" : "Currently inactive"}
                     </span>
-
-                    {editingPlayer.primary_position ? (
-                      <span className="rounded-full border border-app-border bg-app-card px-3 py-1 text-xs font-medium text-app-text-soft">
-                        {editingPlayer.primary_position}
-                      </span>
-                    ) : null}
-
                     {hasNewSelectedImage ? (
                       <span className="rounded-full border border-brand-primary/30 bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary">
                         New image selected
                       </span>
                     ) : null}
-
                     {form.remove_image ? (
                       <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-medium text-red-300">
                         Image will be removed
@@ -527,7 +485,7 @@ function AdminPlayersPage() {
                   Basic Information
                 </h4>
                 <p className="mt-1 text-sm text-app-text-soft">
-                  Update player account details and contact information.
+                  Update coach account details visible across the admin system.
                 </p>
               </div>
 
@@ -539,7 +497,6 @@ function AdminPlayersPage() {
                   onChange={handleInputChange}
                   error={formErrors.fields.first_name}
                 />
-
                 <AdminInputField
                   label="Last Name"
                   name="last_name"
@@ -547,7 +504,6 @@ function AdminPlayersPage() {
                   onChange={handleInputChange}
                   error={formErrors.fields.last_name}
                 />
-
                 <AdminInputField
                   label="Email"
                   name="email"
@@ -556,7 +512,6 @@ function AdminPlayersPage() {
                   onChange={handleInputChange}
                   error={formErrors.fields.email}
                 />
-
                 <AdminInputField
                   label="Phone Number"
                   name="phone_number"
@@ -570,39 +525,48 @@ function AdminPlayersPage() {
             <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-5">
               <div className="mb-4">
                 <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-app-text-muted">
-                  Player Profile
+                  Coaching Profile
                 </h4>
                 <p className="mt-1 text-sm text-app-text-soft">
-                  Manage position, player rating, and account availability.
+                  Keep professional details complete so the directory stays useful.
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <AdminInputField
-                  label="Primary Position"
-                  name="primary_position"
-                  value={form.primary_position}
-                  onChange={handleInputChange}
-                  error={formErrors.fields.primary_position}
-                />
-
-                <AdminInputField
-                  label="Player Rating"
-                  name="player_rating"
+                  label="Years Experience"
+                  name="years_experience"
                   type="number"
-                  step="0.01"
-                  value={form.player_rating}
+                  value={form.years_experience}
                   onChange={handleInputChange}
-                  error={formErrors.fields.player_rating}
+                  error={formErrors.fields.years_experience}
+                />
+                <AdminInputField
+                  label="Coaching Level"
+                  name="coaching_level"
+                  value={form.coaching_level}
+                  onChange={handleInputChange}
+                  error={formErrors.fields.coaching_level}
                 />
 
                 <div className="md:col-span-2">
-                  <AdminCheckboxField
-                    label="Active"
-                    name="is_active"
-                    checked={form.is_active}
+                  <AdminInputField
+                    label="Specialties"
+                    name="specialties"
+                    value={form.specialties}
                     onChange={handleInputChange}
-                    error={formErrors.fields.is_active}
+                    error={formErrors.fields.specialties}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <AdminTextareaField
+                    label="Bio"
+                    name="bio"
+                    value={form.bio}
+                    onChange={handleInputChange}
+                    error={formErrors.fields.bio}
+                    rows={5}
                   />
                 </div>
               </div>
@@ -623,7 +587,7 @@ function AdminPlayersPage() {
                   {currentImageUrl ? (
                     <img
                       src={currentImageUrl}
-                      alt="Player preview"
+                      alt="Coach preview"
                       className="h-28 w-28 rounded-3xl border border-app-border object-cover shadow-sm"
                     />
                   ) : (
@@ -639,9 +603,8 @@ function AdminPlayersPage() {
                       Upload New Image
                     </label>
                     <p className="mt-1 text-xs text-app-text-muted">
-                      PNG, JPG, or WEBP works best for player profile photos.
+                      PNG, JPG, or WEBP works best for coach profile photos.
                     </p>
-
                     <input
                       type="file"
                       name="image"
@@ -649,7 +612,6 @@ function AdminPlayersPage() {
                       onChange={handleInputChange}
                       className="mt-3 block w-full text-sm text-app-text-muted file:mr-4 file:rounded-xl file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black hover:file:opacity-90"
                     />
-
                     {formErrors.fields.image ? (
                       <p className="mt-2 text-sm text-red-400">
                         {formErrors.fields.image}
@@ -658,7 +620,7 @@ function AdminPlayersPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    {(hasExistingImage || hasNewSelectedImage) && (
+                    {hasExistingImage || hasNewSelectedImage ? (
                       <Button
                         type="button"
                         variant="outline"
@@ -667,9 +629,9 @@ function AdminPlayersPage() {
                       >
                         Remove Image
                       </Button>
-                    )}
+                    ) : null}
 
-                    {form.remove_image && hasExistingImage && (
+                    {form.remove_image && hasExistingImage ? (
                       <Button
                         type="button"
                         variant="outline"
@@ -678,7 +640,22 @@ function AdminPlayersPage() {
                       >
                         Keep Current Image
                       </Button>
-                    )}
+                    ) : null}
+                  </div>
+
+                  <div className="grid gap-3">
+                    <AdminCheckboxField
+                      label="Remove profile image"
+                      name="remove_image"
+                      checked={form.remove_image}
+                      onChange={handleInputChange}
+                    />
+                    <AdminCheckboxField
+                      label="Active"
+                      name="is_active"
+                      checked={form.is_active}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -688,21 +665,21 @@ function AdminPlayersPage() {
       </AdminModal>
 
       <AdminConfirmDialog
-        open={Boolean(playerToToggle)}
-        title={playerToToggle?.is_active ? "Deactivate Player" : "Reactivate Player"}
+        open={Boolean(coachToToggle)}
+        title={coachToToggle?.is_active ? "Deactivate Coach" : "Reactivate Coach"}
         description={
-          playerToToggle
-            ? `${playerToToggle.is_active ? "Deactivate" : "Reactivate"} ${getPlayerDisplayName(playerToToggle)}?`
+          coachToToggle
+            ? `${coachToToggle.is_active ? "Deactivate" : "Reactivate"} ${getCoachDisplayName(coachToToggle)}?`
             : ""
         }
-        confirmLabel={playerToToggle?.is_active ? "Deactivate" : "Reactivate"}
+        confirmLabel={coachToToggle?.is_active ? "Deactivate" : "Reactivate"}
         cancelLabel="Cancel"
         onConfirm={handleToggleConfirm}
-        onCancel={handleToggleCancel}
+        onCancel={() => setCoachToToggle(null)}
         isLoading={isStatusUpdating}
       />
     </>
   );
 }
 
-export default AdminPlayersPage;
+export default AdminCoachesPage;

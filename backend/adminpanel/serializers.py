@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from accounts.models import User
+from accounts.models import User, PlayerProfile, CoachProfile
 from bookings.models import Booking
 from enquiries.models import Enquiry
 from training.models import TrainingProgram, TrainingSession
@@ -64,15 +64,21 @@ class AdminDashboardSerializer(serializers.Serializer):
 
 
 class AdminPlayerListSerializer(serializers.ModelSerializer):
-    age = serializers.SerializerMethodField()
-    preferred_foot = serializers.SerializerMethodField()
-    primary_position = serializers.SerializerMethodField()
-    player_rating = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
+    is_active = serializers.BooleanField(source="user.is_active", read_only=True)
+    date_joined = serializers.DateTimeField(source="user.date_joined", read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
-        model = User
+        model = PlayerProfile
         fields = [
             "id",
+            "user_id",
             "username",
             "first_name",
             "last_name",
@@ -84,42 +90,66 @@ class AdminPlayerListSerializer(serializers.ModelSerializer):
             "preferred_foot",
             "primary_position",
             "player_rating",
+            "image_url",
         ]
 
-    def _get_profile(self, obj):
-        try:
-            return obj.player_profile
-        except Exception:
-            return None
-
-    def get_age(self, obj):
-        profile = self._get_profile(obj)
-        return profile.age if profile else None
-
-    def get_preferred_foot(self, obj):
-        profile = self._get_profile(obj)
-        return profile.preferred_foot if profile else ""
-
-    def get_primary_position(self, obj):
-        profile = self._get_profile(obj)
-        return profile.primary_position if profile else ""
-
-    def get_player_rating(self, obj):
-        profile = self._get_profile(obj)
-        return profile.player_rating if profile else None
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image and hasattr(obj.image, "url"):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None
 
 
 class AdminPlayerUpdateSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source="user.first_name", required=False, allow_blank=True)
+    last_name = serializers.CharField(source="user.last_name", required=False, allow_blank=True)
+    email = serializers.EmailField(source="user.email", required=False)
+    phone_number = serializers.CharField(source="user.phone_number", required=False, allow_blank=True)
+    is_active = serializers.BooleanField(source="user.is_active", required=False)
+
+    primary_position = serializers.CharField(required=False, allow_blank=True)
+    player_rating = serializers.DecimalField(
+        required=False,
+        allow_null=True,
+        max_digits=4,
+        decimal_places=2,
+    )
+    image = serializers.ImageField(required=False, allow_null=True)
+    remove_image = serializers.BooleanField(write_only=True, required=False, default=False)
+
     class Meta:
-        model = User
+        model = PlayerProfile
         fields = [
             "first_name",
             "last_name",
             "email",
             "phone_number",
             "is_active",
+            "primary_position",
+            "player_rating",
+            "image",
+            "remove_image",
         ]
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        remove_image = validated_data.pop("remove_image", False)
+
+        user = instance.user
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if remove_image:
+            if instance.image:
+                instance.image.delete(save=False)
+            instance.image = None
+
+        instance.save()
+        return instance
 
 class AdminBookingManageSerializer(serializers.ModelSerializer):
     booked_by = serializers.SerializerMethodField()
@@ -299,3 +329,86 @@ class AdminCoachOptionSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         full_name = f"{obj.first_name} {obj.last_name}".strip()
         return full_name or obj.username
+
+
+class AdminCoachListSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
+    is_active = serializers.BooleanField(source="user.is_active", read_only=True)
+    date_joined = serializers.DateTimeField(source="user.date_joined", read_only=True)
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CoachProfile
+        fields = [
+            "id",
+            "user_id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "is_active",
+            "date_joined",
+            "years_experience",
+            "coaching_level",
+            "specialties",
+            "bio",
+            "image_url",
+        ]
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image and hasattr(obj.image, "url"):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None    
+    
+class AdminCoachUpdateSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source="user.first_name", required=False, allow_blank=True)
+    last_name = serializers.CharField(source="user.last_name", required=False, allow_blank=True)
+    email = serializers.EmailField(source="user.email", required=False)
+    phone_number = serializers.CharField(source="user.phone_number", required=False, allow_blank=True)
+    is_active = serializers.BooleanField(source="user.is_active", required=False)
+
+    image = serializers.ImageField(required=False, allow_null=True)
+    remove_image = serializers.BooleanField(write_only=True, required=False, default=False)
+
+    class Meta:
+        model = CoachProfile
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "is_active",
+            "years_experience",
+            "coaching_level",
+            "specialties",
+            "bio",
+            "image",
+            "remove_image",
+        ]
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        remove_image = validated_data.pop("remove_image", False)
+
+        user = instance.user
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if remove_image:
+            if instance.image:
+                instance.image.delete(save=False)
+            instance.image = None
+
+        instance.save()
+        return instance   

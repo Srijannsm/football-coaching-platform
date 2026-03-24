@@ -13,6 +13,8 @@ from .dashboard_views import (
     AdminEnquiryListView,
     AdminEnquiryDetailView,
     AdminCoachListView,
+    AdminCoachDirectoryListView,
+    AdminCoachDetailView,
 )
 
 urlpatterns = [
@@ -34,5 +36,7 @@ urlpatterns = [
     path("enquiries/", AdminEnquiryListView.as_view(), name="admin-enquiries"),
     path("enquiries/<int:pk>/", AdminEnquiryDetailView.as_view(), name="admin-enquiry-detail"),
     
-    path("coaches/", AdminCoachListView.as_view(), name="admin-coaches"),
+    # path("coaches/", AdminCoachListView.as_view(), name="admin-coaches"),
+    path("coaches/directory/", AdminCoachDirectoryListView.as_view(), name="admin-coach-directory"),
+    path("coaches/directory/<int:pk>/", AdminCoachDetailView.as_view(), name="admin-coach-detail"),
 ]

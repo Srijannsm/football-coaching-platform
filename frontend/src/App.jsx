@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import CoachesPage from "./pages/CoachesPage";
 import TrainingSessionsPage from "./pages/TrainingSessionsPage";
 import SessionDetailPage from "./pages/SessionDetailPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
@@ -16,6 +17,7 @@ import AdminRoute from "./auth/AdminRoute";
 import AdminShell from "./features/admin/components/layout/AdminShell";
 import AdminDashboardPage from "./features/admin/pages/AdminDashboardPage";
 import AdminPlayersPage from "./features/admin/pages/AdminPlayersPage";
+import AdminCoachesPage from "./features/admin/pages/AdminCoachesPage";
 import AdminProgramsPage from "./features/admin/pages/AdminProgramsPage";
 import AdminSessionsPage from "./features/admin/pages/AdminSessionsPage";
 import AdminBookingsPage from "./features/admin/pages/AdminBookingsPage";
@@ -27,6 +29,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/coaches" element={<CoachesPage />} />
           <Route path="/training-sessions" element={<TrainingSessionsPage />} />
           <Route path="/training-sessions/:id" element={<SessionDetailPage />} />
 
@@ -72,6 +75,7 @@ function App() {
           >
             <Route index element={<AdminDashboardPage />} />
             <Route path="players" element={<AdminPlayersPage />} />
+            <Route path="coaches" element={<AdminCoachesPage />} />
             <Route path="programs" element={<AdminProgramsPage />} />
             <Route path="sessions" element={<AdminSessionsPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />

@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Users,
+  UserCheck,
   ShieldCheck,
   CalendarRange,
   ClipboardList,
@@ -24,6 +25,7 @@ const navigationItems = [
     end: true,
   },
   { label: "Players", to: "/admin-dashboard/players", icon: Users },
+  { label: "Coaches", to: "/admin-dashboard/coaches", icon: UserCheck },
   { label: "Programs", to: "/admin-dashboard/programs", icon: ShieldCheck },
   { label: "Sessions", to: "/admin-dashboard/sessions", icon: CalendarRange },
   { label: "Bookings", to: "/admin-dashboard/bookings", icon: ClipboardList },

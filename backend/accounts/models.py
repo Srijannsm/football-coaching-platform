@@ -68,3 +68,20 @@ class PlayerProfile(models.Model):
 
     def __str__(self):
         return f"Player - {self.user.first_name} {self.user.last_name}"
+
+
+
+class CoachProfile(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="coach_profile"
+    )
+    image = models.ImageField(upload_to="coaches/", blank=True, null=True)
+    bio = models.TextField(blank=True)
+    years_experience = models.PositiveIntegerField(blank=True, null=True)
+    coaching_level = models.CharField(max_length=120, blank=True)
+    specialties = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Coach - {self.user.first_name} {self.user.last_name}"

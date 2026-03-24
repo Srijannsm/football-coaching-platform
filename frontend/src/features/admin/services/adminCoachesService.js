@@ -1,6 +1,6 @@
 import api from "../../../api/axios";
 
-export async function getAdminPlayers(queryState = {}) {
+export async function getAdminCoachDirectory(queryState = {}) {
   const params = {
     page: queryState.page,
     page_size: queryState.page_size,
@@ -13,28 +13,24 @@ export async function getAdminPlayers(queryState = {}) {
     params.is_active = false;
   }
 
-  const response = await api.get("/admin/players/", { params });
+  const response = await api.get("/admin/coaches/directory/", { params });
   return response.data;
 }
 
-export async function getAdminPlayer(playerId) {
-  const response = await api.get(`/admin/players/${playerId}/`);
-  return response.data;
-}
-
-export async function updateAdminPlayer(playerId, payload) {
-  const response = await api.patch(`/admin/players/${playerId}/`, payload, {
+export async function updateAdminCoach(coachId, payload) {
+  const response = await api.patch(`/admin/coaches/directory/${coachId}/`, payload, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 }
 
-export function buildPlayerFormData(values) {
+export function buildCoachFormData(values) {
   const formData = new FormData();
 
   Object.entries(values).forEach(([key, value]) => {
     if (value === undefined) return;
 
+    // Only send remove_image when user explicitly wants removal
     if (key === "remove_image") {
       if (value === true) {
         formData.append("remove_image", "true");
@@ -42,6 +38,7 @@ export function buildPlayerFormData(values) {
       return;
     }
 
+    // Never send empty image value
     if (key === "image") {
       if (value instanceof File) {
         formData.append("image", value);
@@ -49,6 +46,7 @@ export function buildPlayerFormData(values) {
       return;
     }
 
+    // Handle nullable numeric/text fields safely
     if (value === null) {
       formData.append(key, "");
       return;

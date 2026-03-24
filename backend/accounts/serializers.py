@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import PlayerProfile
+from .models import PlayerProfile, CoachProfile
 
 User = get_user_model()
 
@@ -124,6 +124,7 @@ class PlayerProfileSerializer(serializers.ModelSerializer):
 class MeSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     player_profile_id = serializers.SerializerMethodField()
+    coach_profile_id = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -137,6 +138,7 @@ class MeSerializer(serializers.ModelSerializer):
             "full_name",
             "role",
             "player_profile_id",
+            "coach_profile_id",
         ]
 
     def get_full_name(self, obj):
@@ -146,6 +148,11 @@ class MeSerializer(serializers.ModelSerializer):
     def get_player_profile_id(self, obj):
         if hasattr(obj, "player_profile"):
             return obj.player_profile.id
+        return None
+    
+    def get_coach_profile_id(self, obj):
+        if hasattr(obj, "coach_profile"):
+            return obj.coach_profile.id
         return None
 
 
@@ -237,3 +244,42 @@ class PlayerProfileUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class CoachProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
+    full_name = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CoachProfile
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "full_name",
+            "email",
+            "phone_number",
+            "bio",
+            "years_experience",
+            "coaching_level",
+            "specialties",
+            "image",
+            "image_url",
+            "updated_at",
+        ]
+
+    def get_full_name(self, obj):
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return full_name or obj.user.username
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image and hasattr(obj.image, "url"):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None    

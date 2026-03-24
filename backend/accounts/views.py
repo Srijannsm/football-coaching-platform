@@ -7,8 +7,10 @@ from .serializers import (
     PlayerRegisterSerializer,
     PlayerProfileSerializer,
     MeSerializer,
-    PlayerProfileUpdateSerializer,
+    PlayerProfileUpdateSerializer, 
+    CoachProfileSerializer,
 )
+from .models import CoachProfile
 
 
 
@@ -57,3 +59,17 @@ class PlayerProfileDetailUpdateView(generics.RetrieveUpdateAPIView):
             raise NotFound("Player profile does not exist.")
 
         return user.player_profile
+    
+class CoachProfileListView(generics.ListAPIView):
+    serializer_class = CoachProfileSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return (
+            CoachProfile.objects.select_related("user")
+            .filter(
+                user__role="coach",
+                user__is_active=True,
+            )
+            .order_by("user__first_name", "user__last_name", "user__username")
+        )    
