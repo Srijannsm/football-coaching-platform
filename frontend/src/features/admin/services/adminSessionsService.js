@@ -39,6 +39,6 @@ export async function deleteAdminSession(sessionId) {
 }
 
 export async function getAdminCoaches() {
-  const response = await api.get("/admin/coaches/");
+  const response = await api.get("/admin/coaches/directory/");
   return response.data;
 }

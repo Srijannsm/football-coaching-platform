@@ -4,11 +4,8 @@ import {
   MessageSquareMore,
   Users,
 } from "lucide-react";
-import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
 import AdminPageHeader from "../components/layout/AdminPageHeader";
-// import AdminToolbar from "../components/ui/AdminToolbar";
-import AdminHeroSummary from "../components/dashboard/AdminHeroSummary";
 import AdminStatCard from "../components/ui/AdminStatCard";
 import RecentBookingsCard from "../components/dashboard/RecentBookingsCard";
 import RecentEnquiriesCard from "../components/dashboard/RecentEnquiriesCard";
@@ -19,7 +16,7 @@ import AdminSkeleton from "../components/ui/AdminSkeleton";
 import { useAdminDashboard } from "../hooks/useAdminDashboard";
 
 function AdminDashboardPage() {
-  const { data, isLoading, error, refetch } = useAdminDashboard();
+  const { data, isLoading, error } = useAdminDashboard();
 
   const stats = data?.stats || {};
   const recentBookings = data?.recent_bookings || [];
@@ -64,6 +61,7 @@ function AdminDashboardPage() {
       /> */}
 
       {error ? <Alert variant="error">{error}</Alert> : null}
+      
 
       {/* <AdminToolbar
         left={

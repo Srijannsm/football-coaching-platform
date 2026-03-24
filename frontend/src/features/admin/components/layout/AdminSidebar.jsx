@@ -6,11 +6,8 @@ import {
   CalendarRange,
   ClipboardList,
   MessageSquareMore,
-  ChevronLeft,
-  ChevronRight,
   Home,
   LogOut,
-  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth";
@@ -36,18 +33,9 @@ const navigationItems = [
   },
 ];
 
-function SidebarBody({ collapsed = false, onLinkClick, mobile = false }) {
+function SidebarBody({ collapsed = false, onLinkClick }) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const {
-    toggleSidebarCollapsed,
-    closeMobileSidebar,
-  } = useAdminSidebar();
-
-  const displayName =
-    user?.first_name?.trim() || user?.username || user?.email || "Admin";
-
-  const userInitial = displayName.slice(0, 1).toUpperCase();
+  const { logout } = useAuth();
 
   function handleNavigate(path) {
     navigate(path);
@@ -234,10 +222,7 @@ function AdminSidebar() {
           />
 
           <aside className="relative h-full w-[88vw] max-w-sm border-r border-app-border bg-app-card/95 shadow-2xl backdrop-blur-xl">
-            <SidebarBody
-              mobile
-              onLinkClick={closeMobileSidebar}
-            />
+             <SidebarBody onLinkClick={closeMobileSidebar} />
           </aside>
         </div>
       ) : null}

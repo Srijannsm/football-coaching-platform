@@ -1,6 +1,5 @@
-import { createContext, useCallback, useMemo, useState } from "react";
-
-export const AdminLayoutContext = createContext(null);
+import { useCallback, useMemo, useState } from "react";
+import { AdminLayoutContext } from "./admin-layout-context";
 
 export function AdminLayoutProvider({ children }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

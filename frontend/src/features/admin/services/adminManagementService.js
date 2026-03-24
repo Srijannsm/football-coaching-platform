@@ -13,7 +13,7 @@ export async function updateAdminPlayer(playerId, payload) {
 
 // ---------- Coaches ----------
 export async function getAdminCoaches() {
-  const response = await api.get("/admin/coaches/");
+  const response = await api.get("/admin/coaches/directory/");
   return response.data;
 }
 

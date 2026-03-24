@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AdminLayoutContext } from "../../../context/AdminLayoutContext";
+import { AdminLayoutContext } from "../../../context/admin-layout-context";
 
 export function useAdminSidebar() {
   const context = useContext(AdminLayoutContext);
