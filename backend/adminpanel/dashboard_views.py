@@ -218,8 +218,13 @@ class AdminBookingListView(generics.ListAPIView):
         ).order_by("-booked_at")
 
         status_filter = self.request.query_params.get("status")
+        player_id = self.request.query_params.get("player_id")
+        
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+            
+        if player_id:
+            queryset = queryset.filter(player_id=player_id)    
 
         return queryset
 

@@ -9,6 +9,7 @@ import AdminTable from "../components/table/AdminTable";
 import AdminPagination from "../components/table/AdminPagination";
 import AdminRowActions from "../components/table/AdminRowActions";
 import AdminStatusBadge from "../components/ui/AdminStatusBadge";
+import AdminPlayerBookingsDetailsView from "../components/ui/AdminPlayerBookingsDetailsView";
 import AdminFormAlert from "../components/form/AdminFormAlert";
 import AdminInputField from "../components/form/AdminInputField";
 import AdminCheckboxField from "../components/form/AdminCheckboxField";
@@ -21,6 +22,9 @@ import {
   getAdminPlayers,
   updateAdminPlayer,
 } from "../services/adminPlayersService";
+import {
+  getAdminBookings,
+} from "../services/adminBookingsService";
 import { useDebounce } from "../hooks/useDebounce";
 
 const initialForm = {
@@ -79,11 +83,16 @@ function AdminPlayersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [isBookingsLoading, setIsBookingsLoading] = useState(false);
 
   const [editingPlayerId, setEditingPlayerId] = useState(null);
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [playerToToggle, setPlayerToToggle] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isBookingsModalOpen, setIsBookingsModalOpen] = useState(false);
+  const [selectedPlayerForBookings, setSelectedPlayerForBookings] = useState(null);
+  const [selectedPlayerBookings, setSelectedPlayerBookings] = useState([]);
+
 
   const [form, setForm] = useState(initialForm);
   const [formErrors, setFormErrors] = useState(initialFormErrors);
@@ -279,6 +288,33 @@ function AdminPlayersPage() {
     }
   }
 
+
+
+  async function handleOpenBookingsModal(player) {
+    setSelectedPlayerForBookings(player);
+    setSelectedPlayerBookings([]);
+    setIsBookingsModalOpen(true);
+    setIsBookingsLoading(true);
+
+    try {
+      const response = await getAdminBookings({ player_id: player.id });
+      const bookings = Array.isArray(response) ? response : response?.results || [];
+      setSelectedPlayerBookings(bookings);
+    } catch (err) {
+      setPageError(getErrorMessage(err, "Failed to load player bookings."));
+    } finally {
+      setIsBookingsLoading(false);
+    }
+  }
+
+  function handleCloseBookingsModal() {
+    if (isBookingsLoading) return;
+    setIsBookingsModalOpen(false);
+    setSelectedPlayerForBookings(null);
+    setSelectedPlayerBookings([]);
+  }
+
+
   return (
     <>
       <div className="space-y-6">
@@ -400,6 +436,15 @@ function AdminPlayersPage() {
                     <Button size="sm" onClick={() => openEditModal(player)}>
                       Edit
                     </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenBookingsModal(player)}
+                    >
+                      View Bookings
+                    </Button>
+
 
                     <Button
                       size="sm"
@@ -685,6 +730,40 @@ function AdminPlayersPage() {
             </section>
           </div>
         </form>
+      </AdminModal>
+
+      <AdminModal
+        open={isBookingsModalOpen}
+        onClose={handleCloseBookingsModal}
+        size="xl"
+        // title="Player Bookings"
+        description={
+          selectedPlayerForBookings
+            ? `Viewing bookings for ${getPlayerDisplayName(selectedPlayerForBookings)}.`
+            : "Viewing player bookings."
+        }
+        footer={
+          <div className="flex items-center justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseBookingsModal}
+              disabled={isBookingsLoading}
+            >
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <AdminPlayerBookingsDetailsView
+          playerName={
+            selectedPlayerForBookings
+              ? getPlayerDisplayName(selectedPlayerForBookings)
+              : ""
+          }
+          bookings={selectedPlayerBookings}
+          isLoading={isBookingsLoading}
+        />
       </AdminModal>
 
       <AdminConfirmDialog
