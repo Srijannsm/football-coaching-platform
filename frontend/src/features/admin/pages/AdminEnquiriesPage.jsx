@@ -245,7 +245,7 @@ function AdminEnquiriesPage() {
             isLoading={isLoading}
             emptyTitle="No enquiries found"
             emptyDescription="New website enquiries will appear here."
-            className="px-5 pb-5"
+            className="pb-5"
             renderRow={(enquiry) => (
               <tr
                 key={enquiry.id}

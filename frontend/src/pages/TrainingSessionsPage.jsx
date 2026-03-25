@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getTrainingSessions } from "../services/trainingSessionService";
 import { createBooking } from "../services/bookingService";
 import { getCurrentUser } from "../services/authService";
@@ -18,8 +18,9 @@ import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
 function SessionInfoRow({ label, value, bordered = true }) {
   return (
     <div
-      className={`flex items-center justify-between gap-4 ${bordered ? "border-b border-app-border pb-3" : ""
-        }`}
+      className={`flex items-center justify-between gap-4 ${
+        bordered ? "border-b border-app-border pb-3" : ""
+      }`}
     >
       <span className="text-sm font-medium text-app-text-muted">{label}</span>
       <span className="text-right text-sm font-semibold text-app-text">
@@ -54,6 +55,8 @@ function TrainingSessionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const isAdmin = user?.role === "admin";
 
   async function fetchSessions() {
     try {
@@ -119,7 +122,7 @@ function TrainingSessionsPage() {
       setBookingError("");
       setBookingSessionId(sessionId);
 
-      await createBooking( sessionId );
+      await createBooking(sessionId);
       showToast("Booking successful.", "success");
 
       await fetchSessions();
@@ -151,6 +154,15 @@ function TrainingSessionsPage() {
     } finally {
       setBookingSessionId(null);
     }
+  }
+
+  function handleEditSessionFromFrontend(sessionId) {
+    navigate("/admin-dashboard/sessions", {
+      state: {
+        highlightSessionId: sessionId,
+        highlightNonce: Date.now(),
+      },
+    });
   }
 
   function handleClearFilters() {
@@ -328,7 +340,7 @@ function TrainingSessionsPage() {
             }
           />
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-6">
             {filteredSessions.map((session) => {
               const isBookingThisSession = bookingSessionId === session.id;
               const isFull = session.is_full;
@@ -337,105 +349,167 @@ function TrainingSessionsPage() {
               const badgeStatus = isAlreadyBooked
                 ? "booked"
                 : isFull
-                  ? "full"
-                  : "open";
+                ? "full"
+                : "open";
 
               return (
                 <Card
                   key={session.id}
-                  className="transition duration-200 hover:-translate-y-1"
+                  className="overflow-hidden transition duration-200 hover:-translate-y-1"
                 >
-                  <CardContent className="p-6">
-                    {session.hero_image ? (
-                      <div className="mb-5 overflow-hidden rounded-[1.25rem]">
-                        <img
-                          src={session.hero_image}
-                          alt={session.program_title || "Training session"}
-                          className="h-48 w-full object-cover transition duration-300 hover:scale-105"
-                        />
-                      </div>
-                    ) : (
-                      <div className="mb-5 flex h-48 w-full items-center justify-center rounded-[1.25rem] border border-app-border bg-app-surface-2 text-sm text-app-text-muted">
-                        No session image
-                      </div>
-                    )}
-
-                    <div className="mb-5 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="mb-2 inline-flex rounded-full bg-brand-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-app-text">
-                          {session.session_type || "Training"}
-                        </p>
-
-                        <h2 className="text-2xl font-bold tracking-tight text-app-text">
-                          {session.program_title || "Training Session"}
-                        </h2>
-                      </div>
-
-                      <StatusBadge status={badgeStatus} />
-                    </div>
-
-                    <div className="space-y-3">
-                      <SessionInfoRow
-                        label="Coach"
-                        value={session.coach_full_name || "Not assigned"}
-                      />
-                      <SessionInfoRow
-                        label="Date"
-                        value={formatDate(session.session_date)}
-                      />
-                      <SessionInfoRow
-                        label="Time"
-                        value={formatSessionTimeRange(
-                          session.start_time,
-                          session.end_time
+                  <CardContent className="p-0">
+                    <div className="flex flex-col lg:flex-row">
+                      {/* <div className="lg:w-[320px] lg:min-w-[320px]">
+                        {session.hero_image ? (
+                          <img
+                            src={session.hero_image}
+                            alt={session.program_title || "Training session"}
+                            className="h-64 w-full object-cover lg:h-full"
+                          />
+                        ) : (
+                          <div className="flex h-64 w-full items-center justify-center border-b border-app-border bg-app-surface-2 text-sm text-app-text-muted lg:h-full lg:border-b-0 lg:border-r">
+                            No session image
+                          </div>
                         )}
-                      />
-                      <SessionInfoRow
-                        label="Location"
-                        value={session.location || "Not set"}
-                      />
-                      <SessionInfoRow
-                        label="Price"
-                        value={`Rs. ${session.price}`}
-                      />
-                      <SessionInfoRow
-                        label="Available Slots"
-                        value={session.available_slots}
-                        bordered={false}
-                      />
-                    </div>
+                      </div> */}
 
-                    <div className="mt-6 flex gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate(`/training-sessions/${session.id}`)}
-                        className="w-full"
-                      >
-                        View Details
-                      </Button>
+                      <div className="flex flex-1 flex-col p-6 lg:p-1">
+                        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="max-w-3xl">
+                            <p className="mb-3 inline-flex rounded-full bg-brand-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-app-text">
+                              {session.session_type
+                                ? session.session_type.replaceAll("_", " ")
+                                : "Training"}
+                            </p>
 
-                      <Button
-                        type="button"
-                        className="w-full"
-                        disabled={isAlreadyBooked || isFull || isBookingThisSession}
-                        variant={
-                          isAlreadyBooked || isFull || isBookingThisSession
-                            ? "secondary"
-                            : "primary"
-                        }
-                        onClick={() => handleBookSession(session.id)}
-                      >
-                        {isAlreadyBooked
-                          ? "Already Booked"
-                          : isFull
-                            ? "Session Full"
-                            : isBookingThisSession
-                              ? "Booking..."
-                              : isAuthenticated
-                                ? "Book Session"
-                                : "Login to Book"}
-                      </Button>
+                            <h2 className="text-2xl font-bold tracking-tight text-app-text lg:text-3xl">
+                              {session.program_title || "Training Session"}
+                            </h2>
+
+                            <p className="mt-2 text-sm text-app-text-soft">
+                              Train with{" "}
+                              <span className="font-semibold text-app-text">
+                                {session.coach_full_name || "Not assigned"}
+                              </span>{" "}
+                              at{" "}
+                              <span className="font-semibold text-app-text">
+                                {session.location || "Not set"}
+                              </span>
+                              .
+                            </p>
+                          </div>
+
+                          <div className="shrink-0">
+                            <StatusBadge status={badgeStatus} />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                          <div className="rounded-2xl border border-app-border bg-app-surface-2 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-app-text-muted">
+                              Date
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-app-text">
+                              {formatDate(session.session_date)}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-app-border bg-app-surface-2 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-app-text-muted">
+                              Time
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-app-text">
+                              {formatSessionTimeRange(
+                                session.start_time,
+                                session.end_time
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-app-border bg-app-surface-2 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-app-text-muted">
+                              Price
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-app-text">
+                              Rs. {session.price}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* <div className="mt-5 grid gap-3 md:grid-cols-2">
+                          <SessionInfoRow
+                            label="Coach"
+                            value={session.coach_full_name || "Not assigned"}
+                          />
+                          <SessionInfoRow
+                            label="Location"
+                            value={session.location || "Not set"}
+                          />
+                          <SessionInfoRow
+                            label="Available Slots"
+                            value={session.available_slots}
+                          />
+                          <SessionInfoRow
+                            label="Status"
+                            value={
+                              isAlreadyBooked
+                                ? "Already booked"
+                                : isFull
+                                ? "Full"
+                                : "Open"
+                            }
+                            bordered={false}
+                          />
+                        </div> */}
+
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                          {isAdmin ? (
+                            <Button
+                              type="button"
+                              onClick={() => handleEditSessionFromFrontend(session.id)}
+                            >
+                              Edit Session
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() =>
+                                  navigate(`/training-sessions/${session.id}`)
+                                }
+                                className="sm:min-w-[160px]"
+                              >
+                                View Details
+                              </Button>
+
+                              <Button
+                                type="button"
+                                disabled={
+                                  isAlreadyBooked || isFull || isBookingThisSession
+                                }
+                                variant={
+                                  isAlreadyBooked || isFull || isBookingThisSession
+                                    ? "secondary"
+                                    : "primary"
+                                }
+                                onClick={() => handleBookSession(session.id)}
+                                className="sm:min-w-[180px]"
+                              >
+                                {isAlreadyBooked
+                                  ? "Already Booked"
+                                  : isFull
+                                  ? "Session Full"
+                                  : isBookingThisSession
+                                  ? "Booking..."
+                                  : isAuthenticated
+                                  ? "Book Session"
+                                  : "Login to Book"}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

@@ -193,3 +193,13 @@ a {
     color 0.25s ease,
     border-color 0.25s ease;
 }
+
+@keyframes flash-highlight {
+  0% { background-color: rgba(183, 136, 18, 0.25); }
+  50% { background-color: transparent; }
+  100% { background-color: rgba(183, 136, 18, 0.25); }
+}
+
+.flash-highlight {
+  animation: flash-highlight 1.2s ease-in-out infinite;
+}

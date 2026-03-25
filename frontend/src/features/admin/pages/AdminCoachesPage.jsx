@@ -313,7 +313,7 @@ function AdminCoachesPage() {
             isLoading={isLoading}
             emptyTitle="No coaches found"
             emptyDescription="Try adjusting search or status filter."
-            className="px-5 pb-5"
+            className="pb-5"
             renderRow={(coach) => (
               <tr
                 key={coach.id}

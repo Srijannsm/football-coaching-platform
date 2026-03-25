@@ -206,7 +206,7 @@ function AdminBookingsPage() {
             isLoading={isLoading}
             emptyTitle="No bookings found"
             emptyDescription="Bookings will appear here once players start reserving sessions."
-            className="px-5 pb-5"
+            className="pb-5"
             renderRow={(booking) => {
               const isUpdatingThisRow = isStatusUpdatingId === booking.id;
               const currentStatus = booking.status || "pending";

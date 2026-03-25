@@ -341,7 +341,7 @@ function AdminPlayersPage() {
             isLoading={isLoading}
             emptyTitle="No players found"
             emptyDescription="Try adjusting the search or status filter."
-            className="px-5 pb-5"
+            className="pb-5"
             renderRow={(player) => (
               <tr
                 key={player.id}

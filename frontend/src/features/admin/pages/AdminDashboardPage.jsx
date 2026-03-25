@@ -2,18 +2,39 @@ import {
   CalendarRange,
   ClipboardList,
   MessageSquareMore,
+  TrendingUp,
   Users,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import Alert from "../../../components/ui/Alert";
+import Button from "../../../components/ui/Button";
 import AdminPageHeader from "../components/layout/AdminPageHeader";
 import AdminStatCard from "../components/ui/AdminStatCard";
 import RecentBookingsCard from "../components/dashboard/RecentBookingsCard";
 import RecentEnquiriesCard from "../components/dashboard/RecentEnquiriesCard";
 import UpcomingSessionsCard from "../components/dashboard/UpcomingSessionsCard";
 import QuickActionsCard from "../components/dashboard/QuickActionsCard";
-import AdminSectionCard from "../components/ui/AdminSectionCard";
 import AdminSkeleton from "../components/ui/AdminSkeleton";
+import AdminCard from "../components/ui/AdminCard";
 import { useAdminDashboard } from "../hooks/useAdminDashboard";
+
+function OverviewChip({ label, value, tone = "default" }) {
+  const toneMap = {
+    default: "border-app-border bg-app-surface-2 text-app-text",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    warning: "border-amber-200 bg-amber-50 text-amber-700",
+    info: "border-blue-200 bg-blue-50 text-blue-700",
+  };
+
+  return (
+    <div className={`rounded-2xl border px-4 py-3 ${toneMap[tone]}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] opacity-70">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-bold">{value}</p>
+    </div>
+  );
+}
 
 function AdminDashboardPage() {
   const { data, isLoading, error } = useAdminDashboard();
@@ -21,28 +42,52 @@ function AdminDashboardPage() {
   const stats = data?.stats || {};
   const recentBookings = data?.recent_bookings || [];
   const recentEnquiries = data?.recent_enquiries || [];
-  const upcomingSessions = data?.upcoming_sessions || [];
+  const upcomingSessions = data?.upcoming_sessions_preview || [];
+
+  // ✅ Centralized stat config (NO duplication)
+  const statItems = [
+    {
+      title: "Total Players",
+      value: stats.total_players,
+      helperText: "Registered academy accounts",
+      icon: Users,
+      accent: "yellow",
+    },
+    {
+      title: "Upcoming Sessions",
+      value: stats.upcoming_sessions,
+      helperText: "Published training sessions",
+      icon: CalendarRange,
+      accent: "blue",
+    },
+    {
+      title: "Total Bookings",
+      value: stats.confirmed_bookings,
+      helperText: "Bookings across programs",
+      icon: ClipboardList,
+      accent: "emerald",
+    },
+    {
+      title: "New Enquiries",
+      value: stats.new_enquiries,
+      helperText: "Leads waiting for action",
+      icon: MessageSquareMore,
+      accent: "purple",
+    },
+  ];
+
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader
-          title="Admin Dashboard"
-          description="Monitor academy activity, player growth, and day-to-day operations from one place."
-        />
+        <AdminPageHeader title="Admin Dashboard" />
 
-        <AdminSkeleton className="h-44 w-full rounded-3xl" />
+        <AdminSkeleton className="h-52 w-full rounded-3xl" />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <AdminSkeleton className="h-36 w-full rounded-3xl" />
-          <AdminSkeleton className="h-36 w-full rounded-3xl" />
-          <AdminSkeleton className="h-36 w-full rounded-3xl" />
-          <AdminSkeleton className="h-36 w-full rounded-3xl" />
-        </div>
-
-        <div className="grid gap-6 xl:grid-cols-2">
-          <AdminSkeleton className="h-80 w-full rounded-3xl" />
-          <AdminSkeleton className="h-80 w-full rounded-3xl" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <AdminSkeleton key={i} className="h-36 w-full rounded-3xl" />
+          ))}
         </div>
       </div>
     );
@@ -50,115 +95,50 @@ function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* <AdminPageHeader
+      <AdminPageHeader
         title="Admin Dashboard"
-        description="Monitor academy activity, player growth, and day-to-day operations from one place."
+        description="Monitor academy activity, player growth, bookings, enquiries, and daily session operations."
         actions={
-          <Button variant="outline" onClick={refetch}>
-            Refresh Overview
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to="/admin-dashboard/sessions">
+              <Button variant="outline">Manage Sessions</Button>
+            </Link>
+            <Link to="/admin-dashboard/enquiries">
+              <Button>Review Enquiries</Button>
+            </Link>
+          </div>
         }
-      /> */}
+      />
 
-      {error ? <Alert variant="error">{error}</Alert> : null}
-      
+      {error && <Alert variant="error">{error}</Alert>}
 
-      {/* <AdminToolbar
-        left={
-          <span className="text-sm text-app-text-muted">
-            Central overview of players, sessions, bookings, and enquiries
-          </span>
-        }
-        right={
-          <Button onClick={refetch}>Sync Latest Data</Button>
-        }
-      /> */}
 
-      {/* <AdminHeroSummary
-        title="Your academy operations are under control."
-        description="Track registrations, bookings, enquiries, and session planning with a cleaner SaaS-style management workspace."
-        actions={
-          <Button onClick={refetch}>Refresh Dashboard</Button>
-        }
-      /> */}
-
+      {/* ✅ Stats */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminStatCard
-          title="Total Players"
-          value={stats.total_players ?? 0}
-          helperText="Registered academy accounts"
-          icon={Users}
-          accent="yellow"
-        />
-
-        <AdminStatCard
-          title="Upcoming Sessions"
-          value={stats.upcoming_sessions ?? 0}
-          helperText="Published training sessions"
-          icon={CalendarRange}
-          accent="blue"
-        />
-
-        <AdminStatCard
-          title="Total Bookings"
-          value={stats.confirmed_bookings ?? 0}
-          helperText="Bookings across programs"
-          icon={ClipboardList}
-          accent="emerald"
-        />
-
-        <AdminStatCard
-          title="New Enquiries"
-          value={stats.new_enquiries ?? 0}
-          helperText="Leads waiting for action"
-          icon={MessageSquareMore}
-          accent="purple"
-        />
+        {statItems.map((item) => (
+          <AdminStatCard
+            key={item.title}
+            title={item.title}
+            value={item.value ?? 0}
+            helperText={item.helperText}
+            icon={item.icon}
+            accent={item.accent}
+          />
+        ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <RecentBookingsCard bookings={recentBookings} />
-        <RecentEnquiriesCard enquiries={recentEnquiries} />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <UpcomingSessionsCard sessions={upcomingSessions} />
-        <QuickActionsCard />
-      </div>
-
-      <AdminSectionCard
-        title="Dashboard Notes"
-        description="Reserved for future reporting, analytics, and AI-powered insights."
-      >
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-app-border bg-app-surface-2 px-4 py-4">
-            <p className="text-sm font-semibold text-app-text">
-              Operations
-            </p>
-            <p className="mt-2 text-sm text-app-text-muted">
-              Keep published sessions accurate and review booking activity frequently.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-app-border bg-app-surface-2 px-4 py-4">
-            <p className="text-sm font-semibold text-app-text">
-              Growth
-            </p>
-            <p className="mt-2 text-sm text-app-text-muted">
-              Watch new enquiries and player signups to improve conversion.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-app-border bg-app-surface-2 px-4 py-4">
-            <p className="text-sm font-semibold text-app-text">
-              Future AI
-            </p>
-            <p className="mt-2 text-sm text-app-text-muted">
-              This space can later show trends, lead quality signals, and session recommendations.
-            </p>
-          </div>
+      {/* ✅ Activity */}
+      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+        <div className="space-y-6">
+          <RecentBookingsCard bookings={recentBookings} />
+          <UpcomingSessionsCard sessions={upcomingSessions} />
         </div>
-      </AdminSectionCard>
+
+        <div className="space-y-6">
+          <RecentEnquiriesCard enquiries={recentEnquiries} />
+          <QuickActionsCard />
+        </div>
+      </div>
     </div>
   );
 }

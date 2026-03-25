@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
 import { formatDate } from "../../../utils/formatDate";
@@ -64,6 +65,8 @@ function formatProgramTypeLabel(sessionType) {
 }
 
 function AdminSessionsPage() {
+  const location = useLocation();
+
   const [sessions, setSessions] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [coaches, setCoaches] = useState([]);
@@ -79,6 +82,10 @@ function AdminSessionsPage() {
   const [form, setForm] = useState(initialForm);
   const [formErrors, setFormErrors] = useState(initialFormErrors);
   const [pageError, setPageError] = useState("");
+  const [highlightedSessionId, setHighlightedSessionId] = useState(null);
+
+  const rowRefs = useRef({});
+  const handledHighlightKeyRef = useRef(null);
 
   const selectedProgram = useMemo(
     () => programs.find((item) => String(item.id) === String(form.program)),
@@ -113,6 +120,31 @@ function AdminSessionsPage() {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    const highlightSessionId = location.state?.highlightSessionId;
+
+    if (!highlightSessionId || !sessions.length) return;
+
+    const matchedSession = sessions.find(
+      (session) => String(session.id) === String(highlightSessionId)
+    );
+
+    if (!matchedSession) return;
+
+    setHighlightedSessionId(matchedSession.id);
+
+    const rowElement = rowRefs.current[matchedSession.id];
+    if (rowElement) {
+      rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    const timeout = setTimeout(() => {
+      setHighlightedSessionId(null);
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [location.state, sessions]);
 
   function resetForm() {
     setEditingSessionId(null);
@@ -282,12 +314,11 @@ function AdminSessionsPage() {
   return (
     <>
       <div className="space-y-6">
-
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
         <AdminToolbar
           left={
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="ml-auto flex items-center gap-3">
               <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
                   <span className="text-sm font-semibold">#</span>
@@ -328,21 +359,15 @@ function AdminSessionsPage() {
           }
         />
 
-        <AdminPageHeader
-          actions={
-            <div className="flex items-center gap-3">
-              {/* <Button variant="outline" onClick={() => loadInitialData()}>
-                Refresh
-              </Button> */}
-              <Button onClick={openCreateModal}>Add New Session</Button>
-            </div>
-          }
-        />
-
         <AdminSectionCard
           title="Session List"
           description="Review upcoming and past training sessions."
           contentClassName="p-0"
+          actions={
+            <div className="flex items-center gap-3">
+              <Button onClick={openCreateModal}>Add New Session</Button>
+            </div>
+          }
         >
           <AdminTable
             columns={[
@@ -356,56 +381,67 @@ function AdminSessionsPage() {
             isLoading={isLoading}
             emptyTitle="No sessions found"
             emptyDescription="Create your first session to start scheduling training."
-            className="px-5 pb-5"
-            renderRow={(session) => (
-              <tr
-                key={session.id}
-                className="border-b border-app-border text-app-text transition hover:bg-app-surface-2/40"
-              >
-                <td className="px-3 py-3">
-                  <p className="font-medium text-app-text">
-                    {session.program_title}
-                  </p>
-                  <p className="text-xs text-app-text-muted">
-                    {session.location}
-                  </p>
-                </td>
+            className="pb-5"
+            renderRow={(session) => {
+              const isHighlighted =
+                String(highlightedSessionId) === String(session.id);
 
-                <td className="px-3 py-3 text-app-text-muted">
-                  {formatDate(session.session_date)} • {formatTime(session.start_time)}
-                  {session.end_time ? ` - ${formatTime(session.end_time)}` : ""}
-                </td>
+              return (
+                <tr
+                  key={session.id}
+                  ref={(element) => {
+                    rowRefs.current[session.id] = element;
+                  }}
+                  className={`border-b border-app-border text-app-text transition-all duration-300 hover:bg-app-surface-2/40 ${isHighlighted
+                      ? "flash-highlight ring-brand-primary"
+                      : ""
+                    }`}
+                >
+                  <td className="px-3 py-3">
+                    <p className="font-medium text-app-text">
+                      {session.program_title}
+                    </p>
+                    <p className="text-xs text-app-text-muted">
+                      {session.location}
+                    </p>
+                  </td>
 
-                <td className="px-3 py-3">{session.coach_name}</td>
+                  <td className="px-3 py-3 text-app-text-muted">
+                    {formatDate(session.session_date)} • {formatTime(session.start_time)}
+                    {session.end_time ? ` - ${formatTime(session.end_time)}` : ""}
+                  </td>
 
-                <td className="px-3 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <AdminStatusBadge
-                      label={session.is_published ? "Published" : "Draft"}
-                    />
-                    <AdminStatusBadge
-                      label={session.is_cancelled ? "Cancelled" : "Active"}
-                    />
-                  </div>
-                </td>
+                  <td className="px-3 py-3">{session.coach_name}</td>
 
-                <td className="px-3 py-3">
-                  <AdminRowActions>
-                    <Button size="sm" onClick={() => openEditModal(session)}>
-                      Edit
-                    </Button>
+                  <td className="px-3 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <AdminStatusBadge
+                        label={session.is_published ? "Published" : "Draft"}
+                      />
+                      <AdminStatusBadge
+                        label={session.is_cancelled ? "Cancelled" : "Active"}
+                      />
+                    </div>
+                  </td>
 
-                    <Button
-                      size="sm"
-                      variant="danger-outline"
-                      onClick={() => handleDeleteClick(session)}
-                    >
-                      Delete
-                    </Button>
-                  </AdminRowActions>
-                </td>
-              </tr>
-            )}
+                  <td className="px-3 py-3">
+                    <AdminRowActions>
+                      <Button size="sm" onClick={() => openEditModal(session)}>
+                        Edit
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="danger-outline"
+                        onClick={() => handleDeleteClick(session)}
+                      >
+                        Delete
+                      </Button>
+                    </AdminRowActions>
+                  </td>
+                </tr>
+              );
+            }}
           />
         </AdminSectionCard>
       </div>
@@ -454,7 +490,7 @@ function AdminSessionsPage() {
                 value={form.coach}
                 onChange={handleInputChange}
                 options={coaches.map((coach) => ({
-                  value: coach.id,
+                  value: coach.user_id,
                   label: coach.full_name || coach.username,
                 }))}
                 error={formErrors.fields.coach}

@@ -282,9 +282,10 @@ function AdminProgramsPage() {
                     }
                 />
 
-                <AdminPageHeader
-                    // title="Programs"
-                    // description="Create, update, and manage academy training programs."
+                <AdminSectionCard
+                    title="Program List"
+                    description="Review and manage all academy programs."
+                    contentClassName="p-0"
                     actions={
                         <div className="flex items-center gap-3">
                             {/* <Button variant="outline" onClick={() => loadPrograms()}>
@@ -294,12 +295,6 @@ function AdminProgramsPage() {
                             <Button onClick={openCreateModal}>Add New Program</Button>
                         </div>
                     }
-                />
-
-                <AdminSectionCard
-                    title="Program List"
-                    description="Review and manage all academy programs."
-                    contentClassName="p-0"
                 >
                     <AdminTable
                         columns={[
@@ -314,7 +309,7 @@ function AdminProgramsPage() {
                         isLoading={isLoading}
                         emptyTitle="No programs found"
                         emptyDescription="Create your first program to get started."
-                        className="px-5 pb-5"
+                        className="pb-5"
                         renderRow={(program) => (
                             <tr
                                 key={program.id}
