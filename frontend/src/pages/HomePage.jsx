@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -43,13 +43,13 @@ function HomePage() {
     { value: "3", label: "Goalkeeper Training" },
   ];
 
-  function handleChange(e) {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  }
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -100,9 +100,10 @@ function HomePage() {
       const element = document.querySelector(location.hash);
 
       if (element) {
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           element.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 80);
+        return () => clearTimeout(timer);
       }
     } else {
       window.scrollTo({ top: 0, behavior: "smooth" });

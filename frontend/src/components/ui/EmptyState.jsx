@@ -16,4 +16,5 @@ function EmptyState({ title, description, action, className = "" }) {
   );
 }
 
-export default EmptyState;
+import { memo } from "react";
+export default memo(EmptyState);

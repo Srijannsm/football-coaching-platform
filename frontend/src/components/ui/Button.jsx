@@ -51,4 +51,5 @@ function Button({
   );
 }
 
-export default Button;
+import { memo } from "react";
+export default memo(Button);

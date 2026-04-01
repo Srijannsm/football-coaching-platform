@@ -1,29 +1,14 @@
 import axios from "axios";
-import {
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-  clearAuthData,
-} from "../utils/auth";
 
-const BASE_URL = "http://localhost:8000/api";
+// In development the Vite proxy rewrites /api → http://localhost:8000/api,
+// so a relative path is all that's needed.  Set VITE_API_BASE_URL to an
+// absolute URL (e.g. https://api.example.com/api) in production builds.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 const api = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true, // send HttpOnly cookies with every request
 });
-
-api.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 let isRefreshing = false;
 let refreshSubscribers = [];
@@ -32,8 +17,8 @@ function subscribeTokenRefresh(callback) {
   refreshSubscribers.push(callback);
 }
 
-function onRefreshed(newToken) {
-  refreshSubscribers.forEach((callback) => callback(newToken));
+function onRefreshed() {
+  refreshSubscribers.forEach((cb) => cb());
   refreshSubscribers = [];
 }
 
@@ -42,8 +27,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isUnauthorized = error.response?.status === 401;
-    const refreshToken = getRefreshToken();
 
+    // Never retry refresh or login requests — avoids infinite loops.
     const isRefreshRequest = originalRequest?.url?.includes("/token/refresh/");
     const isLoginRequest = originalRequest?.url?.includes("/login/");
 
@@ -51,11 +36,11 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (isUnauthorized && refreshToken && !originalRequest._retry) {
+    if (isUnauthorized && !originalRequest._retry) {
       if (isRefreshing) {
+        // Queue requests that arrived while a refresh is already in flight.
         return new Promise((resolve) => {
-          subscribeTokenRefresh((newToken) => {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          subscribeTokenRefresh(() => {
             resolve(api(originalRequest));
           });
         });
@@ -65,24 +50,12 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await axios.post(`${BASE_URL}/token/refresh/`, {
-          refresh: refreshToken,
-        });
-
-        const newAccessToken = response.data.access;
-
-        setTokens({
-          access: newAccessToken,
-          refresh: refreshToken,
-        });
-
-        onRefreshed(newAccessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        // The refresh_token cookie is sent automatically — no body needed.
+        await api.post("/token/refresh/");
+        onRefreshed();
         return api(originalRequest);
       } catch (refreshError) {
-        clearAuthData();
-        window.location.href = "/login";
+        refreshSubscribers = [];
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

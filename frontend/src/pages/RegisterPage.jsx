@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
 import Button from "../components/ui/Button";
@@ -44,6 +44,13 @@ function RegisterPage() {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [imageError, setImageError] = useState("");
+  const objectUrlRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -71,12 +78,19 @@ function RegisterPage() {
     setServerError("");
 
     if (file) {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      const url = URL.createObjectURL(file);
+      objectUrlRef.current = url;
       setProfileImageFile(file);
-      setProfileImagePreview(URL.createObjectURL(file));
+      setProfileImagePreview(url);
     }
   }
 
   function handleRemoveImage() {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
     setProfileImageFile(null);
     setProfileImagePreview("");
     setImageError("");
@@ -93,8 +107,8 @@ function RegisterPage() {
 
     if (!formData.password) {
       errors.password = "Password is required.";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters.";
+    } else if (formData.password.length < 8) {
+      errors.password = "Password must be at least 8 characters.";
     }
 
     if (!formData.confirm_password) {
@@ -360,7 +374,7 @@ function RegisterPage() {
                       label="Password *"
                       value={formData.password}
                       onChange={handleChange}
-                      placeholder="At least 6 characters"
+                      placeholder="At least 8 characters"
                       error={fieldErrors.password}
                     />
 

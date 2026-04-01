@@ -3,6 +3,8 @@ from .models import TrainingProgram, TrainingSession
 
 
 class TrainingProgramSerializer(serializers.ModelSerializer):
+    hero_image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = TrainingProgram
         fields = [
@@ -12,6 +14,7 @@ class TrainingProgramSerializer(serializers.ModelSerializer):
             "short_description",
             "description",
             "hero_image",
+            "hero_image_url",
             "display_order",
             "session_type",
             "default_duration_minutes",
@@ -20,15 +23,22 @@ class TrainingProgramSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def get_hero_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.hero_image and hasattr(obj.hero_image, "url"):
+            return request.build_absolute_uri(obj.hero_image.url) if request else obj.hero_image.url
+        return None
+
 
 class TrainingSessionSerializer(serializers.ModelSerializer):
     program_title = serializers.CharField(source="program.title", read_only=True)
     program_slug = serializers.CharField(source="program.slug", read_only=True)
     session_type = serializers.CharField(source="program.session_type", read_only=True)
     coach_full_name = serializers.SerializerMethodField()
-    booked_players_count = serializers.ReadOnlyField()
-    available_slots = serializers.ReadOnlyField()
-    is_full = serializers.ReadOnlyField()
+    hero_image_url = serializers.SerializerMethodField()
+    booked_players_count = serializers.SerializerMethodField()
+    available_slots = serializers.SerializerMethodField()
+    is_full = serializers.SerializerMethodField()
     is_booked_by_current_user = serializers.SerializerMethodField()
 
     class Meta:
@@ -42,6 +52,7 @@ class TrainingSessionSerializer(serializers.ModelSerializer):
             "coach",
             "coach_full_name",
             "hero_image",
+            "hero_image_url",
             "session_date",
             "start_time",
             "end_time",
@@ -61,7 +72,26 @@ class TrainingSessionSerializer(serializers.ModelSerializer):
     def get_coach_full_name(self, obj):
         full_name = f"{obj.coach.first_name} {obj.coach.last_name}".strip()
         return full_name or obj.coach.username
-    
+
+    def get_hero_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.hero_image and hasattr(obj.hero_image, "url"):
+            return request.build_absolute_uri(obj.hero_image.url) if request else obj.hero_image.url
+        return None
+
+    def get_booked_players_count(self, obj):
+        annotated = getattr(obj, "_booked_count", None)
+        if annotated is not None:
+            return annotated
+        return obj.booked_players_count
+
+    def get_available_slots(self, obj):
+        booked = self.get_booked_players_count(obj)
+        return max(obj.max_players - booked, 0)
+
+    def get_is_full(self, obj):
+        return self.get_booked_players_count(obj) >= obj.max_players
+
     def get_is_booked_by_current_user(self, obj):
         request = self.context.get("request")
 

@@ -13,4 +13,5 @@ function StatCard({ label, value }) {
   );
 }
 
-export default StatCard;
+import { memo } from "react";
+export default memo(StatCard);

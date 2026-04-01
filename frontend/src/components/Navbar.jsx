@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Button from "./ui/Button";
 import ThemeToggle from "./ThemeToggle";
@@ -13,39 +13,40 @@ function Navbar({ mode = "solid" }) {
   const [isHidden, setIsHidden] = useState(false);
   const [isAtTop, setIsAtTop] = useState(mode === "overlay");
 
-  function closeMobileMenu() {
+  const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
-  }
+  }, []);
 
-  function handleLogout() {
+  const handleLogout = useCallback(() => {
     logout();
-    closeMobileMenu();
+    setMobileMenuOpen(false);
     navigate("/", { replace: true });
-  }
+  }, [logout, navigate]);
 
-  function handleGoHome(event) {
-    if (location.pathname === "/") {
-      event.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      closeMobileMenu();
-    }
-  }
-
-  function handleAnchorNavigation(event, sectionId) {
-    if (location.pathname === "/") {
-      event.preventDefault();
-      const section = document.getElementById(sectionId);
-
-      if (section) {
-        section.scrollIntoView({ behavior: "smooth", block: "start" });
+  const handleGoHome = useCallback(
+    (event) => {
+      if (location.pathname === "/") {
+        event.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setMobileMenuOpen(false);
       }
+    },
+    [location.pathname]
+  );
 
-      closeMobileMenu();
-      return;
-    }
-
-    closeMobileMenu();
-  }
+  const handleAnchorNavigation = useCallback(
+    (event, sectionId) => {
+      if (location.pathname === "/") {
+        event.preventDefault();
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+      setMobileMenuOpen(false);
+    },
+    [location.pathname]
+  );
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -96,34 +97,48 @@ function Navbar({ mode = "solid" }) {
     };
   }, [mobileMenuOpen, mode]);
 
-  const navLinkClass = ({ isActive }) =>
-    `relative text-sm font-medium transition-colors duration-200 ${isAtTop
-      ? isActive
-        ? "text-white"
-        : "text-white/80 hover:text-white"
-      : isActive
-        ? "text-brand-primary"
-        : "text-app-text-soft hover:text-app-text"
-    } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${isActive
-      ? isAtTop
-        ? "after:bg-white"
-        : "after:bg-brand-primary"
-      : "after:bg-transparent"
-    }`;
+  const navLinkClass = useCallback(
+    ({ isActive }) =>
+      `relative text-sm font-medium transition-colors duration-200 ${isAtTop
+        ? isActive
+          ? "text-white"
+          : "text-white/80 hover:text-white"
+        : isActive
+          ? "text-brand-primary"
+          : "text-app-text-soft hover:text-app-text"
+      } after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:rounded-full after:transition ${isActive
+        ? isAtTop
+          ? "after:bg-white"
+          : "after:bg-brand-primary"
+        : "after:bg-transparent"
+      }`,
+    [isAtTop]
+  );
 
-  const desktopAnchorClass = `text-sm font-medium transition-colors duration-200 ${isAtTop
-      ? "text-white/80 hover:text-white"
-      : "text-app-text-soft hover:text-app-text"
-    }`;
+  const desktopAnchorClass = useMemo(
+    () =>
+      `text-sm font-medium transition-colors duration-200 ${
+        isAtTop
+          ? "text-white/80 hover:text-white"
+          : "text-app-text-soft hover:text-app-text"
+      }`,
+    [isAtTop]
+  );
 
-  const mobileNavLinkClass = ({ isActive }) =>
-    `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${isActive
-      ? "bg-brand-primary-soft text-app-text"
-      : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
-    }`;
+  const mobileNavLinkClass = useCallback(
+    ({ isActive }) =>
+      `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
+        isActive
+          ? "bg-brand-primary-soft text-app-text"
+          : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
+      }`,
+    []
+  );
 
-  const dashboardPath =
-    user?.role === "admin" ? "/admin-dashboard" : "/player-dashboard";
+  const dashboardPath = useMemo(
+    () => (user?.role === "admin" ? "/admin-dashboard" : "/player-dashboard"),
+    [user?.role]
+  );
 
   return (
     <nav

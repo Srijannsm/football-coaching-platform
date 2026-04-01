@@ -7,9 +7,9 @@ import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
 import { useToast } from "../hooks/useToast";
+import { useAuth } from "../hooks/useAuth";
 import { getTrainingSessionDetail } from "../services/trainingSessionService";
 import { createBooking } from "../services/bookingService";
-import { getCurrentUser } from "../services/authService";
 import { formatDate } from "../utils/formatDate";
 import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
 
@@ -36,18 +36,16 @@ function SummaryRow({ label, value, bordered = true }) {
 
 function SessionDetailPage() {
   const { showToast } = useToast();
+  const { user, isAuthenticated, logout } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [session, setSession] = useState(null);
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bookingError, setBookingError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
-
-  const isAuthenticated = !!localStorage.getItem("accessToken");
 
   const loadSessionDetail = useCallback(async () => {
     try {
@@ -65,29 +63,14 @@ function SessionDetailPage() {
     }
   }, [id]);
 
-  const loadCurrentUser = useCallback(async () => {
-    if (!isAuthenticated) {
-      setUser(null);
-      return;
-    }
-
-    try {
-      const data = await getCurrentUser();
-      setUser(data);
-    } catch (err) {
-      console.error("Failed to fetch current user:", err);
-      setUser(null);
-    }
-  }, [isAuthenticated]);
-
   const loadPageData = useCallback(async () => {
     try {
       setLoading(true);
-      await Promise.all([loadSessionDetail(), loadCurrentUser()]);
+      await loadSessionDetail();
     } finally {
       setLoading(false);
     }
-  }, [loadCurrentUser, loadSessionDetail]);
+  }, [loadSessionDetail]);
 
   useEffect(() => {
     loadPageData();
@@ -119,9 +102,7 @@ function SessionDetailPage() {
 
       if (err.response?.status === 401) {
         setBookingError("Your session expired. Please log in again.");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        logout();
         navigate("/login", {
           state: { from: location },
         });

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTrainingSessions } from "../services/trainingSessionService";
 import { createBooking } from "../services/bookingService";
-import { getCurrentUser } from "../services/authService";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -12,6 +11,7 @@ import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
 import { useToast } from "../hooks/useToast";
+import { useAuth } from "../hooks/useAuth";
 import { formatDate } from "../utils/formatDate";
 import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
 
@@ -30,23 +30,13 @@ function SessionInfoRow({ label, value, bordered = true }) {
   );
 }
 
-function clearAuthData() {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("user");
-}
-
 function TrainingSessionsPage() {
   const { showToast } = useToast();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [sessions, setSessions] = useState([]);
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("accessToken")
-  );
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bookingError, setBookingError] = useState("");
@@ -71,34 +61,8 @@ function TrainingSessionsPage() {
     }
   }
 
-  async function fetchCurrentUser() {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      setUser(null);
-      setIsAuthenticated(false);
-      return;
-    }
-
-    setIsAuthenticated(true);
-
-    try {
-      const userData = await getCurrentUser();
-      setUser(userData);
-    } catch (err) {
-      console.error("Failed to fetch current user:", err);
-
-      if (err.response?.status === 401) {
-        clearAuthData();
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    }
-  }
-
   useEffect(() => {
     fetchSessions();
-    fetchCurrentUser();
   }, []);
 
   async function handleBookSession(sessionId) {
@@ -109,9 +73,7 @@ function TrainingSessionsPage() {
       return;
     }
 
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
+    if (!isAuthenticated) {
       navigate("/login", {
         state: { from: location },
       });
@@ -126,15 +88,12 @@ function TrainingSessionsPage() {
       showToast("Booking successful.", "success");
 
       await fetchSessions();
-      await fetchCurrentUser();
     } catch (err) {
       console.error("Booking failed:", err);
 
       if (err.response?.status === 401) {
         setBookingError("Your session expired. Please log in again.");
-        clearAuthData();
-        setUser(null);
-        setIsAuthenticated(false);
+        await logout();
         navigate("/login", { state: { from: location } });
         return;
       }

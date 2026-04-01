@@ -36,4 +36,5 @@ function Select({
   );
 }
 
-export default Select;
+import { memo } from "react";
+export default memo(Select);

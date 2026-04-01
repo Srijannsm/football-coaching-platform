@@ -23,6 +23,6 @@ export async function getMyBookings() {
 }
 
 export async function cancelBooking(bookingId) {
-  const response = await api.put(`/my-bookings/${bookingId}/cancel/`);
+  const response = await api.patch(`/my-bookings/${bookingId}/cancel/`);
   return response.data;
 }

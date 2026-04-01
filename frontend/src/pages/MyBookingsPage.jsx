@@ -65,6 +65,7 @@ function StatusFilterBar({ value, onChange }) {
 
 function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
   const isCancelled = booking.status === "cancelled";
+  const isCancellable = booking.status === "pending" || booking.status === "confirmed";
 
   return (
     <Card
@@ -112,7 +113,7 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
             </div>
           </div>
 
-          {!isCancelled && (
+          {isCancellable && (
             <div className="flex w-full shrink-0 flex-col gap-3 lg:w-auto lg:min-w-[180px]">
               <Button
                 onClick={() => onCancel(booking.id)}
@@ -219,6 +220,16 @@ function MyBookingsPage() {
     return bookings.filter((booking) => booking.status === statusFilter);
   }, [bookings, statusFilter]);
 
+  // Stat cards always reflect the full dataset regardless of active filter
+  const totalActiveCount = useMemo(
+    () => bookings.filter((b) => b.status !== "cancelled").length,
+    [bookings]
+  );
+  const totalCancelledCount = useMemo(
+    () => bookings.filter((b) => b.status === "cancelled").length,
+    [bookings]
+  );
+
   const activeBookings = useMemo(
     () => filteredBookings.filter((booking) => booking.status !== "cancelled"),
     [filteredBookings]
@@ -273,8 +284,8 @@ function MyBookingsPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Total Bookings" value={bookings.length} />
-        <StatCard label="Active Sessions" value={activeBookings.length} />
-        <StatCard label="Cancelled Sessions" value={cancelledBookings.length} />
+        <StatCard label="Active Sessions" value={totalActiveCount} />
+        <StatCard label="Cancelled Sessions" value={totalCancelledCount} />
       </div>
 
       {/* Filters */}

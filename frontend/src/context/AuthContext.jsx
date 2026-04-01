@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-import { getRefreshToken, setTokens, clearAuthData } from "../utils/auth";
 import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }) {
@@ -10,36 +9,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function initAuth() {
-      const refreshToken = getRefreshToken();
-
-      if (!refreshToken) {
-        delete api.defaults.headers.common.Authorization;
-        setUser(null);
-        setIsAuthenticated(false);
-        setIsAuthLoading(false);
-        return;
-      }
-
       try {
-        const refreshResponse = await api.post("/token/refresh/", {
-          refresh: refreshToken,
-        });
-
-        const newAccessToken = refreshResponse.data.access;
-
-        setTokens({
-          access: newAccessToken,
-          refresh: refreshToken,
-        });
-
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-
-        const userResponse = await api.get("/me/");
-        setUser(userResponse.data);
+        // The access_token cookie is sent automatically.
+        // If it is expired the axios interceptor will transparently refresh it
+        // using the refresh_token cookie before this await resolves.
+        const response = await api.get("/me/");
+        setUser(response.data);
         setIsAuthenticated(true);
       } catch {
-        clearAuthData();
-        delete api.defaults.headers.common.Authorization;
+        // Both the access and refresh tokens are absent or expired.
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -51,12 +29,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(credentials) {
-    const response = await api.post("/login/", credentials);
-    const { access, refresh } = response.data;
+    // POST /login/ sets the access_token and refresh_token cookies server-side.
+    await api.post("/login/", credentials);
 
-    setTokens({ access, refresh });
-    api.defaults.headers.common.Authorization = `Bearer ${access}`;
-
+    // Fetch the user object now that the cookie is in place.
     const userResponse = await api.get("/me/");
     setUser(userResponse.data);
     setIsAuthenticated(true);
@@ -64,11 +40,16 @@ export function AuthProvider({ children }) {
     return userResponse.data;
   }
 
-  function logout() {
-    clearAuthData();
-    delete api.defaults.headers.common.Authorization;
-    setUser(null);
-    setIsAuthenticated(false);
+  async function logout() {
+    try {
+      // Ask the server to clear both HttpOnly cookies.
+      await api.post("/logout/");
+    } catch {
+      // Even if the request fails, clear client state.
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
   }
 
   return (

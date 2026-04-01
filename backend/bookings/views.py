@@ -12,12 +12,13 @@ from .serializers import (
     BookingCancelSerializer,
     PlayerDashboardSerializer,
 )
+from adminpanel.permissions import IsAdminRole
 
 
 class BookingListView(generics.ListAPIView):
-    queryset = Booking.objects.filter()
+    queryset = Booking.objects.select_related("player__user", "session__program", "session__coach")
     serializer_class = BookingListSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated, IsAdminRole]
 
 
 class BookingCreateView(generics.CreateAPIView):
@@ -31,6 +32,9 @@ class MyBookingListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if not hasattr(self.request.user, "player_profile"):
+            return Booking.objects.none()
+
         queryset = Booking.objects.select_related(
             "player__user",
             "session__program",
@@ -62,8 +66,12 @@ class MyBookingListView(generics.ListAPIView):
 class BookingCancelView(generics.UpdateAPIView):
     serializer_class = BookingCancelSerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ["patch", "head", "options"]
 
     def get_queryset(self):
+        if not hasattr(self.request.user, "player_profile"):
+            return Booking.objects.none()
+
         return Booking.objects.select_related("player__user", "session").filter(
             player=self.request.user.player_profile
         )

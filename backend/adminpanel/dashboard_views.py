@@ -142,9 +142,9 @@ class AdminDashboardView(APIView):
                 "start_time": session.start_time,
                 "location": session.location,
                 "max_players": session.max_players,
-                "booked_players_count": session.booked_players_count,
+                "booked_players_count": session.booked_players_count_value,
                 "available_slots": max(
-                    session.max_players - session.booked_players_count, 0
+                    session.max_players - session.booked_players_count_value, 0
                 ),
             }
             for session in upcoming_sessions_qs

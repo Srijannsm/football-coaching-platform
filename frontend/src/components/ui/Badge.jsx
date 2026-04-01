@@ -16,4 +16,5 @@ function Badge({ children, variant = "default", className = "" }) {
   );
 }
 
-export default Badge;
+import { memo } from "react";
+export default memo(Badge);

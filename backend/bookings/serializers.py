@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Booking
+from django.db import transaction
 from django.utils import timezone
 from datetime import datetime
 
@@ -20,6 +21,11 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         if not value.program.is_active:
             raise serializers.ValidationError(
                 "Cannot book a session from an inactive training program."
+            )
+
+        if value.session_date is None or value.start_time is None:
+            raise serializers.ValidationError(
+                "This session does not have a scheduled date or time yet."
             )
 
         session_start = datetime.combine(value.session_date, value.start_time)
@@ -50,35 +56,40 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         player_profile = request.user.player_profile
         session = validated_data["session"]
 
-        existing_booking = Booking.objects.filter(
-            player=player_profile, session=session
-        ).first()
+        with transaction.atomic():
+            # Lock the session row so concurrent requests queue up rather than
+            # both passing the is_full check simultaneously.
+            from training.models import TrainingSession
+            locked_session = TrainingSession.objects.select_for_update().get(pk=session.pk)
 
-        if existing_booking:
-            if existing_booking.status == Booking.STATUS_CANCELLED:
-                if session.is_full:
-                    raise serializers.ValidationError(
-                        {"session": "This session is already full."}
-                    )
+            existing_booking = Booking.objects.filter(
+                player=player_profile, session=locked_session
+            ).first()
 
-                existing_booking.status = Booking.STATUS_CONFIRMED
-                existing_booking.save()
-                return existing_booking
+            if existing_booking:
+                if existing_booking.status == Booking.STATUS_CANCELLED:
+                    if locked_session.is_full:
+                        raise serializers.ValidationError(
+                            {"session": "This session is already full."}
+                        )
+                    existing_booking.status = Booking.STATUS_CONFIRMED
+                    existing_booking.save()
+                    return existing_booking
 
-            raise serializers.ValidationError(
-                {"session": "You have already booked this session."}
+                raise serializers.ValidationError(
+                    {"session": "You have already booked this session."}
+                )
+
+            if locked_session.is_full:
+                raise serializers.ValidationError(
+                    {"session": "This session is already full."}
+                )
+
+            return Booking.objects.create(
+                player=player_profile,
+                session=locked_session,
+                status=Booking.STATUS_CONFIRMED,
             )
-
-        if session.is_full:
-            raise serializers.ValidationError(
-                {"session": "This session is already full."}
-            )
-
-        return Booking.objects.create(
-            player=player_profile,
-            session=session,
-            status=Booking.STATUS_CONFIRMED,
-        )
 
 
 class BookingListSerializer(serializers.ModelSerializer):

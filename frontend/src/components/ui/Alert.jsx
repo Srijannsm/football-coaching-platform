@@ -18,4 +18,5 @@ function Alert({ children, variant = "info", className = "" }) {
   );
 }
 
-export default Alert;
+import { memo } from "react";
+export default memo(Alert);

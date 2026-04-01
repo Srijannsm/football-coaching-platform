@@ -43,22 +43,25 @@ class Booking(models.Model):
         if self.player.user.role != "player":
             raise ValidationError("Only player profiles can create bookings.")
 
-        if self.session.is_cancelled:
-            raise ValidationError("Cannot book a cancelled session.")
+        # Session-state and capacity checks only apply when creating a booking.
+        # Existing bookings (e.g. admin marking attendance on a cancelled session)
+        # must not be blocked by these rules.
+        if not self.pk:
+            if self.session.is_cancelled:
+                raise ValidationError("Cannot book a cancelled session.")
 
-        if not self.session.is_published:
-            raise ValidationError("Cannot book an unpublished session.")
+            if not self.session.is_published:
+                raise ValidationError("Cannot book an unpublished session.")
 
-        if not self.session.program.is_active:
-            raise ValidationError(
-                "Cannot book a session from an inactive training program."
-            )
+            if not self.session.program.is_active:
+                raise ValidationError(
+                    "Cannot book a session from an inactive training program."
+                )
 
-        if (
-            self.status in [self.STATUS_PENDING, self.STATUS_CONFIRMED]
-            and self.session.is_full
-        ):
-            if not self.pk:
+            if (
+                self.status in [self.STATUS_PENDING, self.STATUS_CONFIRMED]
+                and self.session.is_full
+            ):
                 raise ValidationError("This session is already full.")
 
     def save(self, *args, **kwargs):
