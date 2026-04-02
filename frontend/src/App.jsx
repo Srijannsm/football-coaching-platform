@@ -1,16 +1,18 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import PublicOnlyRoute from "./auth/PublicOnlyRoute";
 import AdminRoute from "./auth/AdminRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 // Public pages
 const HomePage = lazy(() => import("./pages/HomePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const CoachesPage = lazy(() => import("./pages/CoachesPage"));
+const GalleryPage = lazy(() => import("./pages/GalleryPage"));
 const TrainingSessionsPage = lazy(() => import("./pages/TrainingSessionsPage"));
 const SessionDetailPage = lazy(() => import("./pages/SessionDetailPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
@@ -49,6 +51,9 @@ const AdminBookingsPage = lazy(() =>
 const AdminEnquiriesPage = lazy(() =>
   import("./features/admin/pages/AdminEnquiriesPage")
 );
+const AdminGalleryPage = lazy(() =>
+  import("./features/admin/pages/AdminGalleryPage")
+);
 
 function PageLoader() {
   return (
@@ -58,76 +63,95 @@ function PageLoader() {
   );
 }
 
+// Renders routes + conditionally shows the WhatsApp button.
+// Must be inside BrowserRouter to use useLocation.
+function AppContent() {
+  const location = useLocation();
+  const hideWhatsApp =
+    location.pathname.startsWith("/admin-dashboard") ||
+    location.pathname.startsWith("/player-dashboard");
+
+  return (
+    <>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/coaches" element={<CoachesPage />} />
+          <Route
+            path="/training-sessions"
+            element={<TrainingSessionsPage />}
+          />
+          <Route
+            path="/training-sessions/:id"
+            element={<SessionDetailPage />}
+          />
+
+          <Route
+            path="/login"
+            element={
+              <PublicOnlyRoute>
+                <LoginPage />
+              </PublicOnlyRoute>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <PublicOnlyRoute>
+                <RegisterPage />
+              </PublicOnlyRoute>
+            }
+          />
+
+          <Route
+            path="/player-dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<PlayerDashboardPage />} />
+            <Route path="bookings" element={<MyBookingsPage />} />
+            <Route path="profile" element={<PlayerProfilePage />} />
+            <Route path="profile/edit" element={<EditPlayerProfile />} />
+          </Route>
+
+          <Route
+            path="/admin-dashboard"
+            element={
+              <AdminRoute>
+                <AdminShell />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="players" element={<AdminPlayersPage />} />
+            <Route path="coaches" element={<AdminCoachesPage />} />
+            <Route path="programs" element={<AdminProgramsPage />} />
+            <Route path="sessions" element={<AdminSessionsPage />} />
+            <Route path="bookings" element={<AdminBookingsPage />} />
+            <Route path="enquiries" element={<AdminEnquiriesPage />} />
+            <Route path="gallery" element={<AdminGalleryPage />} />
+          </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+
+      {!hideWhatsApp && <WhatsAppButton />}
+    </>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ToastProvider>
         <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/coaches" element={<CoachesPage />} />
-              <Route
-                path="/training-sessions"
-                element={<TrainingSessionsPage />}
-              />
-              <Route
-                path="/training-sessions/:id"
-                element={<SessionDetailPage />}
-              />
-
-              <Route
-                path="/login"
-                element={
-                  <PublicOnlyRoute>
-                    <LoginPage />
-                  </PublicOnlyRoute>
-                }
-              />
-
-              <Route
-                path="/register"
-                element={
-                  <PublicOnlyRoute>
-                    <RegisterPage />
-                  </PublicOnlyRoute>
-                }
-              />
-
-              <Route
-                path="/player-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<PlayerDashboardPage />} />
-                <Route path="bookings" element={<MyBookingsPage />} />
-                <Route path="profile" element={<PlayerProfilePage />} />
-                <Route path="profile/edit" element={<EditPlayerProfile />} />
-              </Route>
-
-              <Route
-                path="/admin-dashboard"
-                element={
-                  <AdminRoute>
-                    <AdminShell />
-                  </AdminRoute>
-                }
-              >
-                <Route index element={<AdminDashboardPage />} />
-                <Route path="players" element={<AdminPlayersPage />} />
-                <Route path="coaches" element={<AdminCoachesPage />} />
-                <Route path="programs" element={<AdminProgramsPage />} />
-                <Route path="sessions" element={<AdminSessionsPage />} />
-                <Route path="bookings" element={<AdminBookingsPage />} />
-                <Route path="enquiries" element={<AdminEnquiriesPage />} />
-              </Route>
-
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
+          <AppContent />
         </BrowserRouter>
       </ToastProvider>
     </ErrorBoundary>

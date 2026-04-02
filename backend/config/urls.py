@@ -26,6 +26,7 @@ urlpatterns = [
     path("api/", include("bookings.urls")),
     path("api/", include("contents.urls")),
     path("api/", include("enquiries.urls")),
+    path("api/", include("gallery.urls")),
     path("api/admin/", include("adminpanel.urls")),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

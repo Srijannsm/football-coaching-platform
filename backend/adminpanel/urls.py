@@ -15,6 +15,13 @@ from .dashboard_views import (
     AdminCoachListView,
     AdminCoachDirectoryListView,
     AdminCoachDetailView,
+    AdminNotificationListView,
+    AdminNotificationMarkReadView,
+    AdminNotificationMarkAllReadView,
+    AdminGalleryCategoryListCreateView,
+    AdminGalleryCategoryDetailView,
+    AdminGalleryItemListCreateView,
+    AdminGalleryItemDetailView,
 )
 
 urlpatterns = [
@@ -35,8 +42,17 @@ urlpatterns = [
 
     path("enquiries/", AdminEnquiryListView.as_view(), name="admin-enquiries"),
     path("enquiries/<int:pk>/", AdminEnquiryDetailView.as_view(), name="admin-enquiry-detail"),
-    
+
     # path("coaches/", AdminCoachListView.as_view(), name="admin-coaches"),
     path("coaches/directory/", AdminCoachDirectoryListView.as_view(), name="admin-coach-directory"),
     path("coaches/directory/<int:pk>/", AdminCoachDetailView.as_view(), name="admin-coach-detail"),
+
+    path("notifications/", AdminNotificationListView.as_view(), name="admin-notifications"),
+    path("notifications/<int:pk>/read/", AdminNotificationMarkReadView.as_view(), name="admin-notification-read"),
+    path("notifications/mark-all-read/", AdminNotificationMarkAllReadView.as_view(), name="admin-notifications-mark-all-read"),
+
+    path("gallery/categories/", AdminGalleryCategoryListCreateView.as_view(), name="admin-gallery-categories"),
+    path("gallery/categories/<int:pk>/", AdminGalleryCategoryDetailView.as_view(), name="admin-gallery-category-detail"),
+    path("gallery/items/", AdminGalleryItemListCreateView.as_view(), name="admin-gallery-items"),
+    path("gallery/items/<int:pk>/", AdminGalleryItemDetailView.as_view(), name="admin-gallery-item-detail"),
 ]

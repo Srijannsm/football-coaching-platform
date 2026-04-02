@@ -208,13 +208,9 @@ function Navbar({ mode = "solid" }) {
               About Us
             </a>
 
-            <a
-              href="/#gallery"
-              onClick={(event) => handleAnchorNavigation(event, "gallery")}
-              className={desktopAnchorClass}
-            >
+            <NavLink to="/gallery" className={navLinkClass}>
               Gallery
-            </a>
+            </NavLink>
 
             <a
               href="/#contact"
@@ -325,13 +321,13 @@ function Navbar({ mode = "solid" }) {
                 About Us
               </a>
 
-              <a
-                href="/#gallery"
-                onClick={(event) => handleAnchorNavigation(event, "gallery")}
-                className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+              <NavLink
+                to="/gallery"
+                className={mobileNavLinkClass}
+                onClick={closeMobileMenu}
               >
                 Gallery
-              </a>
+              </NavLink>
 
               <a
                 href="/#contact"

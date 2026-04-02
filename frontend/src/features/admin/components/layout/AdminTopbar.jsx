@@ -1,8 +1,9 @@
-import { Menu, Bell, PanelLeftClose } from "lucide-react";
+import { Menu, PanelLeftClose } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth";
 import { useAdminSidebar } from "../../hooks/useAdminSidebar";
 import ThemeToggle from "../../../../components/ThemeToggle";
+import NotificationDropdown from "./NotificationDropdown";
 
 const routeMeta = {
   "/admin-dashboard": {
@@ -12,6 +13,14 @@ const routeMeta = {
   "/admin-dashboard/players": {
     title: "Players",
     description: "Manage registered players and account status.",
+  },
+  "/admin-dashboard/coaches": {
+    title: "Coaches",
+    description: "Manage registered coaches.",
+  },
+  "/admin-dashboard/gallery": {
+    title: "Gallery",
+    description: "Manage Images and Videos.",
   },
   "/admin-dashboard/programs": {
     title: "Programs",
@@ -73,13 +82,7 @@ function AdminTopbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded-2xl border border-app-border bg-app-surface-2 p-2 text-app-text-muted transition hover:border-brand-primary hover:text-brand-primary"
-          >
-            <Bell size={18} />
-            <span className="sr-only">Notifications</span>
-          </button>
+          <NotificationDropdown />
 
           <div className="hidden rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2 sm:block">
             <p className="text-sm font-medium text-app-text">{displayName}</p>

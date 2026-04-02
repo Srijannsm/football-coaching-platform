@@ -1,0 +1,162 @@
+import logging
+
+from django.conf import settings
+from django.core.mail import send_mail
+
+logger = logging.getLogger(__name__)
+
+
+def _admin_email():
+    return (
+        getattr(settings, "ADMIN_NOTIFICATION_EMAIL", None)
+        or getattr(settings, "EMAIL_HOST_USER", None)
+    )
+
+
+def _from_email():
+    return getattr(settings, "DEFAULT_FROM_EMAIL", "Football Academy <noreply@footballacademy.com>")
+
+
+def send_enquiry_admin_notification(enquiry):
+    recipient = _admin_email()
+    if not recipient:
+        return
+    try:
+        program_title = enquiry.program.title if enquiry.program else "General"
+        send_mail(
+            subject=f"New Enquiry from {enquiry.name}",
+            message=(
+                f"New enquiry received on Football Academy:\n\n"
+                f"Name:    {enquiry.name}\n"
+                f"Email:   {enquiry.email}\n"
+                f"Phone:   {enquiry.phone}\n"
+                f"Program: {program_title}\n\n"
+                f"Message:\n{enquiry.message}\n\n"
+                f"View in admin: /admin-dashboard/enquiries"
+            ),
+            from_email=_from_email(),
+            recipient_list=[recipient],
+            fail_silently=True,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send enquiry admin email: %s", exc)
+
+
+def send_enquiry_confirmation(enquiry):
+    try:
+        program_title = enquiry.program.title if enquiry.program else "General"
+        send_mail(
+            subject="Thank you for your enquiry — Football Academy",
+            message=(
+                f"Hi {enquiry.name},\n\n"
+                f"Thank you for reaching out to Football Academy! We've received your enquiry "
+                f"and will get back to you shortly.\n\n"
+                f"What you sent us:\n"
+                f"  Program: {program_title}\n"
+                f"  Message: {enquiry.message}\n\n"
+                f"We typically respond within 24–48 hours.\n\n"
+                f"Best regards,\nFootball Academy Team"
+            ),
+            from_email=_from_email(),
+            recipient_list=[enquiry.email],
+            fail_silently=True,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send enquiry confirmation email: %s", exc)
+
+
+def send_booking_admin_notification(booking):
+    recipient = _admin_email()
+    if not recipient:
+        return
+    try:
+        player = booking.player.user
+        player_name = f"{player.first_name} {player.last_name}".strip() or player.username
+        send_mail(
+            subject=f"New Booking — {player_name}",
+            message=(
+                f"New session booking on Football Academy:\n\n"
+                f"Player:   {player_name} ({player.email})\n"
+                f"Session:  {booking.session.program.title}\n"
+                f"Date:     {booking.session.session_date} at {booking.session.start_time}\n"
+                f"Location: {booking.session.location}\n\n"
+                f"View in admin: /admin-dashboard/bookings"
+            ),
+            from_email=_from_email(),
+            recipient_list=[recipient],
+            fail_silently=True,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send booking admin email: %s", exc)
+
+
+def send_cancellation_admin_notification(booking):
+    recipient = _admin_email()
+    if not recipient:
+        return
+    try:
+        player = booking.player.user
+        player_name = f"{player.first_name} {player.last_name}".strip() or player.username
+        send_mail(
+            subject=f"Booking Cancelled — {player_name}",
+            message=(
+                f"A booking has been cancelled on Football Academy:\n\n"
+                f"Player:   {player_name} ({player.email})\n"
+                f"Session:  {booking.session.program.title}\n"
+                f"Date:     {booking.session.session_date} at {booking.session.start_time}\n"
+                f"Location: {booking.session.location}\n\n"
+                f"View in admin: /admin-dashboard/bookings"
+            ),
+            from_email=_from_email(),
+            recipient_list=[recipient],
+            fail_silently=True,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send cancellation admin email: %s", exc)
+
+
+def send_welcome_email(user):
+    try:
+        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+        send_mail(
+            subject="Welcome to Football Academy!",
+            message=(
+                f"Hi {player_name},\n\n"
+                f"Welcome to Football Academy! Your account has been successfully created.\n\n"
+                f"You can now:\n"
+                f"  • Browse and book training sessions\n"
+                f"  • View your booking history\n"
+                f"  • Update your player profile\n\n"
+                f"Log in at any time to get started.\n\n"
+                f"See you on the pitch!\n\n"
+                f"Best regards,\nFootball Academy Team"
+            ),
+            from_email=_from_email(),
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send welcome email: %s", exc)
+
+
+def send_registration_admin_notification(user):
+    recipient = _admin_email()
+    if not recipient:
+        return
+    try:
+        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+        send_mail(
+            subject=f"New Player Registered — {player_name}",
+            message=(
+                f"A new player has registered on Football Academy:\n\n"
+                f"Name:     {player_name}\n"
+                f"Username: {user.username}\n"
+                f"Email:    {user.email}\n\n"
+                f"View in admin: /admin-dashboard/players"
+            ),
+            from_email=_from_email(),
+            recipient_list=[recipient],
+            fail_silently=True,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send registration admin email: %s", exc)

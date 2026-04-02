@@ -3,7 +3,15 @@ from rest_framework import serializers
 from accounts.models import User, PlayerProfile, CoachProfile
 from bookings.models import Booking
 from enquiries.models import Enquiry
+from gallery.models import GalleryCategory, GalleryItem
 from training.models import TrainingProgram, TrainingSession
+from .models import Notification
+
+
+class AdminNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["id", "title", "message", "notification_type", "link", "is_read", "created_at"]
 
 
 class AdminDashboardStatsSerializer(serializers.Serializer):
@@ -411,4 +419,62 @@ class AdminCoachUpdateSerializer(serializers.ModelSerializer):
             instance.image = None
 
         instance.save()
-        return instance   
+        return instance
+
+
+class AdminGalleryCategorySerializer(serializers.ModelSerializer):
+    item_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GalleryCategory
+        fields = ["id", "name", "slug", "description", "display_order", "is_active", "created_at", "item_count"]
+        read_only_fields = ["id", "slug", "created_at"]
+
+    def get_item_count(self, obj):
+        return obj.items.count()
+
+
+class AdminGalleryItemSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    video_file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GalleryItem
+        fields = [
+            "id",
+            "category",
+            "category_name",
+            "media_type",
+            "image",
+            "image_url",
+            "video_url",
+            "video_file",
+            "video_file_url",
+            "thumbnail",
+            "thumbnail_url",
+            "caption",
+            "display_order",
+            "is_active",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "category_name", "image_url", "thumbnail_url", "video_file_url"]
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image and hasattr(obj.image, "url"):
+            return request.build_absolute_uri(obj.image.url) if request else obj.image.url
+        return None
+
+    def get_thumbnail_url(self, obj):
+        request = self.context.get("request")
+        if obj.thumbnail and hasattr(obj.thumbnail, "url"):
+            return request.build_absolute_uri(obj.thumbnail.url) if request else obj.thumbnail.url
+        return None
+
+    def get_video_file_url(self, obj):
+        request = self.context.get("request")
+        if obj.video_file and hasattr(obj.video_file, "url"):
+            return request.build_absolute_uri(obj.video_file.url) if request else obj.video_file.url
+        return None

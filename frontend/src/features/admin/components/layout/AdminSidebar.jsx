@@ -6,6 +6,7 @@ import {
   CalendarRange,
   ClipboardList,
   MessageSquareMore,
+  Images,
   Home,
   LogOut,
 } from "lucide-react";
@@ -23,6 +24,11 @@ const navigationItems = [
   },
   { label: "Players", to: "/admin-dashboard/players", icon: Users },
   { label: "Coaches", to: "/admin-dashboard/coaches", icon: UserCheck },
+  {
+    label: "Gallery",
+    to: "/admin-dashboard/gallery",
+    icon: Images,
+  },
   { label: "Programs", to: "/admin-dashboard/programs", icon: ShieldCheck },
   { label: "Sessions", to: "/admin-dashboard/sessions", icon: CalendarRange },
   { label: "Bookings", to: "/admin-dashboard/bookings", icon: ClipboardList },

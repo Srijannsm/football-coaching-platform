@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -8,12 +7,172 @@ import Select from "../components/ui/Select";
 import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import { createEnquiry } from "../services/enquiryService";
+import { getRandomGalleryItems } from "../services/galleryService";
 import { useToast } from "../hooks/useToast";
 import Footer from "../components/Footer";
+
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const match = url.match(
+    /(?:youtube\.com\/watch\?[^&]*v=|youtu\.be\/|youtube\.com\/embed\/)([^&?\s]+)/
+  );
+  return match ? match[1] : null;
+}
+
+function getYouTubeEmbedUrl(url) {
+  const id = extractYouTubeId(url);
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : null;
+}
+
+function getYouTubeThumbnail(url) {
+  const id = extractYouTubeId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
+function HomeGalleryCard({ item, onOpen }) {
+  const isVideo = item.media_type === "video";
+  // Priority: backend thumbnail → YouTube API thumbnail (sync, no state needed)
+  const thumbSrc = item.thumbnail_url || (isVideo ? getYouTubeThumbnail(item.video_url) : null) || item.image_url;
+  const directSrc = isVideo ? (item.video_file_url || item.video_file) : null;
+
+  return (
+    <button
+      onClick={() => onOpen(item)}
+      className="group relative overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-[var(--shadow-soft)]"
+    >
+      <div className="relative h-72 w-full overflow-hidden bg-neutral-900">
+        {thumbSrc ? (
+          <img
+            src={thumbSrc}
+            alt={item.caption || "Gallery item"}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+          />
+        ) : directSrc ? (
+          /* Render video element directly — browser shows first frame, no CORS needed */
+          <video
+            src={directSrc}
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+            onLoadedMetadata={(e) => { e.target.currentTime = 1; }}
+          />
+        ) : (
+          <div className="h-full w-full" />
+        )}
+      </div>
+
+      <div className={`absolute inset-0 transition duration-300 ${isVideo ? "bg-black/30 group-hover:bg-black/40" : "bg-black/0 group-hover:bg-black/30"}`} />
+
+      {isVideo && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/40 backdrop-blur-sm transition group-hover:scale-110">
+            <svg viewBox="0 0 24 24" fill="white" className="h-6 w-6 translate-x-0.5">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {item.caption && (
+        <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3 transition duration-300 ${isVideo ? "" : "translate-y-full group-hover:translate-y-0"}`}>
+          <p className="text-sm text-white">{item.caption}</p>
+        </div>
+      )}
+    </button>
+  );
+}
+
+function Lightbox({ item, onClose }) {
+  useEffect(() => {
+    const handleKey = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  function renderMedia() {
+    if (item.media_type !== "video") {
+      return (
+        <img
+          src={item.image_url}
+          className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
+        />
+      );
+    }
+    const directSrc = item.video_file_url || item.video_file;
+    if (directSrc) {
+      return (
+        <video
+          src={directSrc}
+          controls
+          autoPlay
+          className="max-h-[85vh] w-full rounded-2xl shadow-2xl"
+        />
+      );
+    }
+    const embedUrl = getYouTubeEmbedUrl(item.video_url);
+    if (embedUrl) {
+      return (
+        <div
+          className="w-full overflow-hidden rounded-2xl shadow-2xl"
+          style={{ aspectRatio: "16/9" }}
+        >
+          <iframe
+            src={embedUrl}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="h-full w-full border-0"
+          />
+        </div>
+      );
+    }
+    return (
+      <video
+        src={item.video_url}
+        controls
+        autoPlay
+        className="max-h-[85vh] w-full rounded-2xl shadow-2xl"
+      />
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute right-6 top-6 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+      >
+        ✕
+      </button>
+
+      <div
+        className="relative max-h-[90vh] max-w-5xl w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {renderMedia()}
+
+        {item.caption && (
+          <p className="mt-3 text-center text-white/80">
+            {item.caption}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function HomePage() {
   const { showToast } = useToast();
   const location = useLocation();
+  const [lightboxItem, setLightboxItem] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,16 +184,26 @@ function HomePage() {
 
   const [submitting, setSubmitting] = useState(false);
 
-  const galleryImages = [
+  const staticGalleryImages = [
     "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=1200&q=80",
     "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80",
   ];
+
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [galleryLoaded, setGalleryLoaded] = useState(false);
+
+  useEffect(() => {
+    getRandomGalleryItems(8)
+      .then((items) => {
+        setGalleryItems(Array.isArray(items) ? items : []);
+      })
+      .catch(() => {
+        // fall back to static images
+      })
+      .finally(() => setGalleryLoaded(true));
+  }, []);
 
   const programOptions = [
     { value: "", label: "Select a program (optional)" },
@@ -310,18 +479,34 @@ function HomePage() {
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {galleryImages.map((image, index) => (
-              <div
-                key={index}
-                className="overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-[var(--shadow-soft)]"
-              >
-                <img
-                  src={image}
-                  alt={`Football Academy gallery ${index + 1}`}
-                  className="h-72 w-full object-cover transition duration-300 hover:scale-105"
-                />
-              </div>
-            ))}
+            {galleryLoaded && galleryItems.length > 0
+              ? galleryItems.map((item) => (
+                  <HomeGalleryCard
+                    key={item.id}
+                    item={item}
+                    onOpen={setLightboxItem}
+                  />
+                ))
+              : staticGalleryImages.map((image, index) => (
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-[var(--shadow-soft)]"
+                >
+                  <img
+                    src={image}
+                    alt={`Football Academy gallery ${index + 1}`}
+                    className="h-72 w-full object-cover transition duration-300 hover:scale-105"
+                  />
+                </div>
+              ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link to="/gallery">
+              <Button variant="outline" size="lg">
+                Visit Gallery
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -521,6 +706,13 @@ function HomePage() {
       </section>
 
       <Footer />
+
+      {lightboxItem && (
+        <Lightbox
+          item={lightboxItem}
+          onClose={() => setLightboxItem(null)}
+        />
+      )}
     </div>
   );
 }

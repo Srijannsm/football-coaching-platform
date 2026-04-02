@@ -10,11 +10,14 @@ from django.db.models.functions import Concat
 from accounts.models import User, CoachProfile, PlayerProfile
 from bookings.models import Booking
 from enquiries.models import Enquiry
+from gallery.models import GalleryCategory, GalleryItem
 from training.models import TrainingProgram, TrainingSession
 
+from .models import Notification
 from .permissions import IsAdminRole
 from .serializers import (
     AdminDashboardSerializer,
+    AdminNotificationSerializer,
     AdminPlayerListSerializer,
     AdminPlayerUpdateSerializer,
     AdminBookingManageSerializer,
@@ -26,6 +29,8 @@ from .serializers import (
     AdminCoachOptionSerializer,
     AdminCoachListSerializer,
     AdminCoachUpdateSerializer,
+    AdminGalleryCategorySerializer,
+    AdminGalleryItemSerializer,
 )
 
 
@@ -387,3 +392,78 @@ class AdminCoachDetailView(generics.RetrieveUpdateAPIView):
     )
     serializer_class = AdminCoachUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+
+
+class AdminNotificationListView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        notifications = Notification.objects.order_by("-created_at")[:50]
+        serializer = AdminNotificationSerializer(notifications, many=True)
+        unread_count = Notification.objects.filter(is_read=False).count()
+        return Response({"results": serializer.data, "unread_count": unread_count})
+
+
+class AdminNotificationMarkReadView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def patch(self, request, pk):
+        try:
+            notification = Notification.objects.get(pk=pk)
+        except Notification.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        notification.is_read = True
+        notification.save()
+        return Response({"detail": "Marked as read."})
+
+
+class AdminNotificationMarkAllReadView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def post(self, request):
+        Notification.objects.filter(is_read=False).update(is_read=True)
+        return Response({"detail": "All notifications marked as read."})
+
+
+# ── Gallery ───────────────────────────────────────────────────────────────────
+
+class AdminGalleryCategoryListCreateView(generics.ListCreateAPIView):
+    serializer_class = AdminGalleryCategorySerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get_queryset(self):
+        return GalleryCategory.objects.annotate(
+            item_count=Count("items")
+        ).order_by("display_order", "name")
+
+
+class AdminGalleryCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AdminGalleryCategorySerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    queryset = GalleryCategory.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        kwargs.setdefault("partial", True)
+        return super().update(request, *args, **kwargs)
+
+
+class AdminGalleryItemListCreateView(generics.ListCreateAPIView):
+    serializer_class = AdminGalleryItemSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get_queryset(self):
+        qs = GalleryItem.objects.select_related("category")
+        category_id = self.request.query_params.get("category")
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        return qs.order_by("category__display_order", "display_order", "-created_at")
+
+
+class AdminGalleryItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AdminGalleryItemSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    queryset = GalleryItem.objects.select_related("category")
+
+    def update(self, request, *args, **kwargs):
+        kwargs.setdefault("partial", True)
+        return super().update(request, *args, **kwargs)
