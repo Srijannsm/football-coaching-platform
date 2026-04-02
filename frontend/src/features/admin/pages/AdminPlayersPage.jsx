@@ -320,49 +320,49 @@ function AdminPlayersPage() {
       <div className="space-y-6">
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
-        <AdminToolbar
-          left={
-            <div className="ml-auto flex items-center gap-3">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search by name, email, username, phone, or position"
-                className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
-              />
-
-              <select
-                value={table.filters.status}
-                onChange={(event) => table.updateFilter("status", event.target.value)}
-                className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
-              >
-                <option value="">All players</option>
-                <option value="active">Active only</option>
-                <option value="inactive">Inactive only</option>
-              </select>
-
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                  <span className="text-sm font-semibold">#</span>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                    Players
-                  </p>
-                  <p className="text-sm font-semibold text-app-text">
-                    {isLoading ? "Loading players..." : `${count} player${count === 1 ? "" : "s"}`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          }
-        />
 
         <AdminSectionCard
           title="Player Directory"
           description="Manage registered academy players and keep player records up to date."
           contentClassName="p-0"
+          actions = {<AdminToolbar
+            left={
+              <div className="ml-auto flex items-center gap-3">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search by name, email, username, phone, or position"
+                  className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
+                />
+  
+                <select
+                  value={table.filters.status}
+                  onChange={(event) => table.updateFilter("status", event.target.value)}
+                  className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                >
+                  <option value="">All players</option>
+                  <option value="active">Active only</option>
+                  <option value="inactive">Inactive only</option>
+                </select>
+  
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
+                    <span className="text-sm font-semibold">#</span>
+                  </div>
+  
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                      Players
+                    </p>
+                    <p className="text-sm font-semibold text-app-text">
+                      {isLoading ? "Loading players..." : `${count} player${count === 1 ? "" : "s"}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            }
+          />}
         >
           <AdminTable
             columns={[

@@ -239,61 +239,59 @@ function AdminProgramsPage() {
 
                 {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
-                <AdminToolbar
-                    left={
-                        <div className="flex items-center gap-3 ml-auto">
-                            <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                                    <span className="text-sm font-semibold">#</span>
-                                </div>
-
-                                <div>
-                                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                                        Total programs
-                                    </p>
-                                    <p className="text-sm font-semibold text-app-text">
-                                        {programCountLabel}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
-                                <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                                    Status
-                                </span>
-
-                                <select
-                                    value={statusFilter}
-                                    onChange={(event) => {
-                                        const nextFilter = event.target.value;
-                                        setStatusFilter(nextFilter);
-                                        loadPrograms(nextFilter);
-                                    }}
-                                    className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
-                                >
-                                    {STATUS_FILTER_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    }
-                />
-
                 <AdminSectionCard
                     title="Program List"
                     description="Review and manage all academy programs."
                     contentClassName="p-0"
-                    actions={
-                        <div className="flex items-center gap-3">
-                            {/* <Button variant="outline" onClick={() => loadPrograms()}>
+                    actions={<AdminToolbar
+                        left={
+                            <div className="flex items-center gap-3 ml-auto">
+                                <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
+                                        <span className="text-sm font-semibold">#</span>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                                            Total programs
+                                        </p>
+                                        <p className="text-sm font-semibold text-app-text">
+                                            {programCountLabel}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
+                                    <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                                        Status
+                                    </span>
+
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(event) => {
+                                            const nextFilter = event.target.value;
+                                            setStatusFilter(nextFilter);
+                                            loadPrograms(nextFilter);
+                                        }}
+                                        className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                                    >
+                                        {STATUS_FILTER_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {/* <Button variant="outline" onClick={() => loadPrograms()}>
                                 Refresh
                             </Button> */}
 
-                            <Button onClick={openCreateModal}>Add New Program</Button>
-                        </div>
+                                    <Button onClick={openCreateModal}>Add New Program</Button>
+                                </div>
+                            </div>
+                        }
+                    />
                     }
                 >
                     <AdminTable

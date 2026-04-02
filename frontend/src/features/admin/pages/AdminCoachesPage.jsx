@@ -272,33 +272,33 @@ function AdminCoachesPage() {
       <div className="space-y-6">
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
-        <AdminToolbar
-          left={(
-            <div className="ml-auto flex items-center gap-3">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search by name, email, phone or specialties"
-                className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
-              />
-              <select
-                value={table.filters.status}
-                onChange={(event) => table.updateFilter("status", event.target.value)}
-                className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
-              >
-                <option value="">All coaches</option>
-                <option value="active">Active only</option>
-                <option value="inactive">Inactive only</option>
-              </select>
-            </div>
-          )}
-        />
 
         <AdminSectionCard
           title="Coach Directory"
           description="Manage registered coaches and keep profiles up to date."
           contentClassName="p-0"
+          actions={<AdminToolbar
+            left={(
+              <div className="ml-auto flex items-center gap-3">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search by name, email, phone or specialties"
+                  className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
+                />
+                <select
+                  value={table.filters.status}
+                  onChange={(event) => table.updateFilter("status", event.target.value)}
+                  className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                >
+                  <option value="">All coaches</option>
+                  <option value="active">Active only</option>
+                  <option value="inactive">Inactive only</option>
+                </select>
+              </div>
+            )}
+          />}
         >
           <AdminTable
             columns={[

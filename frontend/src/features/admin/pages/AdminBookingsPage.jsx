@@ -144,55 +144,55 @@ function AdminBookingsPage() {
 
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
-        <AdminToolbar
-          left={
-            <div className="flex items-center gap-3 ml-auto">
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                  <span className="text-sm font-semibold">#</span>
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                    Total bookings
-                  </p>
-                  <p className="text-sm font-semibold text-app-text">
-                    {bookingCountLabel}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                    Status
-                  </p>
-                </div>
-
-                <select
-                  value={statusFilter}
-                  onChange={(event) => {
-                    const nextFilter = event.target.value;
-                    setStatusFilter(nextFilter);
-                    loadBookings(nextFilter);
-                  }}
-                  className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
-                >
-                  {STATUS_FILTER_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          }
-        />
 
         <AdminSectionCard
           title="Booking Management"
           description="Update booking status and remove incorrect or duplicate records."
           contentClassName="p-0"
+          actions={<AdminToolbar
+            left={
+              <div className="flex items-center gap-3 ml-auto">
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
+                    <span className="text-sm font-semibold">#</span>
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                      Total bookings
+                    </p>
+                    <p className="text-sm font-semibold text-app-text">
+                      {bookingCountLabel}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                      Status
+                    </p>
+                  </div>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => {
+                      const nextFilter = event.target.value;
+                      setStatusFilter(nextFilter);
+                      loadBookings(nextFilter);
+                    }}
+                    className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                  >
+                    {STATUS_FILTER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            }
+          />}
         >
           <AdminTable
             columns={[

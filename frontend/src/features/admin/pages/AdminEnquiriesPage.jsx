@@ -208,29 +208,28 @@ function AdminEnquiriesPage() {
 
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
 
-        <AdminToolbar
-          right={
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                <span className="text-sm font-semibold">#</span>
-              </div>
-
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                  Total enquiries
-                </p>
-                <p className="text-sm font-semibold text-app-text">
-                  {enquiryCountLabel}
-                </p>
-              </div>
-            </div>
-          }
-        />
-
         <AdminSectionCard
           title="Enquiry List"
           description="Review the latest inbound leads and messages."
           contentClassName="p-0"
+          actions={<AdminToolbar
+            right={
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
+                  <span className="text-sm font-semibold">#</span>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                    Total enquiries
+                  </p>
+                  <p className="text-sm font-semibold text-app-text">
+                    {enquiryCountLabel}
+                  </p>
+                </div>
+              </div>
+            }
+          />}
         >
           <AdminTable
             columns={[
