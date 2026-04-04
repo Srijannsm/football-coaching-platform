@@ -37,6 +37,8 @@ class BookingCreateTests(APITestCase):
             username="player1", email="player1@test.com",
             password="pass12345", role="player",
         )
+        self.player1.is_email_verified = True
+        self.player1.save()
         self.profile1 = PlayerProfile.objects.create(user=self.player1)
 
         self.admin = User.objects.create_user(
@@ -69,12 +71,16 @@ class BookingCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_non_player_cannot_book(self):
+        self.admin.is_email_verified = True
+        self.admin.save()
         self.client.force_authenticate(user=self.admin)
         url = reverse("booking-create")
         response = self.client.post(url, {"session": self.session.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_coach_cannot_book(self):
+        self.coach.is_email_verified = True
+        self.coach.save()
         self.client.force_authenticate(user=self.coach)
         url = reverse("booking-create")
         response = self.client.post(url, {"session": self.session.id})

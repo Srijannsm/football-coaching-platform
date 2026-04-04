@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import PermissionDenied, NotFound
@@ -20,6 +22,8 @@ from .serializers import (
     CoachProfileSerializer,
 )
 from .models import CoachProfile
+
+VERIFICATION_TOKEN_EXPIRY = 86400  # 24 hours
 
 
 def _set_auth_cookies(response, access_token, refresh_token=None):
@@ -61,7 +65,12 @@ class CookieTokenObtainPairView(TokenObtainPairView):
         access_token = serializer.validated_data["access"]
         refresh_token = serializer.validated_data["refresh"]
 
-        response = Response({"detail": "Login successful."}, status=status.HTTP_200_OK)
+        user = serializer.user if hasattr(serializer, 'user') else None
+        body = {"detail": "Login successful."}
+        if user:
+            body["is_email_verified"] = user.is_email_verified
+
+        response = Response(body, status=status.HTTP_200_OK)
         _set_auth_cookies(response, access_token, refresh_token)
         return response
 
@@ -136,7 +145,9 @@ class MeView(generics.GenericAPIView):
 
     def get(self, request):
         serializer = MeSerializer(request.user)
-        return Response(serializer.data)
+        data = serializer.data
+        data["is_email_verified"] = request.user.is_email_verified
+        return Response(data)
 
 
 class PlayerProfileDetailUpdateView(generics.RetrieveUpdateAPIView):
@@ -167,4 +178,77 @@ class CoachProfileListView(generics.ListAPIView):
                 user__is_active=True,
             )
             .order_by("user__first_name", "user__last_name", "user__username")
-        )    
+        )
+
+
+class VerifyEmailView(APIView):
+    """Validate a signed token and mark the user's email as verified."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response(
+                {"detail": "No verification token provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        signer = TimestampSigner()
+        try:
+            email = signer.unsign(token, max_age=VERIFICATION_TOKEN_EXPIRY)
+        except SignatureExpired:
+            return Response(
+                {"detail": "Verification link has expired."},
+                status=status.HTTP_410_GONE,
+            )
+        except BadSignature:
+            return Response(
+                {"detail": "Invalid verification token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_model().objects.filter(email__iexact=email).first()
+        if not user:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if user.is_email_verified:
+            return Response(
+                {"detail": "Email already verified."},
+                status=status.HTTP_200_OK,
+            )
+
+        user.is_email_verified = True
+        user.save(update_fields=["is_email_verified"])
+
+        return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+
+class SendVerificationEmailView(APIView):
+    """Re-send the verification email for the authenticated user."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        user = request.user
+        if user.is_email_verified:
+            return Response(
+                {"detail": "Email already verified."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not user.email:
+            return Response(
+                {"detail": "No email address on file."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from adminpanel.email_utils import send_verification_email
+
+        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+        send_verification_email(user, frontend_url)
+
+        return Response({"detail": "Verification email sent."}, status=status.HTTP_200_OK)    

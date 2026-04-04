@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../api/axios";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
@@ -8,6 +7,8 @@ import Alert from "../components/ui/Alert";
 import { Card, CardContent } from "../components/ui/Card";
 import ImageUploadField from "../components/ui/ImageUploadField";
 import { useToast } from "../hooks/useToast";
+// import api from "../api/axios";
+import api from "../api/axios";
 
 const initialFormData = {
   username: "",
@@ -53,16 +54,14 @@ function RegisterPage() {
   }, []);
 
   function handleChange(e) {
-    const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [e.target.name]: e.target.value,
     }));
 
     setFieldErrors((prev) => ({
       ...prev,
-      [name]: "",
+      [e.target.name]: "",
     }));
 
     setServerError("");
@@ -202,8 +201,8 @@ function RegisterPage() {
         },
       });
 
-      showToast("Registration successful.", "success");
-      navigate("/login");
+      showToast("Registration successful. Check your email to verify.", "success");
+      navigate("/register-success");
     } catch (err) {
       console.error("Registration error:", err);
 

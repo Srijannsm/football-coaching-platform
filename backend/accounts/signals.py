@@ -11,7 +11,7 @@ def on_new_player(sender, instance, created, **kwargs):
     from adminpanel.models import Notification
     from adminpanel.email_utils import (
         send_registration_admin_notification,
-        send_welcome_email,
+        send_verification_email,
     )
 
     player_name = f"{instance.first_name} {instance.last_name}".strip() or instance.username
@@ -24,4 +24,6 @@ def on_new_player(sender, instance, created, **kwargs):
     )
 
     send_registration_admin_notification(instance)
-    send_welcome_email(instance)
+
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    send_verification_email(instance, frontend_url)

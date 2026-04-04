@@ -26,6 +26,14 @@ class BookingCreateView(generics.CreateAPIView):
     serializer_class = BookingCreateSerializer
     permission_classes = [IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_email_verified:
+            return Response(
+                {"detail": "Please verify your email before booking sessions."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().create(request, *args, **kwargs)
+
 
 class MyBookingListView(generics.ListAPIView):
     serializer_class = BookingListSerializer

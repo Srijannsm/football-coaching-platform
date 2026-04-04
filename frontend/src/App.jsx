@@ -11,10 +11,12 @@ import WhatsAppButton from "./components/WhatsAppButton";
 const HomePage = lazy(() => import("./pages/HomePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const RegisterSuccessPage = lazy(() => import("./pages/RegisterSuccessPage"));
 const CoachesPage = lazy(() => import("./pages/CoachesPage"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage"));
 const TrainingSessionsPage = lazy(() => import("./pages/TrainingSessionsPage"));
 const SessionDetailPage = lazy(() => import("./pages/SessionDetailPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 // Player dashboard pages
@@ -104,6 +106,12 @@ function AppContent() {
               </PublicOnlyRoute>
             }
           />
+
+          <Route path="/register-success" element={<RegisterSuccessPage />} />
+
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+          <Route path="*" element={<NotFoundPage />} />
 
           <Route
             path="/player-dashboard"

@@ -8,6 +8,8 @@ from .views import (
     MeView,
     PlayerProfileDetailUpdateView,
     CoachProfileListView,
+    VerifyEmailView,
+    SendVerificationEmailView,
 )
 
 urlpatterns = [
@@ -19,4 +21,10 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="me"),
     path("player/profile/", PlayerProfileDetailUpdateView.as_view(), name="player-profile"),
     path("coaches/profiles/", CoachProfileListView.as_view(), name="coach-profiles"),
+    path("verify-email/", VerifyEmailView.as_view(), name="verify-email"),
+    path(
+        "send-verification/",
+        SendVerificationEmailView.as_view(),
+        name="send-verification",
+    ),
 ]

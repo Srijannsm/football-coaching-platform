@@ -54,6 +54,9 @@ function LoginPage() {
           ? "/admin-dashboard"
           : "/player-dashboard";
 
+      // If logged in but not verified, go to dashboard (banner will show)
+      // The banner will show since we pass the is_email_verified flag
+
       navigate(fromLocation ? from : fallbackRoute, { replace: true });
     } catch (err) {
       console.error("Login failed:", err);

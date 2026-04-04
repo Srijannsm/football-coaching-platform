@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Button from "./ui/Button";
 import ThemeToggle from "./ThemeToggle";
+import UnverifiedEmailBanner from "./UnverifiedEmailBanner";
 import { useAuth } from "../hooks/useAuth";
 
 function Navbar({ mode = "solid" }) {
@@ -141,6 +142,7 @@ function Navbar({ mode = "solid" }) {
   );
 
   return (
+    <>
     <nav
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
         }`}
@@ -393,6 +395,11 @@ function Navbar({ mode = "solid" }) {
         )}
       </div>
     </nav>
+
+    {isAuthenticated && user?.is_email_verified === false && (
+      <UnverifiedEmailBanner />
+    )}
+  </>
   );
 }
 

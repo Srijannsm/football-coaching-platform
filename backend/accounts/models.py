@@ -15,6 +15,7 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PLAYER)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    is_email_verified = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.username:

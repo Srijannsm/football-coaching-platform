@@ -1,7 +1,9 @@
 import logging
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.core.mail import send_mail
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -160,3 +162,42 @@ def send_registration_admin_notification(user):
         )
     except Exception as exc:
         logger.warning("Failed to send registration admin email: %s", exc)
+
+
+def send_verification_email(user, frontend_url):
+    """Send email verification link with a signed token."""
+    from django.core.signing import TimestampSigner
+
+    signer = TimestampSigner()
+    token = signer.sign(user.email)
+    verify_url = f"{frontend_url.rstrip('/')}/verify-email?token={token}"
+
+    try:
+        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+        html_message = (
+            f"<p>Hi {player_name},</p>"
+            f"<p>Welcome to Football Academy! Please verify your email address by clicking the link below:</p>"
+            f'<p><a href="{verify_url}" style="background:#22c55e;color:#fff;padding:12px 24px;'
+            f'border-radius:6px;text-decoration:none;display:inline-block;">Verify My Email</a></p>'
+            f"<p>If the button doesn't work, copy and paste this link into your browser:</p>"
+            f"<p>{verify_url}</p>"
+            f"<p>This link will expire in 24 hours.</p>"
+            f"<p>See you on the pitch!<br>Football Academy Team</p>"
+        )
+        text_message = (
+            f"Hi {player_name},\n\n"
+            f"Welcome to Football Academy! Please verify your email address by clicking this link:\n\n"
+            f"{verify_url}\n\n"
+            f"This link will expire in 24 hours.\n\n"
+            f"See you on the pitch!\nFootball Academy Team"
+        )
+        msg = EmailMultiAlternatives(
+            subject="Verify your email — Football Academy",
+            body=text_message,
+            from_email=_from_email(),
+            to=[user.email],
+        )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send(fail_silently=True)
+    except Exception as exc:
+        logger.warning("Failed to send verification email: %s", exc)
