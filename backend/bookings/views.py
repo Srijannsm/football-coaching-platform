@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from datetime import datetime
 
-from .models import Booking
+from .models import Booking, Payment
 from .serializers import (
     BookingCreateSerializer,
     BookingListSerializer,
@@ -16,7 +16,9 @@ from adminpanel.permissions import IsAdminRole
 
 
 class BookingListView(generics.ListAPIView):
-    queryset = Booking.objects.select_related("player__user", "session__program", "session__coach")
+    queryset = Booking.objects.select_related(
+        "player__user", "session__program", "session__coach", "payment"
+    )
     serializer_class = BookingListSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
 
@@ -47,6 +49,7 @@ class MyBookingListView(generics.ListAPIView):
             "player__user",
             "session__program",
             "session__coach",
+            "payment",
         ).filter(player=self.request.user.player_profile)
 
         booking_status = self.request.query_params.get("status")
@@ -143,6 +146,7 @@ class PlayerDashboardView(APIView):
             "player__user",
             "session__program",
             "session__coach",
+            "payment",
         ).filter(player=user.player_profile)
 
         active_bookings = bookings.exclude(status=Booking.STATUS_CANCELLED)
@@ -182,3 +186,101 @@ class PlayerDashboardView(APIView):
 
         serializer = PlayerDashboardSerializer(dashboard_data)
         return Response(serializer.data)
+
+
+class PaymentInitiateView(APIView):
+    """
+    Initiates an online payment session with eSewa or Khalti.
+
+    TODO: Replace stub logic with real gateway SDK calls once credentials are
+    available in settings (ESEWA_MERCHANT_CODE, ESEWA_SECRET_KEY, KHALTI_SECRET_KEY).
+
+    Expected request body:
+        { "booking_id": <int>, "method": "esewa" | "khalti" }
+
+    Real response will contain a redirect URL or form payload for the gateway
+    checkout page. For eSewa, build the HMAC-signed form payload and return the
+    ESEWA_PAYMENT_URL alongside it. For Khalti, call their /epayment/initiate/
+    API and return the payment_url from the response.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        booking_id = request.data.get("booking_id")
+        method = request.data.get("method")
+
+        if method not in [Payment.METHOD_ESEWA, Payment.METHOD_KHALTI]:
+            return Response(
+                {"detail": "Invalid payment method. Must be 'esewa' or 'khalti'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            payment = Payment.objects.select_related(
+                "booking__player__user"
+            ).get(
+                booking_id=booking_id,
+                booking__player=request.user.player_profile,
+                method=method,
+                status=Payment.STATUS_PENDING,
+            )
+        except Payment.DoesNotExist:
+            return Response(
+                {"detail": "No pending payment found for this booking."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # TODO: Integrate real gateway here.
+        # eSewa example:
+        #   payload = build_esewa_form_payload(payment)
+        #   return Response({"redirect_url": settings.ESEWA_PAYMENT_URL, "form_data": payload})
+        # Khalti example:
+        #   pidx = khalti_initiate_payment(payment)
+        #   return Response({"redirect_url": f"https://pay.khalti.com/?pidx={pidx}"})
+
+        return Response(
+            {
+                "detail": "Payment gateway not yet configured.",
+                "stub": True,
+                "booking_id": booking_id,
+                "method": method,
+                "amount": str(payment.amount),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PaymentVerifyView(APIView):
+    """
+    Receives the redirect / callback from eSewa or Khalti after the player
+    completes (or abandons) payment on the gateway page.
+
+    Permission is AllowAny because gateway callbacks are server-to-server
+    POST requests that do not carry JWT cookies.
+
+    TODO: Replace stub with real signature/hash verification using gateway
+    credentials. On successful verification, inside transaction.atomic():
+        1. Set payment.status = Payment.STATUS_COMPLETED
+        2. Set payment.transaction_id = <gateway transaction id>
+        3. Set payment.gateway_data  = <full raw payload>
+        4. Set booking.status = Booking.STATUS_CONFIRMED
+    On failure:
+        1. Set payment.status = Payment.STATUS_FAILED
+        (Leave booking.status = STATUS_PENDING; admin can still confirm manually.)
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # TODO: Parse gateway-specific callback payload here.
+        # eSewa sends: oid (our booking id), amt, refId, scd, su/fu params.
+        # Khalti sends: pidx, txnId, amount, status, mobile, etc.
+
+        return Response(
+            {
+                "detail": "Payment verification not yet implemented.",
+                "stub": True,
+            },
+            status=status.HTTP_200_OK,
+        )

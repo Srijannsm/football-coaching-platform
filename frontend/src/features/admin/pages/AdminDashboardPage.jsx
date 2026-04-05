@@ -61,9 +61,9 @@ function AdminDashboardPage() {
       accent: "blue",
     },
     {
-      title: "Total Bookings",
-      value: stats.confirmed_bookings,
-      helperText: "Bookings across programs",
+      title: "Pending Confirmations",
+      value: stats.pending_bookings,
+      helperText: "Cash bookings awaiting approval",
       icon: ClipboardList,
       accent: "emerald",
     },

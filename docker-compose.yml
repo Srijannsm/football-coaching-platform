@@ -22,7 +22,7 @@ services:
     container_name: coaching_web
     user: "${UID}:${GID}"
     env_file: ./backend/.env
-    command: sh -c "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
     volumes:
       - ./backend:/app
     ports:

@@ -165,6 +165,8 @@ class AdminBookingManageSerializer(serializers.ModelSerializer):
     session_date = serializers.DateField(source="session.session_date", allow_null=True, read_only=True)
     start_time = serializers.TimeField(source="session.start_time", allow_null=True, read_only=True)
     location = serializers.CharField(source="session.location", read_only=True)
+    payment_method = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -177,11 +179,21 @@ class AdminBookingManageSerializer(serializers.ModelSerializer):
             "session_date",
             "start_time",
             "location",
+            "payment_method",
+            "payment_status",
         ]
 
     def get_booked_by(self, obj):
         full_name = f"{obj.player.user.first_name} {obj.player.user.last_name}".strip()
         return full_name or obj.player.user.username
+
+    def get_payment_method(self, obj):
+        payment = getattr(obj, "payment", None)
+        return payment.method if payment else None
+
+    def get_payment_status(self, obj):
+        payment = getattr(obj, "payment", None)
+        return payment.status if payment else None
 
 
 class AdminBookingStatusUpdateSerializer(serializers.ModelSerializer):

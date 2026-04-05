@@ -164,6 +164,116 @@ def send_registration_admin_notification(user):
         logger.warning("Failed to send registration admin email: %s", exc)
 
 
+def send_session_cancelled_to_players(session):
+    """Notify all booked players when a training session is cancelled."""
+    from bookings.models import Booking
+
+    bookings = (
+        Booking.objects.filter(
+            session=session,
+            status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED],
+        )
+        .select_related("player__user")
+    )
+
+    if not bookings.exists():
+        return
+
+    try:
+        program_title = session.program.title if session.program else "Training Session"
+    except Exception:
+        program_title = "Training Session"
+
+    session_date = session.session_date.strftime("%B %d, %Y") if session.session_date else "TBD"
+    session_time = session.start_time.strftime("%I:%M %p") if session.start_time else "TBD"
+    location = session.location or "TBD"
+
+    try:
+        coach_name = (
+            f"{session.coach.first_name} {session.coach.last_name}".strip()
+            if session.coach
+            else "Your Coach"
+        )
+    except Exception:
+        coach_name = "Your Coach"
+
+    for booking in bookings:
+        user = booking.player.user
+        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+        try:
+            html_message = (
+                f"<p>Hi {player_name},</p>"
+                f"<p>We're sorry to inform you that the following session has been <strong>cancelled</strong>:</p>"
+                f"<ul>"
+                f"<li><strong>Session:</strong> {program_title}</li>"
+                f"<li><strong>Date:</strong> {session_date}</li>"
+                f"<li><strong>Time:</strong> {session_time}</li>"
+                f"<li><strong>Location:</strong> {location}</li>"
+                f"<li><strong>Coach:</strong> {coach_name}</li>"
+                f"</ul>"
+                f"<p>We apologise for any inconvenience. Please check the platform for alternative sessions.</p>"
+                f"<p>Football Academy Team</p>"
+            )
+            text_message = (
+                f"Hi {player_name},\n\n"
+                f"We're sorry to inform you that the following session has been cancelled:\n\n"
+                f"  Session:  {program_title}\n"
+                f"  Date:     {session_date}\n"
+                f"  Time:     {session_time}\n"
+                f"  Location: {location}\n"
+                f"  Coach:    {coach_name}\n\n"
+                f"We apologise for any inconvenience. Please check the platform for alternative sessions.\n\n"
+                f"Football Academy Team"
+            )
+            msg = EmailMultiAlternatives(
+                subject=f"Session Cancelled: {program_title} — Football Academy",
+                body=text_message,
+                from_email=_from_email(),
+                to=[user.email],
+            )
+            msg.attach_alternative(html_message, "text/html")
+            msg.send(fail_silently=True)
+        except Exception as exc:
+            logger.warning("Failed to send session cancellation email to %s: %s", user.email, exc)
+
+
+def send_password_reset_email(user, frontend_url, token):
+    """Send a password reset link."""
+    reset_url = f"{frontend_url.rstrip('/')}/reset-password?token={token}"
+    try:
+        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+        html_message = (
+            f"<p>Hi {player_name},</p>"
+            f"<p>We received a request to reset your Football Academy password. "
+            f"Click the button below to set a new password:</p>"
+            f'<p><a href="{reset_url}" style="background:#22c55e;color:#fff;padding:12px 24px;'
+            f'border-radius:6px;text-decoration:none;display:inline-block;">Reset My Password</a></p>'
+            f"<p>If the button doesn't work, copy and paste this link into your browser:</p>"
+            f"<p>{reset_url}</p>"
+            f"<p>This link will expire in 1 hour. If you didn't request a password reset, "
+            f"you can safely ignore this email.</p>"
+            f"<p>Football Academy Team</p>"
+        )
+        text_message = (
+            f"Hi {player_name},\n\n"
+            f"We received a request to reset your Football Academy password.\n\n"
+            f"Reset link:\n{reset_url}\n\n"
+            f"This link will expire in 1 hour. If you didn't request this, "
+            f"you can safely ignore this email.\n\n"
+            f"Football Academy Team"
+        )
+        msg = EmailMultiAlternatives(
+            subject="Reset your password — Football Academy",
+            body=text_message,
+            from_email=_from_email(),
+            to=[user.email],
+        )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send(fail_silently=True)
+    except Exception as exc:
+        logger.warning("Failed to send password reset email: %s", exc)
+
+
 def send_verification_email(user, frontend_url):
     """Send email verification link with a signed token."""
     from django.core.signing import TimestampSigner

@@ -48,6 +48,8 @@ function GalleryItemCard({ item, onOpen }) {
             <img
               src={thumbSrc}
               alt="Video thumbnail"
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             />
           ) : directSrc ? (
@@ -90,6 +92,8 @@ function GalleryItemCard({ item, onOpen }) {
       <img
         src={item.image_url}
         alt={item.caption}
+        loading="lazy"
+        decoding="async"
         className="h-64 w-full object-cover transition duration-300 group-hover:scale-105"
       />
 

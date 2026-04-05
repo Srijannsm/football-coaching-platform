@@ -20,10 +20,13 @@ from .serializers import (
     MeSerializer,
     PlayerProfileUpdateSerializer,
     CoachProfileSerializer,
+    ChangePasswordSerializer,
 )
 from .models import CoachProfile
 
 VERIFICATION_TOKEN_EXPIRY = 86400  # 24 hours
+PASSWORD_RESET_TOKEN_EXPIRY = 3600  # 1 hour
+PASSWORD_RESET_SIGNER_SALT = "password-reset"
 
 
 def _set_auth_cookies(response, access_token, refresh_token=None):
@@ -181,6 +184,18 @@ class CoachProfileListView(generics.ListAPIView):
         )
 
 
+class CoachProfileDetailView(generics.RetrieveAPIView):
+    serializer_class = CoachProfileSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "id"
+
+    def get_queryset(self):
+        return (
+            CoachProfile.objects.select_related("user")
+            .filter(user__role="coach", user__is_active=True)
+        )
+
+
 class VerifyEmailView(APIView):
     """Validate a signed token and mark the user's email as verified."""
 
@@ -225,6 +240,114 @@ class VerifyEmailView(APIView):
         user.save(update_fields=["is_email_verified"])
 
         return Response({"detail": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(APIView):
+    """Allow an authenticated user to change their own password."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        if not user.check_password(serializer.validated_data["current_password"]):
+            return Response(
+                {"detail": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    """
+    Accept an email address and send a reset link if the account exists.
+    Always returns 200 to avoid leaking whether an email is registered.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip().lower()
+        if not email:
+            return Response(
+                {"detail": "Email address is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_model().objects.filter(email__iexact=email).first()
+        if user:
+            signer = TimestampSigner(salt=PASSWORD_RESET_SIGNER_SALT)
+            token = signer.sign(user.email)
+            frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+            from adminpanel.email_utils import send_password_reset_email
+            send_password_reset_email(user, frontend_url, token)
+
+        # Always return the same response to prevent email enumeration.
+        return Response(
+            {"detail": "If an account with that email exists, a reset link has been sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    """Validate the reset token and set a new password."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get("token", "").strip()
+        new_password = request.data.get("new_password", "")
+        confirm_password = request.data.get("confirm_password", "")
+
+        if not token:
+            return Response(
+                {"detail": "Reset token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not new_password:
+            return Response(
+                {"detail": "New password is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "Password must be at least 8 characters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if new_password != confirm_password:
+            return Response(
+                {"detail": "Passwords do not match."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        signer = TimestampSigner(salt=PASSWORD_RESET_SIGNER_SALT)
+        try:
+            email = signer.unsign(token, max_age=PASSWORD_RESET_TOKEN_EXPIRY)
+        except SignatureExpired:
+            return Response(
+                {"detail": "This reset link has expired. Please request a new one."},
+                status=status.HTTP_410_GONE,
+            )
+        except BadSignature:
+            return Response(
+                {"detail": "Invalid reset token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_model().objects.filter(email__iexact=email).first()
+        if not user:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        return Response({"detail": "Password reset successfully."}, status=status.HTTP_200_OK)
 
 
 class SendVerificationEmailView(APIView):

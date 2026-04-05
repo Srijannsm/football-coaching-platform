@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { CheckCircle, XCircle, Info, X } from "lucide-react";
 import { ToastContext } from "./toast-context";
 
 export function ToastProvider({ children }) {
@@ -32,41 +33,45 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={value}>
       {children}
 
-      <div className="pointer-events-none fixed bottom-4 right-4 z-[9999] flex w-full max-w-sm flex-col gap-3">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`toast-enter pointer-events-auto flex items-start justify-between gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md ${toast.type === "success"
-              ? "border-green-400/30 bg-green-500/95 text-app-text"
-              : toast.type === "error"
-                ? "border-red-400/30 bg-red-500/95 text-app-text"
-                : "bg-app-border bg-neutral-900/95 text-app-text"
-              }`}
-          >
-            <div className="flex min-w-0 items-start gap-3">
-              {/* <span className="mt-0.5 text-base">
-                {toast.type === "success"
-                  ? "✅"
-                  : toast.type === "error"
-                  ? "❌"
-                  : "ℹ️"}
-              </span> */}
+      <div className="pointer-events-none fixed bottom-4 right-4 z-[9999] flex w-full max-w-sm flex-col gap-2.5">
+        {toasts.map((toast) => {
+          const isSuccess = toast.type === "success";
+          const isError = toast.type === "error";
+          const Icon = isSuccess ? CheckCircle : isError ? XCircle : Info;
 
-              <p className="text-sm font-medium leading-6 break-words">
+          return (
+            <div
+              key={toast.id}
+              className={`toast-enter pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md ${
+                isSuccess
+                  ? "border-green-500/30 bg-neutral-900/95 text-white"
+                  : isError
+                    ? "border-red-500/30 bg-neutral-900/95 text-white"
+                    : "border-neutral-700/40 bg-neutral-900/95 text-white"
+              }`}
+            >
+              <Icon
+                size={18}
+                className={`mt-0.5 shrink-0 ${
+                  isSuccess ? "text-green-400" : isError ? "text-red-400" : "text-blue-400"
+                }`}
+              />
+
+              <p className="min-w-0 flex-1 text-sm font-medium leading-6 break-words">
                 {toast.message}
               </p>
-            </div>
 
-            <button
-              type="button"
-              onClick={() => removeToast(toast.id)}
-              className="shrink-0 rounded-full px-2 py-1 text-sm text-app-text/80 transition hover:bg-white/10 hover:text-app-text"
-              aria-label="Close toast"
-            >
-              ×
-            </button>
-          </div>
-        ))}
+              <button
+                type="button"
+                onClick={() => removeToast(toast.id)}
+                className="shrink-0 rounded-full p-1 text-white/50 transition hover:bg-white/10 hover:text-white"
+                aria-label="Close"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </ToastContext.Provider>
   );

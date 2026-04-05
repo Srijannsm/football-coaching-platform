@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
-import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
+import PaymentMethodSelector from "../components/ui/PaymentMethodSelector";
 import { Card, CardContent } from "../components/ui/Card";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../hooks/useAuth";
@@ -44,8 +44,8 @@ function SessionDetailPage() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bookingError, setBookingError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const loadSessionDetail = useCallback(async () => {
     try {
@@ -78,7 +78,7 @@ function SessionDetailPage() {
 
   async function handleBookSession() {
     if (session?.is_booked_by_current_user) {
-      setBookingError("You have already booked this session.");
+      showToast("You have already booked this session.", "error");
       return;
     }
 
@@ -90,18 +90,21 @@ function SessionDetailPage() {
     }
 
     try {
-      setBookingError("");
       setBookingLoading(true);
 
-      await createBooking(session.id);
+      await createBooking(session.id, paymentMethod);
       await loadPageData();
 
-      showToast("Booking successful.", "success");
+      if (paymentMethod === "cash") {
+        showToast("Booking submitted. Awaiting admin confirmation.", "success");
+      } else {
+        showToast("Booking confirmed.", "success");
+      }
     } catch (err) {
       console.error("Booking failed:", err);
 
       if (err.response?.status === 401) {
-        setBookingError("Your session expired. Please log in again.");
+        showToast("Your session expired. Please log in again.", "error");
         logout();
         navigate("/login", {
           state: { from: location },
@@ -111,15 +114,16 @@ function SessionDetailPage() {
 
       if (err.response?.data?.session) {
         const sessionError = err.response.data.session;
-        setBookingError(
-          Array.isArray(sessionError) ? sessionError[0] : sessionError
+        showToast(
+          Array.isArray(sessionError) ? sessionError[0] : sessionError,
+          "error"
         );
       } else if (err.response?.data?.detail) {
-        setBookingError(err.response.data.detail);
+        showToast(err.response.data.detail, "error");
       } else if (err.response?.data?.non_field_errors) {
-        setBookingError(err.response.data.non_field_errors[0]);
+        showToast(err.response.data.non_field_errors[0], "error");
       } else {
-        setBookingError("Failed to book this session.");
+        showToast("Failed to book this session.", "error");
       }
     } finally {
       setBookingLoading(false);
@@ -193,17 +197,13 @@ function SessionDetailPage() {
           </span>
         </div>
 
-        {bookingError && (
-          <Alert variant="error" className="mb-6">
-            {bookingError}
-          </Alert>
-        )}
-
         <Card className="overflow-hidden">
           {session.hero_image ? (
             <img
               src={session.hero_image}
               alt={session.program_title || "Training session"}
+              loading="lazy"
+              decoding="async"
               className="h-72 w-full object-cover md:h-96"
             />
           ) : (
@@ -267,6 +267,15 @@ function SessionDetailPage() {
                   />
                 </div>
 
+                {!isAlreadyBooked && !isFull && (
+                  <div className="mt-6 border-t border-app-border pt-5">
+                    <PaymentMethodSelector
+                      value={paymentMethod}
+                      onChange={setPaymentMethod}
+                    />
+                  </div>
+                )}
+
                 <Button
                   type="button"
                   onClick={handleBookSession}
@@ -276,7 +285,7 @@ function SessionDetailPage() {
                       ? "secondary"
                       : "primary"
                   }
-                  className="mt-8 w-full"
+                  className="mt-6 w-full"
                 >
                   {bookingButtonText}
                 </Button>

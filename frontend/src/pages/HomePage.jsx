@@ -45,6 +45,8 @@ function HomeGalleryCard({ item, onOpen }) {
           <img
             src={thumbSrc}
             alt={item.caption || "Gallery item"}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
           />
         ) : directSrc ? (
@@ -454,6 +456,8 @@ function HomePage() {
             <img
               src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80"
               alt="Football coaching session"
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
             />
           </div>
@@ -495,6 +499,8 @@ function HomePage() {
                   <img
                     src={image}
                     alt={`Football Academy gallery ${index + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-72 w-full object-cover transition duration-300 hover:scale-105"
                   />
                 </div>

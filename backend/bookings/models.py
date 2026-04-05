@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 
 class Booking(models.Model):
+
     STATUS_PENDING = "pending"
     STATUS_CONFIRMED = "confirmed"
     STATUS_CANCELLED = "cancelled"
@@ -67,3 +68,43 @@ class Booking(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class Payment(models.Model):
+    METHOD_CASH = "cash"
+    METHOD_ESEWA = "esewa"
+    METHOD_KHALTI = "khalti"
+    METHOD_CHOICES = [
+        (METHOD_CASH, "Cash"),
+        (METHOD_ESEWA, "eSewa"),
+        (METHOD_KHALTI, "Khalti"),
+    ]
+
+    STATUS_PENDING = "pending"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
+    booking = models.OneToOneField(
+        Booking, on_delete=models.CASCADE, related_name="payment"
+    )
+    method = models.CharField(max_length=10, choices=METHOD_CHOICES)
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    # Amount is snapshotted from session.price at booking time so it survives
+    # future price changes on the session.
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # Populated by the gateway verify endpoint once payment is confirmed.
+    transaction_id = models.CharField(max_length=255, blank=True)
+    # Stores the raw callback payload from eSewa / Khalti for audit purposes.
+    gateway_data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.method} / {self.status} — Booking #{self.booking_id}"

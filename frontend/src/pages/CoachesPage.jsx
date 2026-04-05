@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Alert from "../components/ui/Alert";
@@ -48,6 +49,8 @@ function CoachAvatar({ coach }) {
             <img
                 src={coach.image_url}
                 alt={name}
+                loading="lazy"
+                decoding="async"
                 className="h-20 w-20 rounded-2xl border border-app-border object-cover shadow-soft"
             />
         );
@@ -134,9 +137,9 @@ function CoachesPage() {
                     ) : (
                         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                             {coaches.map((coach) => (
+                                <Link key={coach.id} to={`/coaches/${coach.id}`} className="group block h-full">
                                 <Card
-                                    key={coach.id}
-                                    className="group h-full overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-premium"
+                                    className="h-full overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-soft transition duration-300 group-hover:-translate-y-1 group-hover:shadow-premium"
                                 >
                                     <div className="h-24 bg-gradient-to-r from-brand-primary/12 via-brand-primary/5 to-transparent" />
 
@@ -186,6 +189,7 @@ function CoachesPage() {
                                         </div>
                                     </CardContent>
                                 </Card>
+                                </Link>
                             ))}
                         </div>
                     )}

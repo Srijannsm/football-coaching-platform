@@ -1,14 +1,20 @@
 from rest_framework import serializers
-from .models import Booking
+from .models import Booking, Payment
 from django.db import transaction
 from django.utils import timezone
 from datetime import datetime
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
+    payment_method = serializers.ChoiceField(
+        choices=[Payment.METHOD_CASH, Payment.METHOD_ESEWA, Payment.METHOD_KHALTI],
+        write_only=True,
+        default=Payment.METHOD_CASH,
+    )
+
     class Meta:
         model = Booking
-        fields = ["id", "session", "booked_at"]
+        fields = ["id", "session", "booked_at", "payment_method"]
         read_only_fields = ["id", "booked_at"]
 
     def validate_session(self, value):
@@ -55,6 +61,12 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         request = self.context["request"]
         player_profile = request.user.player_profile
         session = validated_data["session"]
+        method = validated_data.pop("payment_method", Payment.METHOD_CASH)
+
+        # All bookings start as pending. Cash bookings stay pending until the
+        # admin manually confirms them. Online payments (eSewa/Khalti) will be
+        # confirmed by the PaymentVerifyView callback once the gateway responds.
+        initial_status = Booking.STATUS_PENDING
 
         with transaction.atomic():
             # Lock the session row so concurrent requests queue up rather than
@@ -72,24 +84,35 @@ class BookingCreateSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(
                             {"session": "This session is already full."}
                         )
-                    existing_booking.status = Booking.STATUS_CONFIRMED
+                    existing_booking.status = initial_status
                     existing_booking.save()
-                    return existing_booking
-
-                raise serializers.ValidationError(
-                    {"session": "You have already booked this session."}
+                    booking = existing_booking
+                    # Remove the old payment record so a new one can be created
+                    # (OneToOneField would raise IntegrityError otherwise).
+                    Payment.objects.filter(booking=booking).delete()
+                else:
+                    raise serializers.ValidationError(
+                        {"session": "You have already booked this session."}
+                    )
+            else:
+                if locked_session.is_full:
+                    raise serializers.ValidationError(
+                        {"session": "This session is already full."}
+                    )
+                booking = Booking.objects.create(
+                    player=player_profile,
+                    session=locked_session,
+                    status=initial_status,
                 )
 
-            if locked_session.is_full:
-                raise serializers.ValidationError(
-                    {"session": "This session is already full."}
-                )
-
-            return Booking.objects.create(
-                player=player_profile,
-                session=locked_session,
-                status=Booking.STATUS_CONFIRMED,
+            Payment.objects.create(
+                booking=booking,
+                method=method,
+                status=Payment.STATUS_PENDING,
+                amount=locked_session.price,
             )
+
+            return booking
 
 
 class BookingListSerializer(serializers.ModelSerializer):
@@ -108,6 +131,8 @@ class BookingListSerializer(serializers.ModelSerializer):
     session_type = serializers.CharField(
         source="session.program.session_type", read_only=True
     )
+    payment_method = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -125,6 +150,8 @@ class BookingListSerializer(serializers.ModelSerializer):
             "location",
             "price",
             "coach_full_name",
+            "payment_method",
+            "payment_status",
         ]
 
     def get_booked_by(self, obj):
@@ -137,6 +164,14 @@ class BookingListSerializer(serializers.ModelSerializer):
             f"{obj.session.coach.first_name} {obj.session.coach.last_name}".strip()
         )
         return full_name or obj.session.coach.username
+
+    def get_payment_method(self, obj):
+        payment = getattr(obj, "payment", None)
+        return payment.method if payment else None
+
+    def get_payment_status(self, obj):
+        payment = getattr(obj, "payment", None)
+        return payment.status if payment else None
 
 
 class BookingCancelSerializer(serializers.ModelSerializer):

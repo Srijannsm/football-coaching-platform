@@ -6,7 +6,6 @@ import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
-import Alert from "../components/ui/Alert";
 import EmptyState from "../components/ui/EmptyState";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Card, CardContent } from "../components/ui/Card";
@@ -39,7 +38,6 @@ function TrainingSessionsPage() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bookingError, setBookingError] = useState("");
   const [bookingSessionId, setBookingSessionId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,7 +67,7 @@ function TrainingSessionsPage() {
     const selectedSession = sessions.find((session) => session.id === sessionId);
 
     if (selectedSession?.is_booked_by_current_user) {
-      setBookingError("You have already booked this session.");
+      showToast("You have already booked this session.", "error");
       return;
     }
 
@@ -81,18 +79,17 @@ function TrainingSessionsPage() {
     }
 
     try {
-      setBookingError("");
       setBookingSessionId(sessionId);
 
       await createBooking(sessionId);
-      showToast("Booking successful.", "success");
+      showToast("Booking submitted. Awaiting admin confirmation.", "success");
 
       await fetchSessions();
     } catch (err) {
       console.error("Booking failed:", err);
 
       if (err.response?.status === 401) {
-        setBookingError("Your session expired. Please log in again.");
+        showToast("Your session expired. Please log in again.", "error");
         await logout();
         navigate("/login", { state: { from: location } });
         return;
@@ -100,15 +97,16 @@ function TrainingSessionsPage() {
 
       if (err.response?.data?.session) {
         const sessionError = err.response.data.session;
-        setBookingError(
-          Array.isArray(sessionError) ? sessionError[0] : sessionError
+        showToast(
+          Array.isArray(sessionError) ? sessionError[0] : sessionError,
+          "error"
         );
       } else if (err.response?.data?.detail) {
-        setBookingError(err.response.data.detail);
+        showToast(err.response.data.detail, "error");
       } else if (err.response?.data?.non_field_errors) {
-        setBookingError(err.response.data.non_field_errors[0]);
+        showToast(err.response.data.non_field_errors[0], "error");
       } else {
-        setBookingError("Failed to book the session.");
+        showToast("Failed to book the session.", "error");
       }
     } finally {
       setBookingSessionId(null);
@@ -215,11 +213,6 @@ function TrainingSessionsPage() {
             </p>
           </div>
 
-          {bookingError && (
-            <div className="mt-6 max-w-2xl">
-              <Alert variant="error">{bookingError}</Alert>
-            </div>
-          )}
         </div>
       </section>
 

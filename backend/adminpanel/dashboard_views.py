@@ -220,6 +220,7 @@ class AdminBookingListView(generics.ListAPIView):
             "player__user",
             "session__program",
             "session__coach",
+            "payment",
         ).order_by("-booked_at")
 
         status_filter = self.request.query_params.get("status")
@@ -235,7 +236,7 @@ class AdminBookingListView(generics.ListAPIView):
 
 
 class AdminBookingDetailView(generics.RetrieveDestroyAPIView):
-    queryset = Booking.objects.select_related("player__user", "session__program")
+    queryset = Booking.objects.select_related("player__user", "session__program", "payment")
     serializer_class = AdminBookingManageSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
 

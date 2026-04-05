@@ -5,6 +5,8 @@ from .views import (
     BookingCancelView,
     BookingListView,
     PlayerDashboardView,
+    PaymentInitiateView,
+    PaymentVerifyView,
 )
 
 urlpatterns = [
@@ -17,4 +19,6 @@ urlpatterns = [
         name="my-booking-cancel",
     ),
     path("bookings/dashboard/", PlayerDashboardView.as_view(), name="player-dashboard"),
+    path("payments/initiate/", PaymentInitiateView.as_view(), name="payment-initiate"),
+    path("payments/verify/", PaymentVerifyView.as_view(), name="payment-verify"),
 ]

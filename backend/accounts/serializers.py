@@ -1,12 +1,25 @@
+import re
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import PlayerProfile, CoachProfile
+
+PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
+
+
+def validate_phone_number(value):
+    """Reusable phone validator — allows optional leading +, 7–15 digits."""
+    if value and not PHONE_REGEX.match(value.replace(" ", "")):
+        raise serializers.ValidationError(
+            "Enter a valid phone number (7–15 digits, optional + prefix)."
+        )
+    return value
 
 User = get_user_model()
 
 
 class PlayerRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+    password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
 
     first_name = serializers.CharField(required=True)
@@ -49,6 +62,9 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
                 {"confirm_password": "Passwords do not match."}
             )
         return attrs
+
+    def validate_phone_number(self, value):
+        return validate_phone_number(value)
 
     def validate_username(self, value):
         value = value.strip().lower()
@@ -211,6 +227,9 @@ class PlayerProfileUpdateSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def validate_phone_number(self, value):
+        return validate_phone_number(value)
+
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
         remove_image = validated_data.pop("remove_image", False)
@@ -282,4 +301,17 @@ class CoachProfileSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if obj.image and hasattr(obj.image, "url"):
             return request.build_absolute_uri(obj.image.url) if request else obj.image.url
-        return None    
+        return None
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "Passwords do not match."}
+            )
+        return attrs

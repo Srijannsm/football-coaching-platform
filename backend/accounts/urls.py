@@ -8,8 +8,12 @@ from .views import (
     MeView,
     PlayerProfileDetailUpdateView,
     CoachProfileListView,
+    CoachProfileDetailView,
     VerifyEmailView,
     SendVerificationEmailView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
+    ChangePasswordView,
 )
 
 urlpatterns = [
@@ -21,10 +25,14 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="me"),
     path("player/profile/", PlayerProfileDetailUpdateView.as_view(), name="player-profile"),
     path("coaches/profiles/", CoachProfileListView.as_view(), name="coach-profiles"),
+    path("coaches/profiles/<int:id>/", CoachProfileDetailView.as_view(), name="coach-profile-detail"),
+    path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("verify-email/", VerifyEmailView.as_view(), name="verify-email"),
     path(
         "send-verification/",
         SendVerificationEmailView.as_view(),
         name="send-verification",
     ),
+    path("forgot-password/", PasswordResetRequestView.as_view(), name="forgot-password"),
+    path("reset-password/", PasswordResetConfirmView.as_view(), name="reset-password"),
 ]

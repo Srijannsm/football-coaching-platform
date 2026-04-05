@@ -17,6 +17,9 @@ const GalleryPage = lazy(() => import("./pages/GalleryPage"));
 const TrainingSessionsPage = lazy(() => import("./pages/TrainingSessionsPage"));
 const SessionDetailPage = lazy(() => import("./pages/SessionDetailPage"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const CoachDetailPage = lazy(() => import("./pages/CoachDetailPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 // Player dashboard pages
@@ -27,6 +30,7 @@ const PlayerDashboardPage = lazy(() => import("./pages/PlayerDashboardPage"));
 const MyBookingsPage = lazy(() => import("./pages/MyBookingsPage"));
 const PlayerProfilePage = lazy(() => import("./pages/PlayerProfilePage"));
 const EditPlayerProfile = lazy(() => import("./pages/EditPlayerProfile"));
+const ChangePasswordPage = lazy(() => import("./pages/ChangePasswordPage"));
 
 // Admin pages
 const AdminShell = lazy(() =>
@@ -80,6 +84,7 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/coaches" element={<CoachesPage />} />
+          <Route path="/coaches/:id" element={<CoachDetailPage />} />
           <Route
             path="/training-sessions"
             element={<TrainingSessionsPage />}
@@ -110,6 +115,8 @@ function AppContent() {
           <Route path="/register-success" element={<RegisterSuccessPage />} />
 
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route path="*" element={<NotFoundPage />} />
 
@@ -125,6 +132,7 @@ function AppContent() {
             <Route path="bookings" element={<MyBookingsPage />} />
             <Route path="profile" element={<PlayerProfilePage />} />
             <Route path="profile/edit" element={<EditPlayerProfile />} />
+            <Route path="change-password" element={<ChangePasswordPage />} />
           </Route>
 
           <Route

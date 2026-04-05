@@ -1,4 +1,5 @@
 import { Component } from "react";
+import * as Sentry from "@sentry/react";
 import Button from "./ui/Button";
 
 class ErrorBoundary extends Component {
@@ -13,6 +14,7 @@ class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error("Unhandled render error:", error, info.componentStack);
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
   handleReset() {

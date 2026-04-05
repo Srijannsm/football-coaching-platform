@@ -2,6 +2,7 @@ import {
     LayoutDashboard,
     Users,
     ClipboardList,
+    ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
@@ -24,6 +25,11 @@ const navigationItems = [
         label: "Bookings",
         to: "/player-dashboard/bookings",
         icon: ClipboardList,
+    },
+    {
+        label: "Security",
+        to: "/player-dashboard/change-password",
+        icon: ShieldCheck,
     },
 ];
 
@@ -93,6 +99,9 @@ function DashboardLayout() {
         if (location.pathname === "/player-dashboard/bookings") {
             return "My Bookings";
         }
+        if (location.pathname === "/player-dashboard/change-password") {
+            return "Security";
+        }
         return "Player Dashboard";
     }, [location.pathname]);
 
@@ -124,6 +133,9 @@ function DashboardLayout() {
 
         if (location.pathname === "/player-dashboard/bookings") {
             return "Track your booked training sessions and manage your participation.";
+        }
+        if (location.pathname === "/player-dashboard/change-password") {
+            return "Update your account password to keep your account secure.";
         }
 
         return "Manage your player account and academy activity.";

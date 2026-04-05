@@ -63,6 +63,35 @@ function StatusFilterBar({ value, onChange }) {
   );
 }
 
+const PAYMENT_METHOD_LABELS = { cash: "Cash", esewa: "eSewa", khalti: "Khalti" };
+
+function PaymentBadge({ method, paymentStatus }) {
+  if (!method) return null;
+
+  const methodLabel = PAYMENT_METHOD_LABELS[method] ?? method;
+  const statusLabel =
+    paymentStatus === "completed"
+      ? "Paid"
+      : paymentStatus === "failed"
+      ? "Failed"
+      : "Pending";
+
+  const colorClass =
+    paymentStatus === "completed"
+      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+      : paymentStatus === "failed"
+      ? "border-red-400/30 bg-red-500/10 text-red-600 dark:text-red-400"
+      : "border-amber-400/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${colorClass}`}
+    >
+      {methodLabel} · {statusLabel}
+    </span>
+  );
+}
+
 function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
   const isCancelled = booking.status === "cancelled";
   const isCancellable = booking.status === "pending" || booking.status === "confirmed";
@@ -88,8 +117,12 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
                 </p>
               </div>
 
-              <div className="self-start">
+              <div className="flex flex-wrap items-center gap-2 self-start">
                 <StatusBadge status={booking.status} />
+                <PaymentBadge
+                  method={booking.payment_method}
+                  paymentStatus={booking.payment_status}
+                />
               </div>
             </div>
 

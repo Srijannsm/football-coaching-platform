@@ -158,16 +158,26 @@ function LoginPage() {
                   required
                 />
 
-                <Input
-                  id="password"
-                  type="password"
-                  name="password"
-                  label="Password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  required
-                />
+                <div>
+                  <Input
+                    id="password"
+                    type="password"
+                    name="password"
+                    label="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <div className="mt-1.5 text-right">
+                    <Link
+                      to="/forgot-password"
+                      className="text-xs font-medium text-app-text-muted hover:text-brand-primary transition-colors"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                </div>
 
                 <Button
                   type="submit"

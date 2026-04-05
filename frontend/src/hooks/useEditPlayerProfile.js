@@ -86,6 +86,14 @@ export function useEditPlayerProfile(showToast) {
     async (event) => {
       event.preventDefault();
 
+      if (
+        formData.phone_number &&
+        !/^\+?\d{7,15}$/.test(formData.phone_number.replace(/\s/g, ""))
+      ) {
+        setError("Enter a valid phone number (7–15 digits, optional + prefix).");
+        return;
+      }
+
       try {
         setIsSaving(true);
         setError("");

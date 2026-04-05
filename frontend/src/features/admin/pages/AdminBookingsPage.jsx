@@ -199,6 +199,7 @@ function AdminBookingsPage() {
               { key: "player", label: "Player" },
               { key: "program", label: "Program" },
               { key: "status", label: "Status" },
+              { key: "payment", label: "Payment" },
               { key: "booked_on", label: "Booked On" },
               { key: "actions", label: "Actions" },
             ]}
@@ -257,6 +258,31 @@ function AdminBookingsPage() {
                         ))}
                       </select>
                     </div>
+                  </td>
+
+                  <td className="px-3 py-3">
+                    {booking.payment_method ? (
+                      <div className="flex flex-col gap-1.5">
+                        <AdminStatusBadge
+                          label={
+                            { cash: "Cash", esewa: "eSewa", khalti: "Khalti" }[
+                              booking.payment_method
+                            ] ?? booking.payment_method
+                          }
+                        />
+                        <AdminStatusBadge
+                          label={
+                            booking.payment_status === "completed"
+                              ? "Paid"
+                              : booking.payment_status === "failed"
+                              ? "Failed"
+                              : "Pending"
+                          }
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-app-text-muted">—</span>
+                    )}
                   </td>
 
                   <td className="px-3 py-3 text-app-text-muted">

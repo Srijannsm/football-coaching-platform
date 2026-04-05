@@ -120,6 +120,10 @@ function RegisterPage() {
       errors.email = "Enter a valid email address.";
     }
 
+    if (formData.phone_number && !/^\+?\d{7,15}$/.test(formData.phone_number.replace(/\s/g, ""))) {
+      errors.phone_number = "Enter a valid phone number (7–15 digits, optional + prefix).";
+    }
+
     if (formData.age && Number(formData.age) < 0) {
       errors.age = "Age cannot be negative.";
     }

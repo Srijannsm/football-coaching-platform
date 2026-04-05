@@ -1,10 +1,24 @@
 import api from "../api/axios";
 
-export async function createBooking(sessionId) {
+export async function createBooking(sessionId, paymentMethod = "cash") {
   const response = await api.post("/bookings/", {
     session: sessionId,
+    payment_method: paymentMethod,
   });
 
+  return response.data;
+}
+
+export async function initiatePayment(bookingId, method) {
+  const response = await api.post("/payments/initiate/", {
+    booking_id: bookingId,
+    method,
+  });
+  return response.data;
+}
+
+export async function verifyPayment(payload) {
+  const response = await api.post("/payments/verify/", payload);
   return response.data;
 }
 
