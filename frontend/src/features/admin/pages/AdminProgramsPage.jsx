@@ -3,9 +3,9 @@ import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
 import { formatDate } from "../../../utils/formatDate";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
-import AdminPageHeader from "../components/layout/AdminPageHeader";
 import AdminSectionCard from "../components/ui/AdminSectionCard";
 import AdminTable from "../components/table/AdminTable";
+import AdminPagination from "../components/table/AdminPagination";
 import AdminRowActions from "../components/table/AdminRowActions";
 import AdminStatusBadge from "../components/ui/AdminStatusBadge";
 import AdminFormAlert from "../components/form/AdminFormAlert";
@@ -16,6 +16,9 @@ import AdminCheckboxField from "../components/form/AdminCheckboxField";
 import AdminToolbar from "../components/ui/AdminToolbar";
 import AdminConfirmDialog from "../components/ui/AdminConfirmDialog";
 import AdminModal from "../components/ui/AdminModal";
+import BulkActionBar from "../components/ui/BulkActionBar";
+import { useAdminTable } from "../hooks/useAdminTable";
+import { useRowSelection } from "../hooks/useRowSelection";
 import { normalizeApiErrors } from "../utils/normalizeApiErrors";
 import {
     getAdminPrograms,
@@ -23,17 +26,18 @@ import {
     updateAdminProgram,
     deleteAdminProgram,
     buildProgramFormData,
+    bulkDeleteAdminPrograms,
 } from "../services/adminProgramsService";
+
+const PROGRAM_STATUS_OPTIONS = [
+    { value: "", label: "All programs" },
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+];
 
 const SESSION_TYPE_OPTIONS = [
     { value: "group", label: "Group" },
     { value: "one_to_one", label: "One to One" },
-];
-
-const STATUS_FILTER_OPTIONS = [
-    { value: "", label: "All programs" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
 ];
 
 const initialForm = {
@@ -54,19 +58,38 @@ const initialFormErrors = {
 };
 
 function normalizeResponse(response) {
-    return Array.isArray(response) ? response : response?.results || [];
+    if (Array.isArray(response)) {
+        return { results: response, count: response.length };
+    }
+    return {
+        results: response?.results || [],
+        count: response?.count || 0,
+    };
 }
 
 function AdminProgramsPage() {
+    const table = useAdminTable({ initialFilters: { status: "" } });
+
     const [programs, setPrograms] = useState([]);
-    const [statusFilter, setStatusFilter] = useState("");
+    const [count, setCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
     const [editingProgramId, setEditingProgramId] = useState(null);
     const [programToDelete, setProgramToDelete] = useState(null);
+    const [bulkDeletePending, setBulkDeletePending] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+
+    const {
+        selectedIds,
+        allPageSelected,
+        somePageSelected,
+        toggleSelectAll,
+        toggleSelectRow,
+        clearSelection,
+    } = useRowSelection(programs);
 
     const [form, setForm] = useState(initialForm);
     const [formErrors, setFormErrors] = useState(initialFormErrors);
@@ -74,13 +97,15 @@ function AdminProgramsPage() {
 
     const isEditing = Boolean(editingProgramId);
 
-    async function loadPrograms(filter = statusFilter) {
+    async function loadPrograms() {
         try {
             setIsLoading(true);
             setPageError("");
 
-            const response = await getAdminPrograms({ status: filter });
-            setPrograms(normalizeResponse(response));
+            const response = await getAdminPrograms(table.queryState);
+            const normalized = normalizeResponse(response);
+            setPrograms(normalized.results);
+            setCount(normalized.count);
         } catch (err) {
             setPageError(getErrorMessage(err, "Failed to load programs."));
         } finally {
@@ -90,7 +115,13 @@ function AdminProgramsPage() {
 
     useEffect(() => {
         loadPrograms();
-    }, []);
+        clearSelection();
+    }, [
+        table.queryState.page,
+        table.queryState.page_size,
+        table.queryState.search,
+        table.queryState.status,
+    ]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function resetForm() {
         setEditingProgramId(null);
@@ -169,7 +200,7 @@ function AdminProgramsPage() {
             }
 
             closeFormModal();
-            await loadPrograms(statusFilter);
+            await loadPrograms();
         } catch (err) {
             setFormErrors(normalizeApiErrors(err));
         } finally {
@@ -198,7 +229,7 @@ function AdminProgramsPage() {
             }
 
             setProgramToDelete(null);
-            await loadPrograms(statusFilter);
+            await loadPrograms();
         } catch (err) {
             setPageError(getErrorMessage(err, "Failed to delete program."));
         } finally {
@@ -206,10 +237,24 @@ function AdminProgramsPage() {
         }
     }
 
+    async function handleBulkDeleteConfirm() {
+        setBulkDeletePending(false);
+        try {
+            setIsBulkDeleting(true);
+            await bulkDeleteAdminPrograms(Array.from(selectedIds));
+            clearSelection();
+            await loadPrograms();
+        } catch (err) {
+            setPageError(getErrorMessage(err, "Failed to delete programs."));
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    }
+
     const programCountLabel = useMemo(() => {
         if (isLoading) return "Loading programs...";
-        return `${programs.length} program${programs.length === 1 ? "" : "s"}`;
-    }, [isLoading, programs.length]);
+        return `${count} program${count === 1 ? "" : "s"}`;
+    }, [isLoading, count]);
 
     const modalFooter = (
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -245,7 +290,13 @@ function AdminProgramsPage() {
                     contentClassName="p-0"
                     actions={<AdminToolbar
                         left={
-                            <div className="flex items-center gap-3 ml-auto">
+                            <div className="flex flex-wrap items-center gap-3 ml-auto">
+                                <input
+                                    type="text"
+                                    placeholder="Search by title or description"
+                                    className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
+                                />
+
                                 <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
                                         <span className="text-sm font-semibold">#</span>
@@ -267,15 +318,11 @@ function AdminProgramsPage() {
                                     </span>
 
                                     <select
-                                        value={statusFilter}
-                                        onChange={(event) => {
-                                            const nextFilter = event.target.value;
-                                            setStatusFilter(nextFilter);
-                                            loadPrograms(nextFilter);
-                                        }}
+                                        value={table.filters.status}
+                                        onChange={(event) => table.updateFilter("status", event.target.value)}
                                         className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
                                     >
-                                        {STATUS_FILTER_OPTIONS.map((option) => (
+                                        {PROGRAM_STATUS_OPTIONS.map((option) => (
                                             <option key={option.value} value={option.value}>
                                                 {option.label}
                                             </option>
@@ -283,10 +330,6 @@ function AdminProgramsPage() {
                                     </select>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    {/* <Button variant="outline" onClick={() => loadPrograms()}>
-                                Refresh
-                            </Button> */}
-
                                     <Button onClick={openCreateModal}>Add New Program</Button>
                                 </div>
                             </div>
@@ -295,7 +338,31 @@ function AdminProgramsPage() {
                     }
                 >
                     <AdminTable
+                        bulkBar={
+                            selectedIds.size > 0 ? (
+                                <BulkActionBar
+                                    selectedCount={selectedIds.size}
+                                    onDelete={() => setBulkDeletePending(true)}
+                                    onClear={clearSelection}
+                                    isLoading={isBulkDeleting}
+                                />
+                            ) : null
+                        }
                         columns={[
+                            {
+                                key: "select",
+                                label: (
+                                    <input
+                                        type="checkbox"
+                                        checked={allPageSelected}
+                                        ref={(el) => {
+                                            if (el) el.indeterminate = somePageSelected;
+                                        }}
+                                        onChange={toggleSelectAll}
+                                        className="h-4 w-4 cursor-pointer rounded border-app-border accent-brand-primary"
+                                    />
+                                ),
+                            },
                             { key: "title", label: "Program" },
                             { key: "type", label: "Type" },
                             { key: "price", label: "Price" },
@@ -308,11 +375,22 @@ function AdminProgramsPage() {
                         emptyTitle="No programs found"
                         emptyDescription="Create your first program to get started."
                         className="pb-5"
-                        renderRow={(program) => (
+                        renderRow={(program) => {
+                            const isSelected = selectedIds.has(program.id);
+                            return (
                             <tr
                                 key={program.id}
-                                className="border-b border-app-border text-app-text transition hover:bg-app-surface-2/40"
+                                className={`border-b border-app-border text-app-text transition hover:bg-app-surface-2/40 ${isSelected ? "bg-brand-primary/5" : ""}`}
                             >
+                                <td className="w-10 px-3 py-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => toggleSelectRow(program.id)}
+                                        className="h-4 w-4 cursor-pointer rounded border-app-border accent-brand-primary"
+                                    />
+                                </td>
+
                                 <td className="px-3 py-3">
                                     <p className="font-medium text-app-text">{program.title}</p>
                                     <p className="text-xs text-app-text-muted">
@@ -350,8 +428,18 @@ function AdminProgramsPage() {
                                     </AdminRowActions>
                                 </td>
                             </tr>
-                        )}
+                            );
+                        }}
                     />
+
+                    <div className="px-5 pb-5">
+                        <AdminPagination
+                            page={table.page}
+                            count={count}
+                            pageSize={table.pageSize}
+                            onPageChange={table.setPage}
+                        />
+                    </div>
                 </AdminSectionCard>
             </div>
 
@@ -501,6 +589,17 @@ function AdminProgramsPage() {
                     </section>
                 </form>
             </AdminModal>
+
+            <AdminConfirmDialog
+                open={bulkDeletePending}
+                title={`Delete ${selectedIds.size} Program${selectedIds.size === 1 ? "" : "s"}`}
+                description={`This action cannot be undone. ${selectedIds.size} program${selectedIds.size === 1 ? "" : "s"} will be permanently removed.`}
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                onConfirm={handleBulkDeleteConfirm}
+                onCancel={() => setBulkDeletePending(false)}
+                isLoading={isBulkDeleting}
+            />
 
             <AdminConfirmDialog
                 open={Boolean(programToDelete)}

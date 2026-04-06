@@ -17,3 +17,13 @@ export async function updateAdminBookingStatus(bookingId, payload) {
   const response = await api.patch(`/admin/bookings/${bookingId}/status/`, payload);
   return response.data;
 }
+
+export async function bulkUpdateAdminBookingStatus(payload) {
+  const response = await api.post("/admin/bookings/bulk-status/", payload);
+  return response.data;
+}
+
+export async function bulkDeleteAdminBookings(ids) {
+  const response = await api.post("/admin/bookings/bulk-delete/", { ids });
+  return response.data;
+}

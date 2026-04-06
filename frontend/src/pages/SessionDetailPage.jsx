@@ -170,9 +170,16 @@ function SessionDetailPage() {
             title="Session Detail"
             description={error || "Session not found."}
             action={
-              <Link to="/training-sessions">
-                <Button>Back to Sessions</Button>
-              </Link>
+              <div className="flex flex-wrap justify-center gap-3">
+                {error !== "Session not found." && (
+                  <Button type="button" onClick={loadPageData}>
+                    Try Again
+                  </Button>
+                )}
+                <Link to="/training-sessions">
+                  <Button variant="outline">Back to Sessions</Button>
+                </Link>
+              </div>
             }
           />
         </div>

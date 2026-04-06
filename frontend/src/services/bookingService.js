@@ -23,17 +23,21 @@ export async function verifyPayment(payload) {
 }
 
 export async function getMyBookings() {
-  const response = await api.get("/my-bookings/?status=all");
+  const allBookings = [];
+  let url = "/my-bookings/?status=all";
 
-  if (Array.isArray(response.data)) {
-    return response.data;
+  while (url) {
+    const response = await api.get(url);
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    if (Array.isArray(response.data.results)) {
+      allBookings.push(...response.data.results);
+    }
+    url = response.data.next || null;
   }
 
-  if (Array.isArray(response.data.results)) {
-    return response.data.results;
-  }
-
-  return [];
+  return allBookings;
 }
 
 export async function cancelBooking(bookingId, reason = "") {

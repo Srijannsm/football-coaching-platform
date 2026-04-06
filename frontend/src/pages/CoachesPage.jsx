@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Alert from "../components/ui/Alert";
+import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import { Card, CardContent } from "../components/ui/Card";
 import { getCoachProfiles } from "../services/coachService";
@@ -68,22 +69,22 @@ function CoachesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        async function loadCoaches() {
-            try {
-                setIsLoading(true);
-                setError("");
-                const data = await getCoachProfiles();
-                setCoaches(Array.isArray(data) ? data : []);
-            } catch (err) {
-                setError(getErrorMessage(err, "Failed to load coach profiles."));
-            } finally {
-                setIsLoading(false);
-            }
+    async function loadCoaches() {
+        try {
+            setIsLoading(true);
+            setError("");
+            const data = await getCoachProfiles();
+            setCoaches(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setError(getErrorMessage(err, "Failed to load coach profiles."));
+        } finally {
+            setIsLoading(false);
         }
+    }
 
+    useEffect(() => {
         loadCoaches();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div className="app-shell flex min-h-screen flex-col bg-app-bg">
@@ -122,7 +123,12 @@ function CoachesPage() {
 
                 <section className="mx-auto max-w-7xl px-6 py-12 lg:px-10 lg:py-16">
                     {error ? (
-                        <Alert variant="error">{error}</Alert>
+                        <div className="space-y-4">
+                            <Alert variant="error">{error}</Alert>
+                            <div className="flex justify-center">
+                                <Button type="button" onClick={loadCoaches}>Try Again</Button>
+                            </div>
+                        </div>
                     ) : isLoading ? (
                         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                             {Array.from({ length: 6 }).map((_, index) => (

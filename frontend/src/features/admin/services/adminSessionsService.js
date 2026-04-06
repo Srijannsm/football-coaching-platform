@@ -42,3 +42,13 @@ export async function getAdminCoaches() {
   const response = await api.get("/admin/coaches/directory/");
   return response.data;
 }
+
+export async function bulkDeleteAdminSessions(ids) {
+  const response = await api.post("/admin/sessions/bulk-delete/", { ids });
+  return response.data;
+}
+
+export async function bulkUpdateAdminSessionStatus(ids, action) {
+  const response = await api.post("/admin/sessions/bulk-status/", { ids, action });
+  return response.data;
+}

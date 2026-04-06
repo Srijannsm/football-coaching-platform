@@ -3,17 +3,22 @@ import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
 import { formatDate } from "../../../utils/formatDate";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
-import AdminPageHeader from "../components/layout/AdminPageHeader";
 import AdminToolbar from "../components/ui/AdminToolbar";
 import AdminSectionCard from "../components/ui/AdminSectionCard";
 import AdminTable from "../components/table/AdminTable";
+import AdminPagination from "../components/table/AdminPagination";
 import AdminRowActions from "../components/table/AdminRowActions";
 import AdminStatusBadge from "../components/ui/AdminStatusBadge";
 import AdminConfirmDialog from "../components/ui/AdminConfirmDialog";
+import BulkActionBar from "../components/ui/BulkActionBar";
+import { useAdminTable } from "../hooks/useAdminTable";
+import { useRowSelection } from "../hooks/useRowSelection";
 import {
   getAdminBookings,
   deleteAdminBooking,
   updateAdminBookingStatus,
+  bulkUpdateAdminBookingStatus,
+  bulkDeleteAdminBookings,
 } from "../services/adminBookingsService";
 
 const STATUS_FILTER_OPTIONS = [
@@ -23,14 +28,26 @@ const STATUS_FILTER_OPTIONS = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
+const BULK_STATUS_OPTIONS = [
+  { value: "pending", label: "Mark as Pending" },
+  { value: "confirmed", label: "Mark as Confirmed" },
+  { value: "cancelled", label: "Mark as Cancelled" },
+];
+
 const STATUS_UPDATE_OPTIONS = [
   { value: "pending", label: "Pending" },
   { value: "confirmed", label: "Confirmed" },
   { value: "cancelled", label: "Cancelled" },
 ];
 
-function normalizeList(response) {
-  return Array.isArray(response) ? response : response?.results || [];
+function normalizeResponse(response) {
+  if (Array.isArray(response)) {
+    return { results: response, count: response.length };
+  }
+  return {
+    results: response?.results || [],
+    count: response?.count || 0,
+  };
 }
 
 function getBookingPlayerLabel(booking) {
@@ -57,7 +74,7 @@ function formatBookingStatus(status) {
   return "Pending";
 }
 
-function CancelReasonDialog({ open, onConfirm, onClose, isLoading }) {
+function CancelReasonDialog({ open, onConfirm, onClose, isLoading, bulkCount }) {
   const [reason, setReason] = useState("");
 
   function handleConfirm() {
@@ -72,12 +89,18 @@ function CancelReasonDialog({ open, onConfirm, onClose, isLoading }) {
 
   if (!open) return null;
 
+  const isBulk = bulkCount > 1;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-md rounded-3xl border border-app-border bg-app-card p-6 shadow-2xl">
-        <h3 className="text-lg font-semibold text-app-text">Cancel Booking</h3>
+        <h3 className="text-lg font-semibold text-app-text">
+          {isBulk ? `Cancel ${bulkCount} Bookings` : "Cancel Booking"}
+        </h3>
         <p className="mt-2 text-sm text-app-text-muted">
-          Provide a reason for cancelling this booking. The player will be able to see this.
+          {isBulk
+            ? `Provide a reason for cancelling these ${bulkCount} bookings. Players will be able to see this.`
+            : "Provide a reason for cancelling this booking. The player will be able to see this."}
         </p>
 
         <div className="mt-4">
@@ -98,7 +121,7 @@ function CancelReasonDialog({ open, onConfirm, onClose, isLoading }) {
             Go Back
           </Button>
           <Button variant="danger" onClick={handleConfirm} loading={isLoading}>
-            Yes, Cancel Booking
+            {isBulk ? `Yes, Cancel ${bulkCount} Bookings` : "Yes, Cancel Booking"}
           </Button>
         </div>
       </div>
@@ -107,25 +130,36 @@ function CancelReasonDialog({ open, onConfirm, onClose, isLoading }) {
 }
 
 function AdminBookingsPage() {
+  const table = useAdminTable({ initialFilters: { status: "" } });
   const [bookings, setBookings] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [isStatusUpdatingId, setIsStatusUpdatingId] = useState(null);
   const [bookingToDelete, setBookingToDelete] = useState(null);
+  const [bulkDeletePending, setBulkDeletePending] = useState(false);
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [bulkCancelPending, setBulkCancelPending] = useState(false);
   const [pageError, setPageError] = useState("");
 
-  async function loadBookings(filter = statusFilter) {
+  const {
+    selectedIds,
+    allPageSelected,
+    somePageSelected,
+    toggleSelectAll,
+    toggleSelectRow,
+    clearSelection,
+  } = useRowSelection(bookings);
+
+  async function loadBookings() {
     try {
       setIsLoading(true);
       setPageError("");
-
-      const response = await getAdminBookings(
-        filter ? { status: filter } : undefined
-      );
-
-      setBookings(normalizeList(response));
+      const response = await getAdminBookings(table.queryState);
+      const normalized = normalizeResponse(response);
+      setBookings(normalized.results);
+      setCount(normalized.count);
     } catch (err) {
       setPageError(getErrorMessage(err, "Failed to load bookings."));
     } finally {
@@ -135,20 +169,22 @@ function AdminBookingsPage() {
 
   useEffect(() => {
     loadBookings();
-  }, []);
+    clearSelection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.queryState]);
+
+  // ── Single-row status change ───────────────────────────────────────────────
 
   async function handleStatusChange(booking, status) {
     if ((booking.status || "pending") === status) return;
-
     if (status === "cancelled") {
       setCancelTarget(booking);
       return;
     }
-
     try {
       setIsStatusUpdatingId(booking.id);
       await updateAdminBookingStatus(booking.id, { status });
-      await loadBookings(statusFilter);
+      await loadBookings();
     } catch (err) {
       setPageError(getErrorMessage(err, "Failed to update booking status."));
     } finally {
@@ -157,38 +193,87 @@ function AdminBookingsPage() {
   }
 
   async function handleCancelConfirm(reason) {
-    const booking = cancelTarget;
-    setCancelTarget(null);
-    try {
-      setIsStatusUpdatingId(booking.id);
-      await updateAdminBookingStatus(booking.id, {
-        status: "cancelled",
-        cancellation_reason: reason,
-      });
-      await loadBookings(statusFilter);
-    } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to cancel booking."));
-    } finally {
-      setIsStatusUpdatingId(null);
+    if (bulkCancelPending) {
+      setBulkCancelPending(false);
+      const ids = Array.from(selectedIds);
+      try {
+        setIsBulkUpdating(true);
+        await bulkUpdateAdminBookingStatus({
+          booking_ids: ids,
+          status: "cancelled",
+          cancellation_reason: reason,
+        });
+        clearSelection();
+        await loadBookings();
+      } catch (err) {
+        setPageError(getErrorMessage(err, "Failed to bulk cancel bookings."));
+      } finally {
+        setIsBulkUpdating(false);
+      }
+    } else {
+      const booking = cancelTarget;
+      setCancelTarget(null);
+      try {
+        setIsStatusUpdatingId(booking.id);
+        await updateAdminBookingStatus(booking.id, {
+          status: "cancelled",
+          cancellation_reason: reason,
+        });
+        await loadBookings();
+      } catch (err) {
+        setPageError(getErrorMessage(err, "Failed to cancel booking."));
+      } finally {
+        setIsStatusUpdatingId(null);
+      }
     }
   }
 
-  function handleDeleteClick(booking) {
-    setBookingToDelete(booking);
+  // ── Bulk actions ──────────────────────────────────────────────────────────
+
+  async function handleBulkStatusApply(status) {
+    if (selectedIds.size === 0) return;
+    if (status === "cancelled") {
+      setBulkCancelPending(true);
+      return;
+    }
+    try {
+      setIsBulkUpdating(true);
+      await bulkUpdateAdminBookingStatus({
+        booking_ids: Array.from(selectedIds),
+        status,
+      });
+      clearSelection();
+      await loadBookings();
+    } catch (err) {
+      setPageError(getErrorMessage(err, "Failed to update bookings."));
+    } finally {
+      setIsBulkUpdating(false);
+    }
   }
 
-  function handleDeleteCancel() {
-    setBookingToDelete(null);
+  async function handleBulkDeleteConfirm() {
+    setBulkDeletePending(false);
+    try {
+      setIsBulkUpdating(true);
+      await bulkDeleteAdminBookings(Array.from(selectedIds));
+      clearSelection();
+      await loadBookings();
+    } catch (err) {
+      setPageError(getErrorMessage(err, "Failed to delete bookings."));
+    } finally {
+      setIsBulkUpdating(false);
+    }
   }
+
+  // ── Single-row delete ─────────────────────────────────────────────────────
 
   async function handleDeleteConfirm() {
     if (!bookingToDelete) return;
-
     try {
       setIsDeleting(true);
       await deleteAdminBooking(bookingToDelete.id);
       setBookingToDelete(null);
-      await loadBookings(statusFilter);
+      await loadBookings();
     } catch (err) {
       setPageError(getErrorMessage(err, "Failed to delete booking."));
     } finally {
@@ -198,76 +283,93 @@ function AdminBookingsPage() {
 
   const bookingCountLabel = useMemo(() => {
     if (isLoading) return "Loading bookings...";
-    return `${bookings.length} booking${bookings.length === 1 ? "" : "s"}`;
-  }, [isLoading, bookings.length]);
+    return `${count} booking${count === 1 ? "" : "s"}`;
+  }, [isLoading, count]);
+
+  const cancelDialogOpen = Boolean(cancelTarget) || bulkCancelPending;
+  const cancelDialogCount = bulkCancelPending ? selectedIds.size : 1;
+  const cancelDialogLoading = bulkCancelPending
+    ? isBulkUpdating
+    : isStatusUpdatingId === cancelTarget?.id;
 
   return (
     <>
       <div className="space-y-6">
-        {/* <AdminPageHeader
-          title="Bookings"
-          description="Review, confirm, cancel, and manage training session bookings."
-          actions={
-            <Button variant="outline" onClick={() => loadBookings()}>
-              Refresh
-            </Button>
-          }
-        /> */}
-
         {pageError ? <Alert variant="error">{pageError}</Alert> : null}
-
 
         <AdminSectionCard
           title="Booking Management"
           description="Update booking status and remove incorrect or duplicate records."
           contentClassName="p-0"
-          actions={<AdminToolbar
-            left={
-              <div className="flex items-center gap-3 ml-auto">
-                <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                    <span className="text-sm font-semibold">#</span>
+          actions={
+            <AdminToolbar
+              left={
+                <div className="flex flex-wrap items-center gap-3 ml-auto">
+                  <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
+                      <span className="text-sm font-semibold">#</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
+                        Total bookings
+                      </p>
+                      <p className="text-sm font-semibold text-app-text">
+                        {bookingCountLabel}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                      Total bookings
-                    </p>
-                    <p className="text-sm font-semibold text-app-text">
-                      {bookingCountLabel}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
-                  <div className="min-w-0">
+                  <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
                       Status
                     </p>
+                    <select
+                      value={table.filters.status}
+                      onChange={(event) =>
+                        table.updateFilter("status", event.target.value)
+                      }
+                      className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                    >
+                      {STATUS_FILTER_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-
-                  <select
-                    value={statusFilter}
-                    onChange={(event) => {
-                      const nextFilter = event.target.value;
-                      setStatusFilter(nextFilter);
-                      loadBookings(nextFilter);
-                    }}
-                    className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
-                  >
-                    {STATUS_FILTER_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
                 </div>
-              </div>
-            }
-          />}
+              }
+            />
+          }
         >
           <AdminTable
+            bulkBar={
+              selectedIds.size > 0 ? (
+                <BulkActionBar
+                  selectedCount={selectedIds.size}
+                  statusOptions={BULK_STATUS_OPTIONS}
+                  onApplyStatus={handleBulkStatusApply}
+                  onDelete={() => setBulkDeletePending(true)}
+                  onClear={clearSelection}
+                  isLoading={isBulkUpdating}
+                />
+              ) : null
+            }
             columns={[
+              {
+                key: "select",
+                label: (
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = somePageSelected;
+                    }}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 cursor-pointer rounded border-app-border accent-brand-primary"
+                  />
+                ),
+              },
               { key: "player", label: "Player" },
               { key: "program", label: "Program" },
               { key: "status", label: "Status" },
@@ -283,12 +385,24 @@ function AdminBookingsPage() {
             renderRow={(booking) => {
               const isUpdatingThisRow = isStatusUpdatingId === booking.id;
               const currentStatus = booking.status || "pending";
+              const isSelected = selectedIds.has(booking.id);
 
               return (
                 <tr
                   key={booking.id}
-                  className="border-b border-app-border text-app-text transition hover:bg-app-surface-2/40"
+                  className={`border-b border-app-border text-app-text transition hover:bg-app-surface-2/40 ${
+                    isSelected ? "bg-brand-primary/5" : ""
+                  }`}
                 >
+                  <td className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelectRow(booking.id)}
+                      className="h-4 w-4 cursor-pointer rounded border-app-border accent-brand-primary"
+                    />
+                  </td>
+
                   <td className="px-3 py-3">
                     <p className="font-medium text-app-text">
                       {getBookingPlayerLabel(booking)}
@@ -311,10 +425,7 @@ function AdminBookingsPage() {
 
                   <td className="px-3 py-3">
                     <div className="flex flex-col gap-2">
-                      <div>
-                        <AdminStatusBadge label={formatBookingStatus(currentStatus)} />
-                      </div>
-
+                      <AdminStatusBadge label={formatBookingStatus(currentStatus)} />
                       <select
                         value={currentStatus}
                         onChange={(event) =>
@@ -329,7 +440,6 @@ function AdminBookingsPage() {
                           </option>
                         ))}
                       </select>
-
                       {currentStatus === "cancelled" && booking.cancellation_reason && (
                         <p className="max-w-[200px] text-xs text-app-text-muted">
                           <span className="font-medium">Reason:</span>{" "}
@@ -373,7 +483,7 @@ function AdminBookingsPage() {
                       <Button
                         size="sm"
                         variant="danger-outline"
-                        onClick={() => handleDeleteClick(booking)}
+                        onClick={() => setBookingToDelete(booking)}
                       >
                         Delete
                       </Button>
@@ -383,14 +493,38 @@ function AdminBookingsPage() {
               );
             }}
           />
+
+          <div className="px-5 pb-5">
+            <AdminPagination
+              page={table.page}
+              count={count}
+              pageSize={table.pageSize}
+              onPageChange={table.setPage}
+            />
+          </div>
         </AdminSectionCard>
       </div>
 
       <CancelReasonDialog
-        open={Boolean(cancelTarget)}
+        open={cancelDialogOpen}
         onConfirm={handleCancelConfirm}
-        onClose={() => setCancelTarget(null)}
-        isLoading={isStatusUpdatingId === cancelTarget?.id}
+        onClose={() => {
+          setCancelTarget(null);
+          setBulkCancelPending(false);
+        }}
+        isLoading={cancelDialogLoading}
+        bulkCount={cancelDialogCount}
+      />
+
+      <AdminConfirmDialog
+        open={bulkDeletePending}
+        title={`Delete ${selectedIds.size} Booking${selectedIds.size === 1 ? "" : "s"}`}
+        description={`This action cannot be undone. ${selectedIds.size} booking${selectedIds.size === 1 ? "" : "s"} will be permanently removed.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={() => setBulkDeletePending(false)}
+        isLoading={isBulkUpdating}
       />
 
       <AdminConfirmDialog
@@ -398,15 +532,13 @@ function AdminBookingsPage() {
         title="Delete Booking"
         description={
           bookingToDelete
-            ? `This action cannot be undone. The booking for "${getBookingPlayerLabel(
-              bookingToDelete
-            )}" will be permanently removed.`
+            ? `This action cannot be undone. The booking for "${getBookingPlayerLabel(bookingToDelete)}" will be permanently removed.`
             : ""
         }
         confirmLabel="Delete Booking"
         cancelLabel="Cancel"
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
+        onCancel={() => setBookingToDelete(null)}
         isLoading={isDeleting}
       />
     </>

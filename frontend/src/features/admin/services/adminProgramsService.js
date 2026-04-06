@@ -37,3 +37,8 @@ export async function deleteAdminProgram(programId) {
   const response = await api.delete(`/admin/programs/${programId}/`);
   return response.data;
 }
+
+export async function bulkDeleteAdminPrograms(ids) {
+  const response = await api.post("/admin/programs/bulk-delete/", { ids });
+  return response.data;
+}

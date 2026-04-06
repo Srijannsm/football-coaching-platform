@@ -370,7 +370,16 @@ function MyBookingsPage() {
       </Card>
 
       {/* Error */}
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <div className="space-y-3">
+          <Alert variant="error">{error}</Alert>
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" onClick={fetchBookings}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

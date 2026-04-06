@@ -22,3 +22,13 @@ export async function deleteAdminEnquiry(enquiryId) {
   const response = await api.delete(`/admin/enquiries/${enquiryId}/`);
   return response.data;
 }
+
+export async function bulkDeleteAdminEnquiries(ids) {
+  const response = await api.post("/admin/enquiries/bulk-delete/", { ids });
+  return response.data;
+}
+
+export async function bulkUpdateAdminEnquiryStatus(ids, status) {
+  const response = await api.post("/admin/enquiries/bulk-status/", { ids, status });
+  return response.data;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Button from "../components/ui/Button";
 import { getGalleryCategories } from "../services/galleryService";
 
 function extractYouTubeId(url) {
@@ -202,20 +203,23 @@ function GalleryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await getGalleryCategories();
-        const list = Array.isArray(data) ? data : data.results ?? [];
-        setCategories(list);
-      } catch {
-        setError("Failed to load gallery. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadGallery() {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getGalleryCategories();
+      const list = Array.isArray(data) ? data : data.results ?? [];
+      setCategories(list);
+    } catch {
+      setError("Failed to load gallery. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
-    load();
-  }, []);
+  }
+
+  useEffect(() => {
+    loadGallery();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredItems = useMemo(() => {
     if (activeCategory === "all") {
@@ -304,7 +308,10 @@ function GalleryPage() {
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center text-red-400">
-            {error}
+            <p>{error}</p>
+            <div className="mt-4 flex justify-center">
+              <Button type="button" onClick={loadGallery}>Try Again</Button>
+            </div>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="py-20 text-center">

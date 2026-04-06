@@ -1,8 +1,22 @@
 import api from "../api/axios";
 
+async function fetchAllPages(url) {
+  const all = [];
+  while (url) {
+    const response = await api.get(url);
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    if (Array.isArray(response.data.results)) {
+      all.push(...response.data.results);
+    }
+    url = response.data.next || null;
+  }
+  return all;
+}
+
 export async function getCoachProfiles() {
-  const response = await api.get("/coaches/profiles/");
-  return Array.isArray(response.data) ? response.data : response.data?.results || [];
+  return fetchAllPages("/coaches/profiles/");
 }
 
 export async function getCoachProfile(id) {
