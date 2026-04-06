@@ -389,6 +389,8 @@ function AdminPlayersPage() {
                       <img
                         src={player.image_url}
                         alt={getPlayerDisplayName(player)}
+                        loading="lazy"
+                        decoding="async"
                         className="h-11 w-11 rounded-2xl border border-app-border object-cover"
                       />
                     ) : (
@@ -514,6 +516,8 @@ function AdminPlayersPage() {
                   <img
                     src={currentImageUrl}
                     alt={getPlayerDisplayName(editingPlayer)}
+                    loading="lazy"
+                    decoding="async"
                     className="h-20 w-20 rounded-3xl border border-app-border object-cover shadow-sm"
                   />
                 ) : (
@@ -669,6 +673,8 @@ function AdminPlayersPage() {
                     <img
                       src={currentImageUrl}
                       alt="Player preview"
+                      loading="lazy"
+                      decoding="async"
                       className="h-28 w-28 rounded-3xl border border-app-border object-cover shadow-sm"
                     />
                   ) : (

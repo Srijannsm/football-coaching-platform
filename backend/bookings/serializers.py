@@ -139,6 +139,7 @@ class BookingListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "status",
+            "cancellation_reason",
             "booked_at",
             "session",
             "program_title",
@@ -175,9 +176,11 @@ class BookingListSerializer(serializers.ModelSerializer):
 
 
 class BookingCancelSerializer(serializers.ModelSerializer):
+    cancellation_reason = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = Booking
-        fields = ["id", "status"]
+        fields = ["id", "status", "cancellation_reason"]
         read_only_fields = ["id", "status"]
 
 class DashboardNextBookingSerializer(serializers.ModelSerializer):

@@ -325,6 +325,8 @@ function AdminCoachesPage() {
                       <img
                         src={coach.image_url}
                         alt={getCoachDisplayName(coach)}
+                        loading="lazy"
+                        decoding="async"
                         className="h-11 w-11 rounded-2xl border border-app-border object-cover"
                       />
                     ) : (
@@ -436,6 +438,8 @@ function AdminCoachesPage() {
                   <img
                     src={currentImageUrl}
                     alt={getCoachDisplayName(editingCoach)}
+                    loading="lazy"
+                    decoding="async"
                     className="h-20 w-20 rounded-3xl border border-app-border object-cover shadow-sm"
                   />
                 ) : (
@@ -588,6 +592,8 @@ function AdminCoachesPage() {
                     <img
                       src={currentImageUrl}
                       alt="Coach preview"
+                      loading="lazy"
+                      decoding="async"
                       className="h-28 w-28 rounded-3xl border border-app-border object-cover shadow-sm"
                     />
                   ) : (

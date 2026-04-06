@@ -135,6 +135,6 @@ GET    /api/admin/*     ← all admin CRUD endpoints
 - **User roles**: `'player'`, `'coach'`, `'admin'` — stored on `User.role`. Check with `user.is_player`, `user.is_coach`, `user.is_admin` properties.
 - **Booking statuses**: `pending`, `confirmed`, `cancelled`, `attended`, `missed`.
 - **Session types**: `'group'`, `'one_to_one'` — one-to-one sessions are hard-capped at `max_players=1`.
-- **Images**: Uploaded via `multipart/form-data`. Backend stores under `MEDIA_ROOT`, served at `/media/`. Frontend uses `ImageUploadField` component for all image inputs.
+- **Images**: Uploaded via `multipart/form-data`. All uploads are processed by `config/image_utils.py` which validates via Pillow (magic-byte check to block malicious files), strips EXIF metadata, downscales images exceeding `IMAGE_MAX_DIMENSION` (default 1920px), and converts to WebP. Processing is wired into every serializer that accepts image fields — never save raw uploads. Frontend uses `ImageUploadField` component for all image inputs. All `<img>` tags must include `loading="lazy"` and `decoding="async"` (except lightbox/modal images that are already in viewport).
 - **Pagination**: DRF uses `PageNumberPagination` with `PAGE_SIZE=10`. Admin list endpoints return paginated responses; frontend admin tables must handle `next`/`previous`.
 - **Throttling**: Anon 30/min, authenticated 120/min. Applied to registration, login, password reset, send-verification.

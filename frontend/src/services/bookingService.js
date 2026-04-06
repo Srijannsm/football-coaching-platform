@@ -36,7 +36,9 @@ export async function getMyBookings() {
   return [];
 }
 
-export async function cancelBooking(bookingId) {
-  const response = await api.patch(`/my-bookings/${bookingId}/cancel/`);
+export async function cancelBooking(bookingId, reason = "") {
+  const response = await api.patch(`/my-bookings/${bookingId}/cancel/`, {
+    cancellation_reason: reason,
+  });
   return response.data;
 }

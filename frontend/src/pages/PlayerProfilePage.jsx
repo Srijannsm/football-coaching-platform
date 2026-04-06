@@ -188,6 +188,8 @@ function PlayerProfileViewPage() {
                   <img
                     src={profile.image}
                     alt="Player profile"
+                    loading="lazy"
+                    decoding="async"
                     className="h-24 w-24 rounded-[1.5rem] object-cover ring-4 ring-brand-primary/10"
                   />
                 ) : (

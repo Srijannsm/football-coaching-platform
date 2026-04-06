@@ -60,7 +60,7 @@ function normalizeList(data) {
 function ImagePreview({ src, alt = "Preview", className = "" }) {
   if (!src) return null;
   return (
-    <img src={src} alt={alt} className={`rounded-xl object-cover ${className}`} />
+    <img src={src} alt={alt} loading="lazy" decoding="async" className={`rounded-xl object-cover ${className}`} />
   );
 }
 

@@ -27,6 +27,7 @@ class Booking(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_CONFIRMED
     )
+    cancellation_reason = models.TextField(blank=True, default="")
     booked_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

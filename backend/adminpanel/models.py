@@ -19,6 +19,13 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=30, choices=TYPE_CHOICES)
     link = models.CharField(max_length=255, blank=True)
     is_read = models.BooleanField(default=False)
+    recipient_user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

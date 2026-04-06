@@ -64,6 +64,9 @@ class PlayerProfile(models.Model):
     secondary_position = models.CharField(max_length=50, blank=True)
     height_cm = models.PositiveIntegerField(blank=True, null=True)
     weight_kg = models.PositiveIntegerField(blank=True, null=True)
+    nationality = models.CharField(max_length=100, blank=True)
+    emergency_contact_name = models.CharField(max_length=150, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -81,6 +84,8 @@ class CoachProfile(models.Model):
     years_experience = models.PositiveIntegerField(blank=True, null=True)
     coaching_level = models.CharField(max_length=120, blank=True)
     specialties = models.CharField(max_length=255, blank=True)
+    certifications = models.JSONField(default=list, blank=True)
+    availability_schedule = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

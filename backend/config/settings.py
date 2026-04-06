@@ -162,6 +162,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "30/minute",
         "user": "120/minute",
+        "admin": "60/minute",
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
@@ -181,6 +182,12 @@ SIMPLE_JWT = {
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Image processing — override in .env if needed
+IMAGE_MAX_DIMENSION = 1920        # px — larger images are downscaled
+IMAGE_THUMBNAIL_SIZE = (300, 300)  # px — profile / gallery thumbnails
+IMAGE_WEBP_QUALITY = 82           # 0-100, lossy WebP quality
+IMAGE_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB server-side limit
 
 # Email
 # Default: console backend (prints to terminal in dev).

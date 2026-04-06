@@ -2,6 +2,7 @@ import re
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from config.image_utils import process_image, validate_image_file
 from .models import PlayerProfile, CoachProfile
 
 PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
@@ -56,6 +57,11 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def validate_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
+
     def validate(self, attrs):
         if attrs["password"] != attrs["confirm_password"]:
             raise serializers.ValidationError(
@@ -85,9 +91,10 @@ class PlayerRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("confirm_password")
 
+        raw_image = validated_data.pop("image", None)
         player_profile_data = {
             "age": validated_data.pop("age", None),
-            "image": validated_data.pop("image", None),
+            "image": process_image(raw_image) if raw_image else None,
             "preferred_foot": validated_data.pop("preferred_foot", ""),
             "primary_position": validated_data.pop("primary_position", ""),
             "secondary_position": validated_data.pop("secondary_position", ""),
@@ -134,6 +141,9 @@ class PlayerProfileSerializer(serializers.ModelSerializer):
             "secondary_position",
             "height_cm",
             "weight_kg",
+            "nationality",
+            "emergency_contact_name",
+            "emergency_contact_phone",
         ]
 
 
@@ -206,8 +216,16 @@ class PlayerProfileUpdateSerializer(serializers.ModelSerializer):
             "secondary_position",
             "height_cm",
             "weight_kg",
+            "nationality",
+            "emergency_contact_name",
+            "emergency_contact_phone",
         ]
         read_only_fields = ["id", "username", "player_rating"]
+
+    def validate_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
 
     def validate(self, attrs):
         user_data = attrs.get("user", {})
@@ -253,13 +271,17 @@ class PlayerProfileUpdateSerializer(serializers.ModelSerializer):
         )
         instance.height_cm = validated_data.get("height_cm", instance.height_cm)
         instance.weight_kg = validated_data.get("weight_kg", instance.weight_kg)
+        instance.nationality = validated_data.get("nationality", instance.nationality)
+        instance.emergency_contact_name = validated_data.get("emergency_contact_name", instance.emergency_contact_name)
+        instance.emergency_contact_phone = validated_data.get("emergency_contact_phone", instance.emergency_contact_phone)
 
         if remove_image:
             if instance.image:
                 instance.image.delete(save=False)
             instance.image = None
         elif "image" in validated_data:
-            instance.image = validated_data.get("image")
+            raw_image = validated_data["image"]
+            instance.image = process_image(raw_image) if raw_image else raw_image
 
         instance.save()
         return instance
@@ -288,6 +310,8 @@ class CoachProfileSerializer(serializers.ModelSerializer):
             "years_experience",
             "coaching_level",
             "specialties",
+            "certifications",
+            "availability_schedule",
             "image",
             "image_url",
             "updated_at",

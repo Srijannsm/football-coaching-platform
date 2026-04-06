@@ -57,6 +57,55 @@ function formatBookingStatus(status) {
   return "Pending";
 }
 
+function CancelReasonDialog({ open, onConfirm, onClose, isLoading }) {
+  const [reason, setReason] = useState("");
+
+  function handleConfirm() {
+    onConfirm(reason.trim());
+    setReason("");
+  }
+
+  function handleClose() {
+    setReason("");
+    onClose();
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-3xl border border-app-border bg-app-card p-6 shadow-2xl">
+        <h3 className="text-lg font-semibold text-app-text">Cancel Booking</h3>
+        <p className="mt-2 text-sm text-app-text-muted">
+          Provide a reason for cancelling this booking. The player will be able to see this.
+        </p>
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-sm font-medium text-app-text-soft">
+            Reason <span className="font-normal text-app-text-muted">(optional)</span>
+          </label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Session rescheduled, capacity reduced, admin decision..."
+            rows={3}
+            className="w-full resize-none rounded-2xl border border-app-border bg-app-surface-2 px-4 py-3 text-sm text-app-text placeholder:text-app-text-muted outline-none focus:border-brand-primary"
+          />
+        </div>
+
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+            Go Back
+          </Button>
+          <Button variant="danger" onClick={handleConfirm} loading={isLoading}>
+            Yes, Cancel Booking
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
@@ -64,6 +113,7 @@ function AdminBookingsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isStatusUpdatingId, setIsStatusUpdatingId] = useState(null);
   const [bookingToDelete, setBookingToDelete] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const [pageError, setPageError] = useState("");
 
   async function loadBookings(filter = statusFilter) {
@@ -90,12 +140,34 @@ function AdminBookingsPage() {
   async function handleStatusChange(booking, status) {
     if ((booking.status || "pending") === status) return;
 
+    if (status === "cancelled") {
+      setCancelTarget(booking);
+      return;
+    }
+
     try {
       setIsStatusUpdatingId(booking.id);
       await updateAdminBookingStatus(booking.id, { status });
       await loadBookings(statusFilter);
     } catch (err) {
       setPageError(getErrorMessage(err, "Failed to update booking status."));
+    } finally {
+      setIsStatusUpdatingId(null);
+    }
+  }
+
+  async function handleCancelConfirm(reason) {
+    const booking = cancelTarget;
+    setCancelTarget(null);
+    try {
+      setIsStatusUpdatingId(booking.id);
+      await updateAdminBookingStatus(booking.id, {
+        status: "cancelled",
+        cancellation_reason: reason,
+      });
+      await loadBookings(statusFilter);
+    } catch (err) {
+      setPageError(getErrorMessage(err, "Failed to cancel booking."));
     } finally {
       setIsStatusUpdatingId(null);
     }
@@ -257,6 +329,13 @@ function AdminBookingsPage() {
                           </option>
                         ))}
                       </select>
+
+                      {currentStatus === "cancelled" && booking.cancellation_reason && (
+                        <p className="max-w-[200px] text-xs text-app-text-muted">
+                          <span className="font-medium">Reason:</span>{" "}
+                          {booking.cancellation_reason}
+                        </p>
+                      )}
                     </div>
                   </td>
 
@@ -306,6 +385,13 @@ function AdminBookingsPage() {
           />
         </AdminSectionCard>
       </div>
+
+      <CancelReasonDialog
+        open={Boolean(cancelTarget)}
+        onConfirm={handleCancelConfirm}
+        onClose={() => setCancelTarget(null)}
+        isLoading={isStatusUpdatingId === cancelTarget?.id}
+      />
 
       <AdminConfirmDialog
         open={Boolean(bookingToDelete)}

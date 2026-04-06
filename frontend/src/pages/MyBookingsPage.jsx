@@ -92,7 +92,56 @@ function PaymentBadge({ method, paymentStatus }) {
   );
 }
 
-function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
+function CancelBookingDialog({ open, onConfirm, onClose, isLoading }) {
+  const [reason, setReason] = useState("");
+
+  function handleConfirm() {
+    onConfirm(reason.trim());
+    setReason("");
+  }
+
+  function handleClose() {
+    setReason("");
+    onClose();
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-3xl border border-app-border bg-app-card p-6 shadow-2xl">
+        <h3 className="text-lg font-semibold text-app-text">Cancel Booking</h3>
+        <p className="mt-2 text-sm text-app-text-muted">
+          Are you sure you want to cancel this booking? This cannot be undone.
+        </p>
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-sm font-medium text-app-text-soft">
+            Reason <span className="text-app-text-muted font-normal">(optional)</span>
+          </label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Schedule conflict, injury, personal reason..."
+            rows={3}
+            className="w-full resize-none rounded-2xl border border-app-border bg-app-surface-2 px-4 py-3 text-sm text-app-text placeholder:text-app-text-muted outline-none focus:border-brand-primary"
+          />
+        </div>
+
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+            Go Back
+          </Button>
+          <Button variant="danger" onClick={handleConfirm} loading={isLoading}>
+            Yes, Cancel Booking
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BookingCard({ booking, onCancelClick, isCancelling, faded = false }) {
   const isCancelled = booking.status === "cancelled";
   const isCancellable = booking.status === "pending" || booking.status === "confirmed";
 
@@ -149,7 +198,7 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
           {isCancellable && (
             <div className="flex w-full shrink-0 flex-col gap-3 lg:w-auto lg:min-w-[180px]">
               <Button
-                onClick={() => onCancel(booking.id)}
+                onClick={() => onCancelClick(booking.id)}
                 loading={isCancelling}
                 disabled={isCancelling}
                 variant="danger"
@@ -172,6 +221,12 @@ function BookingCard({ booking, onCancel, isCancelling, faded = false }) {
             <p className="text-sm text-app-text-muted">
               This booking has been cancelled and is kept here for your record.
             </p>
+            {booking.cancellation_reason && (
+              <p className="mt-1 text-sm text-app-text-muted">
+                <span className="font-medium text-app-text-soft">Reason:</span>{" "}
+                {booking.cancellation_reason}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
@@ -204,6 +259,7 @@ function MyBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelBookingId, setCancelBookingId] = useState(null);
+  const [cancelDialogBookingId, setCancelDialogBookingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
   async function fetchBookings() {
@@ -223,12 +279,14 @@ function MyBookingsPage() {
     }
   }
 
-  async function handleCancelBooking(id) {
+  async function handleCancelConfirm(reason) {
+    const id = cancelDialogBookingId;
     try {
       setError("");
+      setCancelDialogBookingId(null);
       setCancelBookingId(id);
 
-      await cancelBooking(id);
+      await cancelBooking(id, reason);
       await fetchBookings();
 
       showToast("Booking cancelled successfully.", "success");
@@ -375,7 +433,7 @@ function MyBookingsPage() {
                   <BookingCard
                     key={booking.id}
                     booking={booking}
-                    onCancel={handleCancelBooking}
+                    onCancelClick={setCancelDialogBookingId}
                     isCancelling={cancelBookingId === booking.id}
                   />
                 ))}
@@ -409,7 +467,7 @@ function MyBookingsPage() {
                   <BookingCard
                     key={booking.id}
                     booking={booking}
-                    onCancel={handleCancelBooking}
+                    onCancelClick={setCancelDialogBookingId}
                     isCancelling={false}
                     faded
                   />
@@ -419,6 +477,13 @@ function MyBookingsPage() {
           )}
         </div>
       )}
+
+      <CancelBookingDialog
+        open={Boolean(cancelDialogBookingId)}
+        onConfirm={handleCancelConfirm}
+        onClose={() => setCancelDialogBookingId(null)}
+        isLoading={Boolean(cancelBookingId)}
+      />
     </div>
   );
 }

@@ -116,6 +116,7 @@ class BookingCancelView(generics.UpdateAPIView):
             )
 
         booking.status = Booking.STATUS_CANCELLED
+        booking.cancellation_reason = request.data.get("cancellation_reason", "")
         booking.save()
 
         serializer = self.get_serializer(booking)

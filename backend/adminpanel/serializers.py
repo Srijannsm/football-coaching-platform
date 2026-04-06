@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import User, PlayerProfile, CoachProfile
 from bookings.models import Booking
+from config.image_utils import process_image, validate_image_file
 from enquiries.models import Enquiry
 from gallery.models import GalleryCategory, GalleryItem
 from training.models import TrainingProgram, TrainingSession
@@ -11,7 +12,7 @@ from .models import Notification
 class AdminNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ["id", "title", "message", "notification_type", "link", "is_read", "created_at"]
+        fields = ["id", "title", "message", "notification_type", "link", "is_read", "recipient_user", "created_at"]
 
 
 class AdminDashboardStatsSerializer(serializers.Serializer):
@@ -98,6 +99,9 @@ class AdminPlayerListSerializer(serializers.ModelSerializer):
             "preferred_foot",
             "primary_position",
             "player_rating",
+            "nationality",
+            "emergency_contact_name",
+            "emergency_contact_phone",
             "image_url",
         ]
 
@@ -135,9 +139,17 @@ class AdminPlayerUpdateSerializer(serializers.ModelSerializer):
             "is_active",
             "primary_position",
             "player_rating",
+            "nationality",
+            "emergency_contact_name",
+            "emergency_contact_phone",
             "image",
             "remove_image",
         ]
+
+    def validate_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
@@ -147,6 +159,10 @@ class AdminPlayerUpdateSerializer(serializers.ModelSerializer):
         for attr, value in user_data.items():
             setattr(user, attr, value)
         user.save()
+
+        # Process image before setting attributes
+        if "image" in validated_data and validated_data["image"]:
+            validated_data["image"] = process_image(validated_data["image"])
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -173,6 +189,7 @@ class AdminBookingManageSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "status",
+            "cancellation_reason",
             "booked_at",
             "booked_by",
             "program_title",
@@ -199,7 +216,7 @@ class AdminBookingManageSerializer(serializers.ModelSerializer):
 class AdminBookingStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = ["status"]
+        fields = ["status", "cancellation_reason"]
 
 
 class AdminTrainingProgramSerializer(serializers.ModelSerializer):
@@ -223,6 +240,21 @@ class AdminTrainingProgramSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["slug", "created_at"]
+
+    def validate_hero_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
+
+    def create(self, validated_data):
+        if validated_data.get("hero_image"):
+            validated_data["hero_image"] = process_image(validated_data["hero_image"])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if validated_data.get("hero_image"):
+            validated_data["hero_image"] = process_image(validated_data["hero_image"])
+        return super().update(instance, validated_data)
 
     def get_hero_image_url(self, obj):
         request = self.context.get("request")
@@ -266,6 +298,21 @@ class AdminTrainingSessionManageSerializer(serializers.ModelSerializer):
             "booked_players_count",
             "available_slots",
         ]
+
+    def validate_hero_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
+
+    def create(self, validated_data):
+        if validated_data.get("hero_image"):
+            validated_data["hero_image"] = process_image(validated_data["hero_image"])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if validated_data.get("hero_image"):
+            validated_data["hero_image"] = process_image(validated_data["hero_image"])
+        return super().update(instance, validated_data)
 
     def get_coach_name(self, obj):
         full_name = f"{obj.coach.first_name} {obj.coach.last_name}".strip()
@@ -377,6 +424,8 @@ class AdminCoachListSerializer(serializers.ModelSerializer):
             "years_experience",
             "coaching_level",
             "specialties",
+            "certifications",
+            "availability_schedule",
             "bio",
             "image_url",
         ]
@@ -385,8 +434,8 @@ class AdminCoachListSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if obj.image and hasattr(obj.image, "url"):
             return request.build_absolute_uri(obj.image.url) if request else obj.image.url
-        return None    
-    
+        return None
+
 class AdminCoachUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="user.first_name", required=False, allow_blank=True)
     last_name = serializers.CharField(source="user.last_name", required=False, allow_blank=True)
@@ -408,10 +457,17 @@ class AdminCoachUpdateSerializer(serializers.ModelSerializer):
             "years_experience",
             "coaching_level",
             "specialties",
+            "certifications",
+            "availability_schedule",
             "bio",
             "image",
             "remove_image",
         ]
+
+    def validate_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
@@ -421,6 +477,10 @@ class AdminCoachUpdateSerializer(serializers.ModelSerializer):
         for attr, value in user_data.items():
             setattr(user, attr, value)
         user.save()
+
+        # Process image before setting attributes
+        if "image" in validated_data and validated_data["image"]:
+            validated_data["image"] = process_image(validated_data["image"])
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -472,6 +532,30 @@ class AdminGalleryItemSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at", "category_name", "image_url", "thumbnail_url", "video_file_url"]
+
+    def validate_image(self, value):
+        if value:
+            validate_image_file(value)
+        return value
+
+    def validate_thumbnail(self, value):
+        if value:
+            validate_image_file(value)
+        return value
+
+    def create(self, validated_data):
+        if validated_data.get("image"):
+            validated_data["image"] = process_image(validated_data["image"])
+        if validated_data.get("thumbnail"):
+            validated_data["thumbnail"] = process_image(validated_data["thumbnail"])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if validated_data.get("image"):
+            validated_data["image"] = process_image(validated_data["image"])
+        if validated_data.get("thumbnail"):
+            validated_data["thumbnail"] = process_image(validated_data["thumbnail"])
+        return super().update(instance, validated_data)
 
     def get_image_url(self, obj):
         request = self.context.get("request")

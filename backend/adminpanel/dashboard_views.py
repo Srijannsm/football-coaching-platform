@@ -14,7 +14,7 @@ from gallery.models import GalleryCategory, GalleryItem
 from training.models import TrainingProgram, TrainingSession
 
 from .models import Notification
-from .permissions import IsAdminRole
+from .permissions import IsAdminRole, AdminRateThrottle
 from .serializers import (
     AdminDashboardSerializer,
     AdminNotificationSerializer,
@@ -36,6 +36,7 @@ from .serializers import (
 
 class AdminDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get(self, request):
         today = timezone.localdate()
@@ -169,6 +170,7 @@ class AdminDashboardView(APIView):
 class AdminPlayerListView(generics.ListAPIView):
     serializer_class = AdminPlayerListSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         queryset = (
@@ -209,11 +211,13 @@ class AdminPlayerDetailView(generics.RetrieveUpdateAPIView):
     )
     serializer_class = AdminPlayerUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
 
 class AdminBookingListView(generics.ListAPIView):
     serializer_class = AdminBookingManageSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         queryset = Booking.objects.select_related(
@@ -239,11 +243,13 @@ class AdminBookingDetailView(generics.RetrieveDestroyAPIView):
     queryset = Booking.objects.select_related("player__user", "session__program", "payment")
     serializer_class = AdminBookingManageSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
 
 class AdminBookingStatusUpdateView(generics.UpdateAPIView):
     serializer_class = AdminBookingStatusUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
     http_method_names = ["patch"]
 
     def get_queryset(self):
@@ -253,6 +259,7 @@ class AdminBookingStatusUpdateView(generics.UpdateAPIView):
 class AdminTrainingProgramListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminTrainingProgramSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         queryset = TrainingProgram.objects.all().order_by("display_order", "title")
@@ -270,11 +277,13 @@ class AdminTrainingProgramDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TrainingProgram.objects.all()
     serializer_class = AdminTrainingProgramSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
 
 class AdminTrainingSessionListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminTrainingSessionManageSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         queryset = (
@@ -307,6 +316,7 @@ class AdminTrainingSessionListCreateView(generics.ListCreateAPIView):
 class AdminTrainingSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminTrainingSessionManageSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         return TrainingSession.objects.select_related("program", "coach").annotate(
@@ -325,6 +335,7 @@ class AdminTrainingSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
 class AdminEnquiryListView(generics.ListAPIView):
     serializer_class = AdminEnquiryListSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         queryset = Enquiry.objects.select_related("program").order_by("-created_at")
@@ -340,11 +351,13 @@ class AdminEnquiryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Enquiry.objects.select_related("program").all()
     serializer_class = AdminEnquiryUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
 
 class AdminCoachListView(generics.ListAPIView):
     serializer_class = AdminCoachOptionSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         return User.objects.filter(
@@ -356,6 +369,7 @@ class AdminCoachListView(generics.ListAPIView):
 class AdminCoachDirectoryListView(generics.ListAPIView):
     serializer_class = AdminCoachListSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         queryset = (
@@ -393,10 +407,12 @@ class AdminCoachDetailView(generics.RetrieveUpdateAPIView):
     )
     serializer_class = AdminCoachUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
 
 class AdminNotificationListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get(self, request):
         notifications = Notification.objects.order_by("-created_at")[:50]
@@ -407,6 +423,7 @@ class AdminNotificationListView(APIView):
 
 class AdminNotificationMarkReadView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def patch(self, request, pk):
         try:
@@ -420,6 +437,7 @@ class AdminNotificationMarkReadView(APIView):
 
 class AdminNotificationMarkAllReadView(APIView):
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def post(self, request):
         Notification.objects.filter(is_read=False).update(is_read=True)
@@ -431,6 +449,7 @@ class AdminNotificationMarkAllReadView(APIView):
 class AdminGalleryCategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminGalleryCategorySerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         return GalleryCategory.objects.annotate(
@@ -441,6 +460,7 @@ class AdminGalleryCategoryListCreateView(generics.ListCreateAPIView):
 class AdminGalleryCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminGalleryCategorySerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
     queryset = GalleryCategory.objects.all()
 
     def update(self, request, *args, **kwargs):
@@ -451,6 +471,7 @@ class AdminGalleryCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 class AdminGalleryItemListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminGalleryItemSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
         qs = GalleryItem.objects.select_related("category")
@@ -463,6 +484,7 @@ class AdminGalleryItemListCreateView(generics.ListCreateAPIView):
 class AdminGalleryItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminGalleryItemSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
     queryset = GalleryItem.objects.select_related("category")
 
     def update(self, request, *args, **kwargs):

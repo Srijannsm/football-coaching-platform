@@ -109,7 +109,7 @@ function GalleryDetailPanel({ item, onClose, onEdit, onDelete }) {
               className="h-full w-full border-0"
             />
           ) : mediaSrc ? (
-            <img src={mediaSrc} alt={item.caption || "Preview"} className="h-full w-full object-cover" />
+            <img src={mediaSrc} alt={item.caption || "Preview"} loading="lazy" decoding="async" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <Video size={32} className="text-app-text-muted" />
@@ -118,7 +118,7 @@ function GalleryDetailPanel({ item, onClose, onEdit, onDelete }) {
         ) : (
           /* ── Image preview ── */
           mediaSrc ? (
-            <img src={mediaSrc} alt={item.caption || "Preview"} className="h-full w-full object-cover" />
+            <img src={mediaSrc} alt={item.caption || "Preview"} loading="lazy" decoding="async" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <Video size={32} className="text-app-text-muted" />
