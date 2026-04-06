@@ -70,6 +70,24 @@ class BookingCreateTests(APITestCase):
         response = self.client.post(url, {"session": self.session.id})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_unverified_email_cannot_book(self):
+        """BookingCreateView returns 403 when player's email is not verified."""
+        unverified = User.objects.create_user(
+            username="unverified", email="unverified@test.com",
+            password="pass12345", role="player",
+        )
+        unverified.is_email_verified = False
+        unverified.save()
+        PlayerProfile.objects.create(user=unverified)
+
+        self.client.force_authenticate(user=unverified)
+        url = reverse("booking-create")
+        response = self.client.post(url, {"session": self.session.id})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(
+            Booking.objects.filter(session=self.session, player__user=unverified).exists()
+        )
+
     def test_non_player_cannot_book(self):
         self.admin.is_email_verified = True
         self.admin.save()
@@ -155,7 +173,8 @@ class BookingCreateTests(APITestCase):
         response = self.client.post(url, {"session": self.session.id})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         booking.refresh_from_db()
-        self.assertEqual(booking.status, Booking.STATUS_CONFIRMED)
+        # Rebook resets to pending — cash bookings require admin confirmation.
+        self.assertEqual(booking.status, Booking.STATUS_PENDING)
 
 
 class BookingCancelTests(APITestCase):
