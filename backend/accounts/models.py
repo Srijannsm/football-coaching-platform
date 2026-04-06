@@ -1,5 +1,15 @@
+import re
+
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
+
+PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
+
+
+def validate_phone_number(value):
+    if value and not PHONE_REGEX.match(value.replace(" ", "")):
+        raise ValidationError("Enter a valid phone number (7–15 digits, optional + prefix).")
 
 
 class User(AbstractUser):
@@ -14,7 +24,7 @@ class User(AbstractUser):
     ]
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PLAYER)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True, validators=[validate_phone_number])
     is_email_verified = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -66,7 +76,7 @@ class PlayerProfile(models.Model):
     weight_kg = models.PositiveIntegerField(blank=True, null=True)
     nationality = models.CharField(max_length=100, blank=True)
     emergency_contact_name = models.CharField(max_length=150, blank=True)
-    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True, validators=[validate_phone_number])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

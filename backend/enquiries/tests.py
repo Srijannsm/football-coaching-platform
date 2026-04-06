@@ -54,6 +54,15 @@ class EnquiryCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("phone", response.data)
 
+    def test_phone_invalid_format_returns_400(self):
+        response = self._post({**VALID_PAYLOAD, "phone": "abc-defgh"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data)
+
+    def test_phone_with_plus_prefix_is_valid(self):
+        response = self._post({**VALID_PAYLOAD, "phone": "+9800000001"})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
     def test_message_too_short_returns_400(self):
         response = self._post({**VALID_PAYLOAD, "message": "Short"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

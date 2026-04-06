@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from config.validators import validate_phone_number
 from .models import Enquiry
 
 
@@ -15,10 +16,7 @@ class EnquiryCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_phone(self, value):
-        value = value.strip()
-        if len(value) < 7:
-            raise serializers.ValidationError("Enter a valid phone number.")
-        return value
+        return validate_phone_number(value.strip())
 
     def validate_message(self, value):
         value = value.strip()

@@ -1,20 +1,8 @@
-import re
-
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from config.image_utils import process_image, validate_image_file
+from config.validators import validate_phone_number
 from .models import PlayerProfile, CoachProfile
-
-PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
-
-
-def validate_phone_number(value):
-    """Reusable phone validator — allows optional leading +, 7–15 digits."""
-    if value and not PHONE_REGEX.match(value.replace(" ", "")):
-        raise serializers.ValidationError(
-            "Enter a valid phone number (7–15 digits, optional + prefix)."
-        )
-    return value
 
 User = get_user_model()
 
@@ -246,6 +234,9 @@ class PlayerProfileUpdateSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_phone_number(self, value):
+        return validate_phone_number(value)
+
+    def validate_emergency_contact_phone(self, value):
         return validate_phone_number(value)
 
     def update(self, instance, validated_data):

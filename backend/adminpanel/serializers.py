@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import User, PlayerProfile, CoachProfile
+from config.validators import validate_phone_number
 from bookings.models import Booking
 from config.image_utils import process_image, validate_image_file
 from enquiries.models import Enquiry
@@ -150,6 +151,12 @@ class AdminPlayerUpdateSerializer(serializers.ModelSerializer):
         if value:
             validate_image_file(value)
         return value
+
+    def validate_phone_number(self, value):
+        return validate_phone_number(value)
+
+    def validate_emergency_contact_phone(self, value):
+        return validate_phone_number(value)
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
@@ -468,6 +475,9 @@ class AdminCoachUpdateSerializer(serializers.ModelSerializer):
         if value:
             validate_image_file(value)
         return value
+
+    def validate_phone_number(self, value):
+        return validate_phone_number(value)
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})

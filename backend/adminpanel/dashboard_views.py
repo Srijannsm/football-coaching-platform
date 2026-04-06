@@ -256,6 +256,155 @@ class AdminBookingStatusUpdateView(generics.UpdateAPIView):
         return Booking.objects.select_related("player__user", "session__program")
 
 
+def _require_ids(request):
+    """Return (ids, error_response). ids is a non-empty list or None on failure."""
+    ids = request.data.get("ids")
+    if not ids or not isinstance(ids, list):
+        return None, Response(
+            {"detail": "ids must be a non-empty list."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return ids, None
+
+
+class AdminBulkBookingStatusUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    VALID_STATUSES = [
+        Booking.STATUS_PENDING,
+        Booking.STATUS_CONFIRMED,
+        Booking.STATUS_CANCELLED,
+    ]
+
+    def post(self, request):
+        booking_ids = request.data.get("booking_ids")
+        new_status = request.data.get("status")
+        cancellation_reason = request.data.get("cancellation_reason", "")
+
+        if not booking_ids or not isinstance(booking_ids, list):
+            return Response(
+                {"detail": "booking_ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new_status not in self.VALID_STATUSES:
+            return Response(
+                {"detail": f"Invalid status. Must be one of: {self.VALID_STATUSES}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        update_fields = {"status": new_status}
+        if new_status == Booking.STATUS_CANCELLED:
+            update_fields["cancellation_reason"] = cancellation_reason
+
+        updated = Booking.objects.filter(id__in=booking_ids).update(**update_fields)
+        return Response({"updated": updated}, status=status.HTTP_200_OK)
+
+
+class AdminBulkBookingDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    def post(self, request):
+        ids, err = _require_ids(request)
+        if err:
+            return err
+        deleted, _ = Booking.objects.filter(id__in=ids).delete()
+        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
+class AdminBulkEnquiryDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    def post(self, request):
+        ids, err = _require_ids(request)
+        if err:
+            return err
+        deleted, _ = Enquiry.objects.filter(id__in=ids).delete()
+        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
+class AdminBulkEnquiryStatusUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    VALID_STATUSES = [
+        Enquiry.STATUS_NEW,
+        Enquiry.STATUS_CONTACTED,
+        Enquiry.STATUS_CLOSED,
+    ]
+
+    def post(self, request):
+        ids, err = _require_ids(request)
+        if err:
+            return err
+
+        new_status = request.data.get("status")
+        if new_status not in self.VALID_STATUSES:
+            return Response(
+                {"detail": f"Invalid status. Must be one of: {self.VALID_STATUSES}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        updated = Enquiry.objects.filter(id__in=ids).update(status=new_status)
+        return Response({"updated": updated}, status=status.HTTP_200_OK)
+
+
+class AdminBulkSessionDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    def post(self, request):
+        ids, err = _require_ids(request)
+        if err:
+            return err
+        deleted, _ = TrainingSession.objects.filter(id__in=ids).delete()
+        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
+class AdminBulkSessionStatusUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    VALID_ACTIONS = ["publish", "unpublish", "cancel"]
+
+    def post(self, request):
+        ids, err = _require_ids(request)
+        if err:
+            return err
+
+        action = request.data.get("action")
+        if action not in self.VALID_ACTIONS:
+            return Response(
+                {"detail": f"Invalid action. Must be one of: {self.VALID_ACTIONS}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        qs = TrainingSession.objects.filter(id__in=ids)
+        if action == "publish":
+            updated = qs.update(is_published=True, is_cancelled=False)
+        elif action == "unpublish":
+            updated = qs.update(is_published=False)
+        else:  # cancel
+            updated = qs.update(is_cancelled=True)
+
+        return Response({"updated": updated}, status=status.HTTP_200_OK)
+
+
+class AdminBulkProgramDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    def post(self, request):
+        ids, err = _require_ids(request)
+        if err:
+            return err
+        deleted, _ = TrainingProgram.objects.filter(id__in=ids).delete()
+        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
 class AdminTrainingProgramListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminTrainingProgramSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
