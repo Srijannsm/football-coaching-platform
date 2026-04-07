@@ -60,6 +60,12 @@ const AdminEnquiriesPage = lazy(() =>
 const AdminGalleryPage = lazy(() =>
   import("./features/admin/pages/AdminGalleryPage")
 );
+const AdminAuditLogPage = lazy(() =>
+  import("./features/admin/pages/AdminAuditLogPage")
+);
+const AdminAnalyticsPage = lazy(() =>
+  import("./features/admin/pages/AdminAnalyticsPage")
+);
 
 function PageLoader() {
   return (
@@ -151,6 +157,8 @@ function AppContent() {
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="enquiries" element={<AdminEnquiriesPage />} />
             <Route path="gallery" element={<AdminGalleryPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="audit-log" element={<AdminAuditLogPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

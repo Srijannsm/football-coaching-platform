@@ -1,23 +1,28 @@
-from django.db.models import Count, Q, Value
+from datetime import timedelta
+from decimal import Decimal
+
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import TruncWeek
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from django.db.models.functions import Concat
 
 from accounts.models import User, CoachProfile, PlayerProfile
-from bookings.models import Booking
+from bookings.models import Booking, Payment
 from enquiries.models import Enquiry
 from gallery.models import GalleryCategory, GalleryItem
 from training.models import TrainingProgram, TrainingSession
 
-from .models import Notification
+from audit_middleware import get_current_user
+from .models import Notification, AuditLog
 from .permissions import IsAdminRole, AdminRateThrottle
 from .serializers import (
     AdminDashboardSerializer,
     AdminNotificationSerializer,
+    AuditLogSerializer,
     AdminPlayerListSerializer,
     AdminPlayerUpdateSerializer,
     AdminBookingManageSerializer,
@@ -45,7 +50,7 @@ class AdminDashboardView(APIView):
             "total_players": User.objects.filter(role=User.ROLE_PLAYER).count(),
             "total_coaches": User.objects.filter(role=User.ROLE_COACH).count(),
             "total_admins": User.objects.filter(role=User.ROLE_ADMIN).count(),
-            "total_programs": TrainingProgram.objects.count(),
+            "total_programs": TrainingProgram.all_records.count(),
             "active_programs": TrainingProgram.objects.filter(is_active=True).count(),
             "total_bookings": Booking.objects.count(),
             "pending_bookings": Booking.objects.filter(
@@ -174,8 +179,7 @@ class AdminPlayerListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = (
-            PlayerProfile.objects
-            .select_related("user")
+            PlayerProfile.objects.select_related("user")
             .filter(user__role=User.ROLE_PLAYER)
             .order_by("-user__date_joined")
         )
@@ -204,10 +208,8 @@ class AdminPlayerListView(generics.ListAPIView):
 
 
 class AdminPlayerDetailView(generics.RetrieveUpdateAPIView):
-    queryset = (
-        PlayerProfile.objects
-        .select_related("user")
-        .filter(user__role=User.ROLE_PLAYER)
+    queryset = PlayerProfile.objects.select_related("user").filter(
+        user__role=User.ROLE_PLAYER
     )
     serializer_class = AdminPlayerUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
@@ -229,21 +231,58 @@ class AdminBookingListView(generics.ListAPIView):
 
         status_filter = self.request.query_params.get("status")
         player_id = self.request.query_params.get("player_id")
-        
+
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-            
+
         if player_id:
-            queryset = queryset.filter(player_id=player_id)    
+            queryset = queryset.filter(player_id=player_id)
 
         return queryset
 
 
 class AdminBookingDetailView(generics.RetrieveDestroyAPIView):
-    queryset = Booking.objects.select_related("player__user", "session__program", "payment")
+    queryset = Booking.objects.select_related(
+        "player__user", "session__program", "payment"
+    )
     serializer_class = AdminBookingManageSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
     throttle_classes = [AdminRateThrottle]
+
+
+def _log_bulk(action_label, model_name, count, request):
+    user = get_current_user()
+    label = AuditLog._model_label(model_name)
+    items = f"{count} {label}{'s' if count != 1 else ''}"
+
+    if action_label == "delete":
+        summary = f"Removed {items} in bulk"
+        audit_action = AuditLog.ACTION_DELETE
+    elif action_label.startswith("status_update to "):
+        new_status = action_label.replace("status_update to ", "")
+        summary = f"Changed status to '{new_status}' on {items}"
+        audit_action = AuditLog.ACTION_UPDATE
+    elif action_label == "publish":
+        summary = f"Published {items}"
+        audit_action = AuditLog.ACTION_UPDATE
+    elif action_label == "unpublish":
+        summary = f"Unpublished {items}"
+        audit_action = AuditLog.ACTION_UPDATE
+    elif action_label == "cancel":
+        summary = f"Cancelled {items}"
+        audit_action = AuditLog.ACTION_UPDATE
+    else:
+        summary = f"Bulk action on {items}"
+        audit_action = AuditLog.ACTION_UPDATE
+
+    AuditLog.objects.create(
+        user=user,
+        action=audit_action,
+        model_name=model_name,
+        object_id="bulk",
+        changes={"action": action_label, "affected_count": count},
+        summary=summary,
+    )
 
 
 class AdminBookingStatusUpdateView(generics.UpdateAPIView):
@@ -255,16 +294,33 @@ class AdminBookingStatusUpdateView(generics.UpdateAPIView):
     def get_queryset(self):
         return Booking.objects.select_related("player__user", "session__program")
 
-
-def _require_ids(request):
-    """Return (ids, error_response). ids is a non-empty list or None on failure."""
-    ids = request.data.get("ids")
-    if not ids or not isinstance(ids, list):
-        return None, Response(
-            {"detail": "ids must be a non-empty list."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    return ids, None
+    def update(self, request, *args, **kwargs):
+        booking = self.get_object()
+        old_status = booking.status
+        old_reason = booking.cancellation_reason
+        response = super().update(request, *args, **kwargs)
+        booking.refresh_from_db()
+        if booking.status != old_status or booking.cancellation_reason != old_reason:
+            changes = {}
+            if booking.status != old_status:
+                changes["status"] = {"old": old_status, "new": booking.status}
+            if booking.cancellation_reason != old_reason:
+                changes["cancellation_reason"] = {
+                    "old": old_reason,
+                    "new": booking.cancellation_reason,
+                }
+            if changes:
+                field_labels = [k.replace("_", " ") for k in changes]
+                summary = f"Changed {', '.join(field_labels)} on booking #{booking.pk}"
+                AuditLog.objects.create(
+                    user=get_current_user(),
+                    action=AuditLog.ACTION_UPDATE,
+                    model_name="Booking",
+                    object_id=str(booking.pk),
+                    changes=changes,
+                    summary=summary,
+                )
+        return response
 
 
 class AdminBulkBookingStatusUpdateView(APIView):
@@ -299,6 +355,7 @@ class AdminBulkBookingStatusUpdateView(APIView):
             update_fields["cancellation_reason"] = cancellation_reason
 
         updated = Booking.objects.filter(id__in=booking_ids).update(**update_fields)
+        _log_bulk(f"status_update to {new_status}", "Booking", updated, request)
         return Response({"updated": updated}, status=status.HTTP_200_OK)
 
 
@@ -307,10 +364,14 @@ class AdminBulkBookingDeleteView(APIView):
     throttle_classes = [AdminRateThrottle]
 
     def post(self, request):
-        ids, err = _require_ids(request)
-        if err:
-            return err
+        ids = request.data.get("ids")
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"detail": "ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         deleted, _ = Booking.objects.filter(id__in=ids).delete()
+        _log_bulk("delete", "Booking", deleted, request)
         return Response({"deleted": deleted}, status=status.HTTP_200_OK)
 
 
@@ -319,10 +380,14 @@ class AdminBulkEnquiryDeleteView(APIView):
     throttle_classes = [AdminRateThrottle]
 
     def post(self, request):
-        ids, err = _require_ids(request)
-        if err:
-            return err
+        ids = request.data.get("ids")
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"detail": "ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         deleted, _ = Enquiry.objects.filter(id__in=ids).delete()
+        _log_bulk("delete", "Enquiry", deleted, request)
         return Response({"deleted": deleted}, status=status.HTTP_200_OK)
 
 
@@ -337,9 +402,12 @@ class AdminBulkEnquiryStatusUpdateView(APIView):
     ]
 
     def post(self, request):
-        ids, err = _require_ids(request)
-        if err:
-            return err
+        ids = request.data.get("ids")
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"detail": "ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         new_status = request.data.get("status")
         if new_status not in self.VALID_STATUSES:
@@ -349,6 +417,7 @@ class AdminBulkEnquiryStatusUpdateView(APIView):
             )
 
         updated = Enquiry.objects.filter(id__in=ids).update(status=new_status)
+        _log_bulk(f"status_update to {new_status}", "Enquiry", updated, request)
         return Response({"updated": updated}, status=status.HTTP_200_OK)
 
 
@@ -357,11 +426,19 @@ class AdminBulkSessionDeleteView(APIView):
     throttle_classes = [AdminRateThrottle]
 
     def post(self, request):
-        ids, err = _require_ids(request)
-        if err:
-            return err
-        deleted, _ = TrainingSession.objects.filter(id__in=ids).delete()
-        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+        ids = request.data.get("ids")
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"detail": "ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        count = TrainingSession.all_records.filter(id__in=ids).update(
+            is_active=False,
+            deleted_at=timezone.now(),
+        )
+        _log_bulk("delete", "TrainingSession", count, request)
+        return Response({"deleted": count}, status=status.HTTP_200_OK)
 
 
 class AdminBulkSessionStatusUpdateView(APIView):
@@ -371,9 +448,12 @@ class AdminBulkSessionStatusUpdateView(APIView):
     VALID_ACTIONS = ["publish", "unpublish", "cancel"]
 
     def post(self, request):
-        ids, err = _require_ids(request)
-        if err:
-            return err
+        ids = request.data.get("ids")
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"detail": "ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         action = request.data.get("action")
         if action not in self.VALID_ACTIONS:
@@ -390,6 +470,7 @@ class AdminBulkSessionStatusUpdateView(APIView):
         else:  # cancel
             updated = qs.update(is_cancelled=True)
 
+        _log_bulk(action, "TrainingSession", updated, request)
         return Response({"updated": updated}, status=status.HTTP_200_OK)
 
 
@@ -398,10 +479,14 @@ class AdminBulkProgramDeleteView(APIView):
     throttle_classes = [AdminRateThrottle]
 
     def post(self, request):
-        ids, err = _require_ids(request)
-        if err:
-            return err
-        deleted, _ = TrainingProgram.objects.filter(id__in=ids).delete()
+        ids = request.data.get("ids")
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"detail": "ids must be a non-empty list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        deleted, _ = TrainingProgram.all_records.filter(id__in=ids).delete()
+        _log_bulk("delete", "TrainingProgram", deleted, request)
         return Response({"deleted": deleted}, status=status.HTTP_200_OK)
 
 
@@ -411,19 +496,21 @@ class AdminTrainingProgramListCreateView(generics.ListCreateAPIView):
     throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
-        queryset = TrainingProgram.objects.all().order_by("display_order", "title")
+        queryset = TrainingProgram.all_records.all().order_by("display_order", "title")
 
         status_filter = self.request.query_params.get("status")
         if status_filter == "active":
             queryset = queryset.filter(is_active=True)
         elif status_filter == "inactive":
             queryset = queryset.filter(is_active=False)
+        elif status_filter == "deleted":
+            queryset = queryset.filter(is_active=False)
 
         return queryset
 
 
 class AdminTrainingProgramDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = TrainingProgram.objects.all()
+    queryset = TrainingProgram.all_records.all()
     serializer_class = AdminTrainingProgramSerializer
     permission_classes = [IsAuthenticated, IsAdminRole]
     throttle_classes = [AdminRateThrottle]
@@ -436,7 +523,7 @@ class AdminTrainingSessionListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = (
-            TrainingSession.objects.select_related("program", "coach")
+            TrainingSession.all_records.select_related("program", "coach")
             .annotate(
                 booked_players_count_value=Count(
                     "bookings",
@@ -458,6 +545,8 @@ class AdminTrainingSessionListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(is_published=False, is_cancelled=False)
         elif status_filter == "cancelled":
             queryset = queryset.filter(is_cancelled=True)
+        elif status_filter == "deleted":
+            queryset = queryset.filter(is_active=False)
 
         return queryset
 
@@ -468,7 +557,7 @@ class AdminTrainingSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
     throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
-        return TrainingSession.objects.select_related("program", "coach").annotate(
+        return TrainingSession.all_records.select_related("program", "coach").annotate(
             booked_players_count_value=Count(
                 "bookings",
                 filter=Q(
@@ -593,7 +682,8 @@ class AdminNotificationMarkAllReadView(APIView):
         return Response({"detail": "All notifications marked as read."})
 
 
-# ── Gallery ───────────────────────────────────────────────────────────────────
+# Gallery
+
 
 class AdminGalleryCategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminGalleryCategorySerializer
@@ -601,9 +691,9 @@ class AdminGalleryCategoryListCreateView(generics.ListCreateAPIView):
     throttle_classes = [AdminRateThrottle]
 
     def get_queryset(self):
-        return GalleryCategory.objects.annotate(
-            item_count=Count("items")
-        ).order_by("display_order", "name")
+        return GalleryCategory.objects.annotate(item_count=Count("items")).order_by(
+            "display_order", "name"
+        )
 
 
 class AdminGalleryCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -639,3 +729,126 @@ class AdminGalleryItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         kwargs.setdefault("partial", True)
         return super().update(request, *args, **kwargs)
+
+
+class AdminAuditLogView(ListAPIView):
+    serializer_class = AuditLogSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    def get_queryset(self):
+        qs = AuditLog.objects.all().select_related("user")
+
+        action = self.request.query_params.get("action")
+        model_name = self.request.query_params.get("model_name")
+        user_id = self.request.query_params.get("user_id")
+        date_from = self.request.query_params.get("date_from")
+        date_to = self.request.query_params.get("date_to")
+
+        if action:
+            qs = qs.filter(action=action)
+        if model_name:
+            qs = qs.filter(model_name__iexact=model_name)
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if date_from:
+            qs = qs.filter(timestamp__gte=date_from)
+        if date_to:
+            qs = qs.filter(timestamp__lte=date_to)
+
+        return qs
+
+
+class AdminAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
+    throttle_classes = [AdminRateThrottle]
+
+    def get(self, request):
+        now = timezone.now()
+        cutoff = now - timedelta(weeks=12)
+
+        # ── Bookings per week ──
+        bookings_weekly = (
+            Booking.objects.filter(booked_at__gte=cutoff)
+            .annotate(week=TruncWeek("booked_at"))
+            .values("week")
+            .annotate(count=Count("id"))
+            .order_by("week")
+        )
+        bookings_per_week = [
+            {"week": entry["week"].isoformat(), "count": entry["count"]}
+            for entry in bookings_weekly
+        ]
+
+        # ── Revenue per week ──
+        # Sum payment amount for completed payments, grouped by week of booking creation
+        revenue_weekly = (
+            Payment.objects.filter(
+                status=Payment.STATUS_COMPLETED,
+                booking__booked_at__gte=cutoff,
+            )
+            .annotate(week=TruncWeek("booking__booked_at"))
+            .values("week")
+            .annotate(total=Sum("amount"))
+            .order_by("week")
+        )
+        revenue_per_week = [
+            {
+                "week": entry["week"].isoformat(),
+                "total": str(entry["total"] or Decimal("0")),
+            }
+            for entry in revenue_weekly
+        ]
+
+        # ── Session utilization per week ──
+        # For each session, utilization = booked_players_count / max_players
+        # Then average across sessions in the same week.
+        sessions_qs = (
+            TrainingSession.objects.filter(
+                session_date__gte=cutoff.date(),
+                is_active=True,
+            )
+            .annotate(week=TruncWeek("session_date"))
+            .values("week", "max_players")
+            .annotate(
+                booked=Count(
+                    "bookings",
+                    filter=Q(
+                        bookings__status__in=[
+                            Booking.STATUS_PENDING,
+                            Booking.STATUS_CONFIRMED,
+                            Booking.STATUS_ATTENDED,
+                        ]
+                    ),
+                )
+            )
+        )
+
+        utilization_map = {}
+        for row in sessions_qs:
+            week_key = row["week"].isoformat()
+            max_p = row["max_players"]
+            utilization_map.setdefault(week_key, []).append(
+                row["booked"] / max_p if max_p > 0 else 0
+            )
+
+        utilization_per_week = sorted(
+            [
+                {
+                    "week": week,
+                    "avg_utilization": round(
+                        sum(vals) / len(vals) * 100, 1
+                    ),  # store as percentage
+                }
+                for week, vals in utilization_map.items()
+            ],
+            key=lambda x: x["week"],
+        )
+
+        return Response(
+            {
+                "bookings_per_week": bookings_per_week,
+                "revenue_per_week": revenue_per_week,
+                "session_utilization": utilization_per_week,
+            }
+        )

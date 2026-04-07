@@ -29,6 +29,8 @@ from .dashboard_views import (
     AdminGalleryCategoryDetailView,
     AdminGalleryItemListCreateView,
     AdminGalleryItemDetailView,
+    AdminAuditLogView,
+    AdminAnalyticsView,
 )
 
 urlpatterns = [
@@ -69,4 +71,8 @@ urlpatterns = [
     path("gallery/categories/<int:pk>/", AdminGalleryCategoryDetailView.as_view(), name="admin-gallery-category-detail"),
     path("gallery/items/", AdminGalleryItemListCreateView.as_view(), name="admin-gallery-items"),
     path("gallery/items/<int:pk>/", AdminGalleryItemDetailView.as_view(), name="admin-gallery-item-detail"),
+
+    path("audit-log/", AdminAuditLogView.as_view(), name="admin-audit-log"),
+    
+    path("analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),
 ]

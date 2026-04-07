@@ -7,13 +7,37 @@ from config.image_utils import process_image, validate_image_file
 from enquiries.models import Enquiry
 from gallery.models import GalleryCategory, GalleryItem
 from training.models import TrainingProgram, TrainingSession
-from .models import Notification
+from .models import Notification, AuditLog
 
 
 class AdminNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ["id", "title", "message", "notification_type", "link", "is_read", "recipient_user", "created_at"]
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            "id",
+            "timestamp",
+            "user",
+            "user_name",
+            "action",
+            "model_name",
+            "object_id",
+            "changes",
+            "summary",
+        ]
+
+    def get_user_name(self, obj):
+        if obj.user:
+            full = f"{obj.user.first_name} {obj.user.last_name}".strip()
+            return full or obj.user.email or obj.user.username
+        return "System"
 
 
 class AdminDashboardStatsSerializer(serializers.Serializer):
@@ -244,9 +268,10 @@ class AdminTrainingProgramSerializer(serializers.ModelSerializer):
             "default_duration_minutes",
             "default_price",
             "is_active",
+            "deleted_at",
             "created_at",
         ]
-        read_only_fields = ["slug", "created_at"]
+        read_only_fields = ["slug", "created_at", "deleted_at"]
 
     def validate_hero_image(self, value):
         if value:
@@ -295,6 +320,8 @@ class AdminTrainingSessionManageSerializer(serializers.ModelSerializer):
             "price",
             "is_published",
             "is_cancelled",
+            "is_active",
+            "deleted_at",
             "notes",
             "booked_players_count",
             "available_slots",

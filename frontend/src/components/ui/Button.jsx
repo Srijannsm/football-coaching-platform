@@ -11,32 +11,31 @@ function Button({
   ...props
 }) {
   const baseStyles =
-    "inline-flex items-center justify-center gap-2 rounded-full font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-55";
 
   const variants = {
     primary:
-      "bg-brand-primary text-white shadow-[var(--shadow-soft)] hover:bg-brand-primary-hover",
+      "bg-brand-primary text-white hover:bg-brand-primary-hover shadow-sm",
     secondary:
-      "bg-app-surface-2 text-app-text hover:opacity-90",
+      "bg-app-surface-2 text-app-text border border-app-border hover:bg-app-border",
     outline:
-      "border border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary",
-    ghost: "bg-transparent text-app-text hover:bg-app-surface-2",
+      "border border-app-border bg-app-card text-app-text hover:bg-app-surface-2",
+    ghost: "text-app-text hover:bg-app-surface-2",
     danger:
-      "bg-app-danger text-white hover:opacity-90",
+      "bg-app-danger-text text-white hover:opacity-90 shadow-sm",
     "danger-outline":
-      "border border-app-danger/20 bg-app-card text-app-danger hover:bg-app-danger/8",
+      "border border-app-danger-border text-app-danger-text hover:bg-app-danger-bg",
     success:
-      "bg-app-success text-white hover:opacity-90",
+      "bg-app-success-text text-white hover:opacity-90 shadow-sm",
   };
 
   const sizes = {
-    sm: "px-4 py-2.5 text-sm",
-    md: "px-5 py-3 text-sm",
-    lg: "px-6 py-3.5 text-base",
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-sm",
+    lg: "px-5 py-2.5 text-base",
   };
 
   const widthClass = fullWidth ? "w-full" : "";
-  const content = loading ? loadingText || children : children;
 
   return (
     <button
@@ -46,7 +45,7 @@ function Button({
       className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size]} ${widthClass} ${className}`}
       {...props}
     >
-      {loading ? (loadingText || "Please wait...") : content}
+      {loading ? (loadingText || "Please wait...") : children}
     </button>
   );
 }

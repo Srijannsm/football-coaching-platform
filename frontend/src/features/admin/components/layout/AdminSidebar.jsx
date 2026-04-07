@@ -9,6 +9,9 @@ import {
   Images,
   Home,
   LogOut,
+  Trophy,
+  FileText,
+  BarChart3,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth";
@@ -24,11 +27,7 @@ const navigationItems = [
   },
   { label: "Players", to: "/admin-dashboard/players", icon: Users },
   { label: "Coaches", to: "/admin-dashboard/coaches", icon: UserCheck },
-  {
-    label: "Gallery",
-    to: "/admin-dashboard/gallery",
-    icon: Images,
-  },
+  { label: "Gallery", to: "/admin-dashboard/gallery", icon: Images },
   { label: "Programs", to: "/admin-dashboard/programs", icon: ShieldCheck },
   { label: "Sessions", to: "/admin-dashboard/sessions", icon: CalendarRange },
   { label: "Bookings", to: "/admin-dashboard/bookings", icon: ClipboardList },
@@ -37,11 +36,20 @@ const navigationItems = [
     to: "/admin-dashboard/enquiries",
     icon: MessageSquareMore,
   },
+  { label: "Analytics", to: "/admin-dashboard/analytics", icon: BarChart3 },
+  { label: "Audit Log", to: "/admin-dashboard/audit-log", icon: FileText },
 ];
 
 function SidebarBody({ collapsed = false, onLinkClick }) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  const displayName =
+    user?.first_name?.trim() ||
+    user?.username ||
+    user?.email?.split("@")[0] ||
+    "Admin";
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   function handleNavigate(path) {
     navigate(path);
@@ -55,101 +63,30 @@ function SidebarBody({ collapsed = false, onLinkClick }) {
   }
 
   return (
-    <div className="flex h-full flex-col text-app-text">
-      {/* Top Brand Area */}
-      <div className="border-b border-app-border px-4 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => handleNavigate("/")}
-            className={`group text-left transition ${collapsed ? "mx-auto" : ""}`}
-          >
-            <div className="flex items-center gap-3">
-              {!collapsed ? (
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-primary/15 text-sm font-extrabold tracking-wide text-brand-primary ring-1 ring-brand-primary/20">
-                  FA
-                </div>
-              ) : null}
-
-              {!collapsed ? (
-                <div className="min-w-0">
-                  <p className="truncate text-base font-bold tracking-tight text-app-text transition group-hover:text-brand-primary">
-                    Football Academy
-                  </p>
-                  <p className="mt-0.5 text-xs font-medium text-app-text-muted">
-                    Admin Control Center
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          </button>
-
-          {/* <div className="flex items-center gap-2">
-            {mobile ? (
-              <button
-                type="button"
-                onClick={closeMobileSidebar}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-app-border bg-app-surface-2 text-app-text-muted transition hover:border-brand-primary hover:text-brand-primary"
-              >
-                <X size={16} />
-                <span className="sr-only">Close sidebar</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={toggleSidebarCollapsed}
-                className="hidden xl:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-app-border bg-app-surface-2 text-app-text-muted transition hover:border-brand-primary hover:text-brand-primary"
-              >
-                {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-                <span className="sr-only">Toggle sidebar</span>
-              </button>
-            )}
-          </div> */}
+    <div className="flex h-full flex-col bg-app-sidebar-bg">
+      {/* Brand */}
+      <div className="flex h-16 items-center gap-3 border-b border-app-sidebar-border px-5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary text-sm font-bold text-white">
+          <Trophy size={18} />
         </div>
-      </div>
-
-      {/* Profile */}
-      <div className="px-4 py-4">
-        {/* <div
-          className={`rounded-3xl border border-app-border bg-gradient-to-br from-app-surface-2 to-app-card shadow-sm ${collapsed ? "px-2 py-3" : "px-4 py-4"
-            }`}
-        >
-          {collapsed ? (
-            <div className="flex justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary/15 text-sm font-bold text-brand-primary ring-1 ring-brand-primary/20">
-                {userInitial}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-primary/15 text-sm font-bold text-brand-primary ring-1 ring-brand-primary/20">
-                {userInitial}
-              </div>
-
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-app-text">
-                  {displayName}
-                </p>
-                <p className="mt-1 text-xs text-app-text-muted">
-                  Administrator
-                </p>
-              </div>
-            </div>
-          )}
-        </div> */}
+        {!collapsed && (
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-app-sidebar-text">
+              Football Academy
+            </p>
+            <p className="text-xs text-app-sidebar-text-muted">Admin Panel</p>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 pb-4">
-        {!collapsed ? (
-          <div className="px-2 pb-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-app-text-muted">
-              Workspace
-            </p>
-          </div>
-        ) : null}
-
-        <nav className="space-y-1.5">
+      <div className="flex-1 overflow-y-auto px-3 py-4 admin-sidebar-scroll">
+        {!collapsed && (
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-app-sidebar-text-muted">
+            Menu
+          </p>
+        )}
+        <nav className="space-y-0.5">
           {navigationItems.map((item) => (
             <AdminSidebarLink
               key={item.to}
@@ -159,45 +96,61 @@ function SidebarBody({ collapsed = false, onLinkClick }) {
             />
           ))}
         </nav>
-      </div>
 
-      {/* Footer Actions */}
-      <div className="border-t border-app-border px-3 py-4">
-        <div className="space-y-2">
+        {!collapsed && (
+          <>
+            <div className="my-4 border-t border-app-sidebar-border" />
+            <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-app-sidebar-text-muted">
+              General
+            </p>
+          </>
+        )}
+        {collapsed && <div className="my-4 border-t border-app-sidebar-border" />}
+
+        <nav className="space-y-0.5">
           <button
             type="button"
             onClick={() => handleNavigate("/")}
-            className={`group flex w-full items-center rounded-2xl border border-app-border bg-app-surface-2 px-3 py-3 text-sm transition hover:border-brand-primary/40 hover:bg-brand-primary/5 ${collapsed ? "justify-center" : "justify-start gap-3"
-              }`}
+            className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-app-sidebar-text-muted transition-all duration-150 hover:bg-app-sidebar-hover hover:text-app-sidebar-text"
           >
-            <Home
-              size={18}
-              className="text-app-text-muted transition group-hover:text-brand-primary"
-            />
-            {!collapsed ? (
-              <span className="font-medium text-app-text-muted transition group-hover:text-brand-primary">
-                View Website
-              </span>
-            ) : null}
+            <Home size={18} className="shrink-0" />
+            {!collapsed && <span className="truncate">View Website</span>}
           </button>
+        </nav>
+      </div>
 
+      {/* User profile */}
+      <div className="border-t border-app-sidebar-border p-3">
+        {collapsed ? (
           <button
             type="button"
             onClick={handleLogout}
-            className={`group flex w-full items-center rounded-2xl border border-red-500/20 bg-red-500/[0.04] px-3 py-3 text-sm transition hover:border-red-500/35 hover:bg-red-500/[0.08] ${collapsed ? "justify-center" : "justify-start gap-3"
-              }`}
+            className="flex w-full items-center justify-center rounded-lg p-2.5 text-app-sidebar-text-muted transition hover:bg-red-500/15 hover:text-red-400"
+            title="Logout"
           >
-            <LogOut
-              size={18}
-              className="text-red-400 transition group-hover:text-red-300"
-            />
-            {!collapsed ? (
-              <span className="font-medium text-red-400 transition group-hover:text-red-300">
-                Logout
-              </span>
-            ) : null}
+            <LogOut size={18} />
           </button>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-xl border border-app-sidebar-border bg-app-sidebar-hover px-3 py-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-primary text-sm font-bold text-white">
+              {userInitial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-app-sidebar-text">
+                {displayName}
+              </p>
+              <p className="text-xs text-app-sidebar-text-muted">Administrator</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Logout"
+              className="shrink-0 rounded-lg p-1.5 text-app-sidebar-text-muted transition hover:bg-red-500/15 hover:text-red-400"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -211,27 +164,27 @@ function AdminSidebar() {
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden xl:sticky xl:top-0 xl:flex xl:h-screen xl:shrink-0 xl:flex-col xl:border-r xl:border-app-border xl:bg-app-card/95 xl:backdrop-blur ${isSidebarCollapsed ? "xl:w-24" : "xl:w-72"
-          }`}
+        className={`hidden border-r border-app-sidebar-border xl:sticky xl:top-0 xl:flex xl:h-screen xl:shrink-0 xl:flex-col ${
+          isSidebarCollapsed ? "xl:w-20" : "xl:w-64"
+        } transition-all duration-300`}
       >
         <SidebarBody collapsed={isSidebarCollapsed} />
       </aside>
 
-      {/* Mobile Sidebar */}
-      {isMobileSidebarOpen ? (
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 xl:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-app-overlay backdrop-blur-sm"
             onClick={closeMobileSidebar}
-            aria-label="Close admin sidebar"
+            aria-label="Close sidebar"
           />
-
-          <aside className="relative h-full w-[88vw] max-w-sm border-r border-app-border bg-app-card/95 shadow-2xl backdrop-blur-xl">
-             <SidebarBody onLinkClick={closeMobileSidebar} />
+          <aside className="relative h-full w-64 shadow-2xl">
+            <SidebarBody onLinkClick={closeMobileSidebar} />
           </aside>
         </div>
-      ) : null}
+      )}
     </>
   );
 }

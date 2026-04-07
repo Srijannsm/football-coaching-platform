@@ -9,7 +9,7 @@ export function getStatusVariant(status = "") {
     return "warning";
   }
 
-  if (["cancelled", "inactive", "failed", "closed", "danger"].includes(normalizedStatus)) {
+  if (["cancelled", "inactive", "failed", "closed", "danger", "deleted"].includes(normalizedStatus)) {
     return "danger";
   }
 

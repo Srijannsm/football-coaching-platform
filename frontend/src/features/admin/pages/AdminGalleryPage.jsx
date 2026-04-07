@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useToast } from "../../../hooks/useToast";
 import AdminPageHeader from "../components/layout/AdminPageHeader";
 import AdminSectionCard from "../components/ui/AdminSectionCard";
 import AdminTable from "../components/table/AdminTable";
@@ -89,6 +90,7 @@ const itemListColumns = [
 
 function AdminGalleryPage() {
   const [state, dispatch] = useReducer(galleryReducer, initialState);
+  const { showToast } = useToast();
 
   // Local form state (not worth putting in the reducer)
   const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY_FORM);
@@ -205,11 +207,13 @@ function AdminGalleryPage() {
         display_order: Number(categoryForm.display_order) || 0,
         is_active: categoryForm.is_active,
       };
-      if (categoryModal.mode === "create") {
+      const isCreating = categoryModal.mode === "create";
+      if (isCreating) {
         await createAdminGalleryCategory(payload);
       } else {
         await updateAdminGalleryCategory(categoryModal.data.id, payload);
       }
+      showToast(isCreating ? "Category created." : "Category updated.", "success");
       dispatch({ type: "CLOSE_CATEGORY_MODAL" });
       await loadCategories();
     } catch (err) {
@@ -225,6 +229,7 @@ function AdminGalleryPage() {
     dispatch({ type: "SET_LOADING", key: "isDeletingCategory", value: true });
     try {
       await deleteAdminGalleryCategory(categoryToDelete.id);
+      showToast("Category deleted.", "success");
       dispatch({ type: "SET_CATEGORY_TO_DELETE", payload: null });
       await Promise.all([loadCategories(), loadItems()]);
     } catch {
@@ -319,11 +324,13 @@ function AdminGalleryPage() {
         if (itemForm.thumbnail instanceof File) fd.append("thumbnail", itemForm.thumbnail);
       }
 
-      if (itemModal.mode === "create") {
+      const isCreatingItem = itemModal.mode === "create";
+      if (isCreatingItem) {
         await createAdminGalleryItem(fd);
       } else {
         await updateAdminGalleryItem(itemModal.data.id, fd);
       }
+      showToast(isCreatingItem ? "Item uploaded." : "Item updated.", "success");
       dispatch({ type: "CLOSE_ITEM_MODAL" });
       await loadItems();
     } catch (err) {
@@ -339,6 +346,7 @@ function AdminGalleryPage() {
     dispatch({ type: "SET_LOADING", key: "isDeletingItem", value: true });
     try {
       await deleteAdminGalleryItem(itemToDelete.id);
+      showToast("Item deleted.", "success");
       dispatch({ type: "SET_ITEM_TO_DELETE", payload: null });
       if (detailItem?.id === itemToDelete.id)
         dispatch({ type: "SET_DETAIL_ITEM", payload: null });
@@ -358,6 +366,7 @@ function AdminGalleryPage() {
       fd.append("caption", item.caption);
       try {
         await updateAdminGalleryItem(item.id, fd);
+        showToast("Caption saved.", "success");
         await loadItems();
         // Refresh detail panel
         dispatch({
@@ -365,7 +374,7 @@ function AdminGalleryPage() {
           payload: { ...detailItem, caption: item.caption },
         });
       } catch {
-        dispatch({ type: "SET_ERROR", payload: "Failed to update caption." });
+        showToast("Failed to update caption.", "error");
       }
     } else {
       openEditItem(item);
@@ -379,6 +388,7 @@ function AdminGalleryPage() {
     dispatch({ type: "SET_LOADING", key: "isBulkDeleting", value: true });
     try {
       await bulkDeleteAdminGalleryItems(ids);
+      showToast(`${ids.length} item${ids.length === 1 ? "" : "s"} deleted.`, "success");
       dispatch({ type: "CLEAR_SELECTION" });
       if (detailItem && ids.includes(detailItem.id))
         dispatch({ type: "SET_DETAIL_ITEM", payload: null });
@@ -423,10 +433,12 @@ function AdminGalleryPage() {
           return createAdminGalleryItem(fd);
         })
       );
+      const fileCount = uploadModal.files.length;
       dispatch({ type: "CLOSE_UPLOAD_MODAL" });
+      showToast(`${fileCount} file${fileCount === 1 ? "" : "s"} uploaded.`, "success");
       await loadItems();
     } catch {
-      dispatch({ type: "SET_ERROR", payload: "Some files failed to upload." });
+      showToast("Some files failed to upload.", "error");
     } finally {
       setIsUploading(false);
     }
@@ -986,7 +998,7 @@ function AdminGalleryPage() {
             </select>
           </div>
 
-          <div className="max-h-56 overflow-y-auto space-y-1.5 rounded-xl border border-app-border bg-app-surface p-3">
+          <div className="max-h-56 overflow-y-auto app-scroll space-y-1.5 rounded-xl border border-app-border bg-app-surface p-3">
             {uploadModal.files.map((file, i) => (
               <div key={i} className="flex items-center gap-2 text-sm text-app-text-soft">
                 <span className="text-xs">

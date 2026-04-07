@@ -1,4 +1,4 @@
-import { Menu, PanelLeftClose } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth";
 import { useAdminSidebar } from "../../hooks/useAdminSidebar";
@@ -20,7 +20,7 @@ const routeMeta = {
   },
   "/admin-dashboard/gallery": {
     title: "Gallery",
-    description: "Manage Images and Videos.",
+    description: "Manage images and videos.",
   },
   "/admin-dashboard/programs": {
     title: "Programs",
@@ -38,58 +38,79 @@ const routeMeta = {
     title: "Enquiries",
     description: "Handle incoming leads and communication notes.",
   },
+  "/admin-dashboard/audit-log": {
+    title: "Audit Logs",
+    // description: "Handle incoming leads and communication notes.",
+  },
 };
 
 function AdminTopbar() {
   const location = useLocation();
   const { user } = useAuth();
-  const { toggleSidebarCollapsed, openMobileSidebar } = useAdminSidebar();
+  const { isSidebarCollapsed, toggleSidebarCollapsed, openMobileSidebar } =
+    useAdminSidebar();
 
   const meta = routeMeta[location.pathname] || routeMeta["/admin-dashboard"];
   const displayName =
     user?.first_name?.trim() || user?.username || user?.email || "Admin";
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-app-border bg-app-card/85 backdrop-blur">
-      <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center border-b border-app-border bg-app-card/95 backdrop-blur-sm">
+      <div className="flex w-full items-center justify-between gap-4 px-4 md:px-6">
+        {/* Left: Toggle + Page title */}
         <div className="flex min-w-0 items-center gap-3">
+          {/* Mobile toggle */}
           <button
             type="button"
             onClick={openMobileSidebar}
-            className="inline-flex rounded-2xl border border-app-border bg-app-surface-2 p-2 text-app-text-muted transition hover:border-brand-primary hover:text-brand-primary xl:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-app-border text-app-text-muted transition hover:bg-app-surface-2 hover:text-app-text xl:hidden"
           >
             <Menu size={18} />
             <span className="sr-only">Open sidebar</span>
           </button>
 
+          {/* Desktop toggle */}
           <button
             type="button"
             onClick={toggleSidebarCollapsed}
-            className="hidden rounded-2xl border border-app-border bg-app-surface-2 p-2 text-app-text-muted transition hover:border-brand-primary hover:text-brand-primary xl:inline-flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-app-border text-app-text-muted transition hover:bg-app-surface-2 hover:text-app-text xl:inline-flex"
           >
-            <PanelLeftClose size={18} />
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen size={18} />
+            ) : (
+              <PanelLeftClose size={18} />
+            )}
             <span className="sr-only">Toggle sidebar</span>
           </button>
 
+          {/* Divider */}
+          <div className="hidden h-5 w-px bg-app-border sm:block" />
+
           <div className="min-w-0">
-            <p className="truncate text-lg font-semibold text-app-text">
+            <h1 className="truncate text-sm font-semibold text-app-text sm:text-base">
               {meta.title}
-            </p>
-            <p className="truncate text-sm text-app-text-muted">
-              {meta.description}
-            </p>
+            </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
           <NotificationDropdown />
-
-          <div className="hidden rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2 sm:block">
-            <p className="text-sm font-medium text-app-text">{displayName}</p>
-            <p className="text-xs text-app-text-muted">Admin account</p>
-          </div>
-
           <ThemeToggle />
+
+          {/* User avatar chip */}
+          <div className="hidden items-center gap-2.5 sm:flex">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary text-xs font-bold text-white">
+              {userInitial}
+            </div>
+            <div className="hidden lg:block">
+              <p className="text-sm font-medium text-app-text leading-none">
+                {displayName}
+              </p>
+              <p className="mt-0.5 text-xs text-app-text-muted">Admin</p>
+            </div>
+          </div>
         </div>
       </div>
     </header>

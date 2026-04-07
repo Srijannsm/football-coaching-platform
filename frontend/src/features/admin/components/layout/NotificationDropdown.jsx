@@ -126,7 +126,7 @@ export default function NotificationDropdown() {
           </div>
 
           {/* List */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto app-scroll">
             {loading ? (
               <p className="px-4 py-6 text-center text-sm text-app-text-muted">
                 Loading…

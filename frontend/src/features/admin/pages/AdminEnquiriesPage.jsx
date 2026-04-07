@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
+import { useToast } from "../../../hooks/useToast";
 import { formatDate } from "../../../utils/formatDate";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 import AdminToolbar from "../components/ui/AdminToolbar";
@@ -64,6 +65,7 @@ function getProgramLabel(enquiry) {
 
 function AdminEnquiriesPage() {
   const table = useAdminTable({ initialFilters: { status: "" } });
+  const { showToast } = useToast();
 
   const [enquiries, setEnquiries] = useState([]);
   const [count, setCount] = useState(0);
@@ -160,6 +162,7 @@ function AdminEnquiriesPage() {
       setIsSaving(true);
       setFormErrors(initialFormErrors);
       await updateAdminEnquiry(selectedEnquiry.id, form);
+      showToast("Enquiry updated.", "success");
       closeManageModal();
       await loadEnquiries();
     } catch (err) {
@@ -177,10 +180,11 @@ function AdminEnquiriesPage() {
       setIsDeleting(true);
       await deleteAdminEnquiry(enquiryToDelete.id);
       if (selectedEnquiry?.id === enquiryToDelete.id) closeManageModal();
+      showToast("Enquiry deleted.", "success");
       setEnquiryToDelete(null);
       await loadEnquiries();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to delete enquiry."));
+      showToast(getErrorMessage(err, "Failed to delete enquiry."), "error");
     } finally {
       setIsDeleting(false);
     }
@@ -192,11 +196,13 @@ function AdminEnquiriesPage() {
     if (selectedIds.size === 0) return;
     try {
       setIsBulkUpdating(true);
+      const count = selectedIds.size;
       await bulkUpdateAdminEnquiryStatus(Array.from(selectedIds), status);
       clearSelection();
+      showToast(`${count} enquir${count === 1 ? "y" : "ies"} updated.`, "success");
       await loadEnquiries();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to update enquiries."));
+      showToast(getErrorMessage(err, "Failed to update enquiries."), "error");
     } finally {
       setIsBulkUpdating(false);
     }
@@ -206,11 +212,13 @@ function AdminEnquiriesPage() {
     setBulkDeletePending(false);
     try {
       setIsBulkUpdating(true);
+      const count = selectedIds.size;
       await bulkDeleteAdminEnquiries(Array.from(selectedIds));
       clearSelection();
+      showToast(`${count} enquir${count === 1 ? "y" : "ies"} deleted.`, "success");
       await loadEnquiries();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to delete enquiries."));
+      showToast(getErrorMessage(err, "Failed to delete enquiries."), "error");
     } finally {
       setIsBulkUpdating(false);
     }
@@ -239,19 +247,31 @@ function AdminEnquiriesPage() {
           actions={
             <AdminToolbar
               left={
-                <div className="flex flex-wrap items-center gap-3 ml-auto">
-                  <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                      <span className="text-sm font-semibold">#</span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                        Total enquiries
-                      </p>
-                      <p className="text-sm font-semibold text-app-text">
-                        {enquiryCountLabel}
-                      </p>
-                    </div>
+                <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {selectedIds.size > 0 && (
+                      <BulkActionBar
+                        selectedCount={selectedIds.size}
+                        statusOptions={BULK_STATUS_OPTIONS}
+                        onApplyStatus={handleBulkStatusApply}
+                        onDelete={() => setBulkDeletePending(true)}
+                        onClear={clearSelection}
+                        isLoading={isBulkUpdating}
+                      />
+                    )}
+                    <select
+                      value={table.filters.status}
+                      onChange={(e) => table.updateFilter("status", e.target.value)}
+                      className="h-9 rounded-lg border border-app-border bg-app-card px-3 text-sm text-app-text outline-none transition focus:border-brand-primary"
+                    >
+                      <option value="">All enquiries</option>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                    <span className="hidden rounded-lg border border-app-border bg-app-surface-2 px-3 py-1.5 text-sm font-medium text-app-text-muted sm:inline">
+                      {isLoading ? "…" : `${count} total`}
+                    </span>
                   </div>
                 </div>
               }
@@ -259,18 +279,6 @@ function AdminEnquiriesPage() {
           }
         >
           <AdminTable
-            bulkBar={
-              selectedIds.size > 0 ? (
-                <BulkActionBar
-                  selectedCount={selectedIds.size}
-                  statusOptions={BULK_STATUS_OPTIONS}
-                  onApplyStatus={handleBulkStatusApply}
-                  onDelete={() => setBulkDeletePending(true)}
-                  onClear={clearSelection}
-                  isLoading={isBulkUpdating}
-                />
-              ) : null
-            }
             columns={[
               {
                 key: "select",
@@ -298,16 +306,17 @@ function AdminEnquiriesPage() {
             emptyTitle="No enquiries found"
             emptyDescription="New website enquiries will appear here."
             className="pb-5"
-            renderRow={(enquiry) => {
+            hiddenColumnsAtMobile={["message", "created"]}
+            renderRow={(enquiry, _index, { isMobileHidden }) => {
               const isSelected = selectedIds.has(enquiry.id);
               return (
                 <tr
                   key={enquiry.id}
-                  className={`border-b border-app-border text-app-text transition hover:bg-app-surface-2/40 ${
+                  className={`text-app-text transition-colors hover:bg-app-surface-2/50 ${
                     isSelected ? "bg-brand-primary/5" : ""
                   }`}
                 >
-                  <td className="w-10 px-3 py-3">
+                  <td className="w-10 px-5 py-3.5">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -316,33 +325,33 @@ function AdminEnquiriesPage() {
                     />
                   </td>
 
-                  <td className="px-3 py-3">
+                  <td className="px-5 py-3.5">
                     <p className="font-medium text-app-text">{enquiry.name}</p>
                     <p className="text-xs text-app-text-muted">
                       {getProgramLabel(enquiry)}
                     </p>
                   </td>
 
-                  <td className="px-3 py-3">
-                    <p>{enquiry.email}</p>
+                  <td className="px-5 py-3.5">
+                    <p className="truncate">{enquiry.email}</p>
                     <p className="text-xs text-app-text-muted">
                       {enquiry.phone || "No phone"}
                     </p>
                   </td>
 
-                  <td className="px-3 py-3 text-app-text-muted">
-                    <p className="line-clamp-2 max-w-md">{enquiry.message}</p>
+                  <td className={isMobileHidden("message") ? "hidden lg:table-cell px-3 py-3 text-app-text-muted" : "px-3 py-3 text-app-text-muted"}>
+                    <p className="line-clamp-2 max-w-[220px] truncate">{enquiry.message}</p>
                   </td>
 
-                  <td className="px-3 py-3">
+                  <td className="px-5 py-3.5">
                     <AdminStatusBadge label={enquiry.status || "new"} />
                   </td>
 
-                  <td className="px-3 py-3 text-app-text-muted">
+                  <td className={isMobileHidden("created") ? "hidden lg:table-cell px-3 py-3 text-app-text-muted" : "px-3 py-3 text-app-text-muted"}>
                     {formatDate(enquiry.created_at)}
                   </td>
 
-                  <td className="px-3 py-3">
+                  <td className="px-5 py-3.5">
                     <AdminRowActions>
                       <Button size="sm" onClick={() => openManageModal(enquiry)}>
                         Manage
@@ -389,7 +398,7 @@ function AdminEnquiriesPage() {
 
           {selectedEnquiry ? (
             <>
-              <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-4 sm:p-5">
+              <section className="rounded-xl border border-app-border p-4 sm:p-5">
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold text-app-text">Enquiry Details</h3>
                   <p className="mt-1 text-xs text-app-text-muted">
@@ -430,19 +439,19 @@ function AdminEnquiriesPage() {
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-4 sm:p-5">
+              <section className="rounded-xl border border-app-border p-4 sm:p-5">
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold text-app-text">Message</h3>
                   <p className="mt-1 text-xs text-app-text-muted">
                     Full message submitted by the lead.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-app-border bg-app-card px-4 py-3 text-sm leading-6 text-app-text">
+                <div className="rounded-lg border border-app-border bg-app-surface-2/60 px-4 py-3 text-sm leading-6 text-app-text">
                   {selectedEnquiry.message || "No message provided."}
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-4 sm:p-5">
+              <section className="rounded-xl border border-app-border p-4 sm:p-5">
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold text-app-text">Lead Management</h3>
                   <p className="mt-1 text-xs text-app-text-muted">

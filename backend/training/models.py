@@ -1,11 +1,49 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.utils.text import slugify
 from bookings.models import Booking
 
 
-class TrainingProgram(models.Model):
+class SoftDeleteManager(models.Manager):
+    """Returns only active (non-deleted) records by default."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+    def all_records(self):
+        """Include soft-deleted records when explicitly requested."""
+        return super().get_queryset()
+
+
+class SoftDeleteMixin(models.Model):
+    """Soft-delete support: marks records inactive instead of removing them."""
+
+    is_active = models.BooleanField(default=True, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, editable=False)
+
+    objects = SoftDeleteManager()
+    all_records = models.Manager()
+
+    class Meta:
+        abstract = True
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save(using=using, update_fields=["is_active", "deleted_at"])
+
+    def hard_delete(self, using=None, keep_parents=False):
+        super().delete(using=using, keep_parents=keep_parents)
+
+    def restore(self):
+        self.is_active = True
+        self.deleted_at = None
+        self.save(update_fields=["is_active", "deleted_at"])
+
+
+class TrainingProgram(SoftDeleteMixin, models.Model):
     SESSION_TYPE_ONE_TO_ONE = "one_to_one"
     SESSION_TYPE_GROUP = "group"
 
@@ -25,7 +63,6 @@ class TrainingProgram(models.Model):
     session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES)
     default_duration_minutes = models.PositiveIntegerField()
     default_price = models.DecimalField(max_digits=8, decimal_places=2)
-    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -51,7 +88,7 @@ class TrainingProgram(models.Model):
         super().save(*args, **kwargs)
 
 
-class TrainingSession(models.Model):
+class TrainingSession(SoftDeleteMixin, models.Model):
     program = models.ForeignKey(
         TrainingProgram, on_delete=models.CASCADE, related_name="sessions"
     )

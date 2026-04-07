@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
+import { useToast } from "../../../hooks/useToast";
 import { formatDate } from "../../../utils/formatDate";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 import AdminToolbar from "../components/ui/AdminToolbar";
@@ -75,6 +76,7 @@ function getPlayerInitials(player) {
 
 function AdminPlayersPage() {
   const table = useAdminTable({ initialFilters: { status: "" } });
+  const { showToast } = useToast();
   const [searchInput, setSearchInput] = useState(table.search);
   const debouncedSearch = useDebounce(searchInput, 400);
 
@@ -242,7 +244,7 @@ function AdminPlayersPage() {
       });
 
       await updateAdminPlayer(editingPlayerId, payload);
-
+      showToast("Player profile updated.", "success");
       closeEditModal();
       await loadPlayers();
     } catch (err) {
@@ -270,6 +272,7 @@ function AdminPlayersPage() {
         is_active: !playerToToggle.is_active,
       });
 
+      const wasActive = playerToToggle.is_active;
       await updateAdminPlayer(playerToToggle.id, payload);
 
       if (editingPlayerId === playerToToggle.id) {
@@ -279,10 +282,11 @@ function AdminPlayersPage() {
         }));
       }
 
+      showToast(wasActive ? "Player deactivated." : "Player reactivated.", "success");
       setPlayerToToggle(null);
       await loadPlayers();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to update player status."));
+      showToast(getErrorMessage(err, "Failed to update player status."), "error");
     } finally {
       setIsStatusUpdating(false);
     }
@@ -323,47 +327,41 @@ function AdminPlayersPage() {
 
         <AdminSectionCard
           title="Player Directory"
-          description="Manage registered academy players and keep player records up to date."
+          description="Manage registered academy players and keep records up to date."
           contentClassName="p-0"
-          actions = {<AdminToolbar
+          actions={<AdminToolbar
             left={
-              <div className="ml-auto flex items-center gap-3">
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Search by name, email, username, phone, or position"
-                  className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
-                />
-  
-                <select
-                  value={table.filters.status}
-                  onChange={(event) => table.updateFilter("status", event.target.value)}
-                  className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
-                >
-                  <option value="">All players</option>
-                  <option value="active">Active only</option>
-                  <option value="inactive">Inactive only</option>
-                </select>
-  
-                <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                    <span className="text-sm font-semibold">#</span>
-                  </div>
-  
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                      Players
-                    </p>
-                    <p className="text-sm font-semibold text-app-text">
-                      {isLoading ? "Loading players..." : `${count} player${count === 1 ? "" : "s"}`}
-                    </p>
-                  </div>
+              <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+                <div className="relative flex-1 sm:max-w-sm">
+                  <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search players…"
+                    className="h-9 w-full rounded-lg border border-app-border bg-app-card pl-9 pr-3 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/15"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={table.filters.status}
+                    onChange={(e) => table.updateFilter("status", e.target.value)}
+                    className="h-9 rounded-lg border border-app-border bg-app-card px-3 text-sm text-app-text outline-none transition focus:border-brand-primary"
+                  >
+                    <option value="">All players</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                  <span className="hidden rounded-lg border border-app-border bg-app-surface-2 px-3 py-1.5 text-sm font-medium text-app-text-muted sm:inline">
+                    {isLoading ? "…" : `${count} total`}
+                  </span>
                 </div>
               </div>
             }
           />}
         >
+
+          {/* Toolbar */}
           <AdminTable
             columns={[
               { key: "player", label: "Player" },
@@ -378,12 +376,13 @@ function AdminPlayersPage() {
             emptyTitle="No players found"
             emptyDescription="Try adjusting the search or status filter."
             className="pb-5"
-            renderRow={(player) => (
+            hiddenColumnsAtMobile={["position", "rating", "joined"]}
+            renderRow={(player, _index, { isMobileHidden }) => (
               <tr
                 key={player.id}
-                className="border-b border-app-border text-app-text transition hover:bg-app-surface-2/40"
+                className="text-app-text transition-colors hover:bg-app-surface-2/50"
               >
-                <td className="px-3 py-3">
+                <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
                     {player.image_url ? (
                       <img
@@ -391,10 +390,10 @@ function AdminPlayersPage() {
                         alt={getPlayerDisplayName(player)}
                         loading="lazy"
                         decoding="async"
-                        className="h-11 w-11 rounded-2xl border border-app-border object-cover"
+                        className="h-9 w-9 rounded-full border border-app-border object-cover"
                       />
                     ) : (
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-app-border bg-app-surface-2 text-xs font-bold text-app-text">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-primary/10 text-xs font-bold text-brand-primary">
                         {getPlayerInitials(player)}
                       </div>
                     )}
@@ -410,7 +409,7 @@ function AdminPlayersPage() {
                   </div>
                 </td>
 
-                <td className="px-3 py-3">
+                <td className={isMobileHidden("position") ? "hidden lg:table-cell px-5 py-3.5" : "px-5 py-3.5"}>
                   <div>
                     <p className="text-sm text-app-text">
                       {player.primary_position || "Not set"}
@@ -421,19 +420,19 @@ function AdminPlayersPage() {
                   </div>
                 </td>
 
-                <td className="px-3 py-3">
+                <td className={isMobileHidden("rating") ? "hidden lg:table-cell px-5 py-3.5" : "px-5 py-3.5"}>
                   {player.player_rating || "0.00"}
                 </td>
 
-                <td className="px-3 py-3">
+                <td className="px-5 py-3.5">
                   <AdminStatusBadge label={player.is_active ? "Active" : "Inactive"} />
                 </td>
 
-                <td className="px-3 py-3 text-app-text-muted">
+                <td className={isMobileHidden("joined") ? "hidden lg:table-cell px-3 py-3 text-app-text-muted" : "px-3 py-3 text-app-text-muted"}>
                   {formatDate(player.date_joined)}
                 </td>
 
-                <td className="px-3 py-3">
+                <td className="px-5 py-3.5">
                   <AdminRowActions>
                     <Button size="sm" onClick={() => openEditModal(player)}>
                       Edit
@@ -444,7 +443,7 @@ function AdminPlayersPage() {
                       variant="outline"
                       onClick={() => handleOpenBookingsModal(player)}
                     >
-                      View Bookings
+                      Bookings
                     </Button>
 
 
@@ -479,7 +478,7 @@ function AdminPlayersPage() {
         title="Edit Player"
         description="Update player profile information, image, contact details, rating, and account status."
         footer={
-          <div className="flex flex-col-reverse gap-3 border-t border-app-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-app-text-muted">
               Changes are saved directly to this player account.
             </p>
@@ -510,72 +509,46 @@ function AdminPlayersPage() {
           <AdminFormAlert message={formErrors.nonField} />
 
           {editingPlayer ? (
-            <div className="rounded-3xl border border-app-border bg-app-surface-2/70 p-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                {currentImageUrl ? (
-                  <img
-                    src={currentImageUrl}
-                    alt={getPlayerDisplayName(editingPlayer)}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-20 w-20 rounded-3xl border border-app-border object-cover shadow-sm"
-                  />
-                ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-app-border bg-app-card text-lg font-bold text-app-text">
-                    {getPlayerInitials(editingPlayer)}
-                  </div>
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-app-text-muted">
-                    Editing Profile
-                  </p>
-                  <h3 className="mt-1 truncate text-lg font-bold text-app-text">
-                    {getPlayerDisplayName(editingPlayer)}
-                  </h3>
-                  <p className="truncate text-sm text-app-text-muted">
-                    {editingPlayer.email || "No email provided"}
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-app-border bg-app-card px-3 py-1 text-xs font-medium text-app-text-soft">
-                      Joined {formatDate(editingPlayer.date_joined)}
-                    </span>
-
-                    <span className="rounded-full border border-app-border bg-app-card px-3 py-1 text-xs font-medium text-app-text-soft">
-                      {editingPlayer.is_active ? "Currently active" : "Currently inactive"}
-                    </span>
-
-                    {editingPlayer.primary_position ? (
-                      <span className="rounded-full border border-app-border bg-app-card px-3 py-1 text-xs font-medium text-app-text-soft">
-                        {editingPlayer.primary_position}
-                      </span>
-                    ) : null}
-
-                    {hasNewSelectedImage ? (
-                      <span className="rounded-full border border-brand-primary/30 bg-brand-primary/10 px-3 py-1 text-xs font-medium text-brand-primary">
-                        New image selected
-                      </span>
-                    ) : null}
-
-                    {form.remove_image ? (
-                      <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-medium text-red-300">
-                        Image will be removed
-                      </span>
-                    ) : null}
-                  </div>
+            <div className="mb-6 flex items-center gap-3 rounded-xl border border-app-border bg-app-surface-2 p-4">
+              {currentImageUrl ? (
+                <img
+                  src={currentImageUrl}
+                  alt={getPlayerDisplayName(editingPlayer)}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-12 rounded-full border border-app-border object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/10 text-sm font-bold text-brand-primary">
+                  {getPlayerInitials(editingPlayer)}
                 </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold text-app-text">{getPlayerDisplayName(editingPlayer)}</p>
+                <p className="text-sm text-app-text-muted">{editingPlayer.email || "No email"}</p>
+              </div>
+              <div className="ml-auto flex flex-wrap gap-1.5">
+                {hasNewSelectedImage && (
+                  <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    New image
+                  </span>
+                )}
+                {form.remove_image && (
+                  <span className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+                    Image removed
+                  </span>
+                )}
               </div>
             </div>
           ) : null}
 
-          <div className="grid gap-6">
-            <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-5">
+          <div className="grid gap-5">
+            <section className="rounded-xl border border-app-border p-5">
               <div className="mb-4">
-                <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-app-text-muted">
+                <h4 className="text-sm font-semibold text-app-text">
                   Basic Information
                 </h4>
-                <p className="mt-1 text-sm text-app-text-soft">
+                <p className="mt-0.5 text-xs text-app-text-muted">
                   Update player account details and contact information.
                 </p>
               </div>
@@ -616,12 +589,12 @@ function AdminPlayersPage() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-5">
+            <section className="rounded-xl border border-app-border p-5">
               <div className="mb-4">
-                <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-app-text-muted">
+                <h4 className="text-sm font-semibold text-app-text">
                   Player Profile
                 </h4>
-                <p className="mt-1 text-sm text-app-text-soft">
+                <p className="mt-0.5 text-xs text-app-text-muted">
                   Manage position, player rating, and account availability.
                 </p>
               </div>
@@ -657,40 +630,40 @@ function AdminPlayersPage() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-5">
+            <section className="rounded-xl border border-app-border p-5">
               <div className="mb-4">
-                <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-app-text-muted">
+                <h4 className="text-sm font-semibold text-app-text">
                   Profile Image
                 </h4>
-                <p className="mt-1 text-sm text-app-text-soft">
+                <p className="mt-0.5 text-xs text-app-text-muted">
                   Upload a new image, keep the current one, or remove it.
                 </p>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-[140px_minmax(0,1fr)]">
-                <div className="flex items-start justify-center lg:justify-start">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="shrink-0">
                   {currentImageUrl ? (
                     <img
                       src={currentImageUrl}
                       alt="Player preview"
                       loading="lazy"
                       decoding="async"
-                      className="h-28 w-28 rounded-3xl border border-app-border object-cover shadow-sm"
+                      className="h-20 w-20 rounded-xl border border-app-border object-cover"
                     />
                   ) : (
-                    <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-dashed border-app-border bg-app-card text-sm font-medium text-app-text-muted">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-app-border bg-app-surface-2 text-xs text-app-text-muted">
                       No Image
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-dashed border-app-border bg-app-card p-4">
+                <div className="flex-1 space-y-3">
+                  <div className="rounded-lg border border-dashed border-app-border bg-app-surface-2/60 p-4">
                     <label className="block text-sm font-medium text-app-text">
                       Upload New Image
                     </label>
-                    <p className="mt-1 text-xs text-app-text-muted">
-                      PNG, JPG, or WEBP works best for player profile photos.
+                    <p className="mt-0.5 text-xs text-app-text-muted">
+                      PNG, JPG, or WEBP · Max 1920px
                     </p>
 
                     <input
@@ -698,11 +671,11 @@ function AdminPlayersPage() {
                       name="image"
                       accept="image/*"
                       onChange={handleInputChange}
-                      className="mt-3 block w-full text-sm text-app-text-muted file:mr-4 file:rounded-xl file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black hover:file:opacity-90"
+                      className="mt-3 block w-full text-sm text-app-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-brand-primary-hover"
                     />
 
                     {formErrors.fields.image ? (
-                      <p className="mt-2 text-sm text-red-400">
+                      <p className="mt-1.5 text-xs text-red-500">
                         {formErrors.fields.image}
                       </p>
                     ) : null}

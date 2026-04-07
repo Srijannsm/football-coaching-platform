@@ -3,6 +3,7 @@ import re
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
 
@@ -24,6 +25,7 @@ class User(AbstractUser):
     ]
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_PLAYER)
+    deleted_at = models.DateTimeField(null=True, blank=True, editable=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True, validators=[validate_phone_number])
     is_email_verified = models.BooleanField(default=False)
 
@@ -46,6 +48,20 @@ class User(AbstractUser):
     def is_admin(self):
         return self.role == self.ROLE_ADMIN
     
+    def delete(self, using=None, keep_parents=False):
+        """Soft delete: deactivate user but keep record for booking history."""
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save(using=using, update_fields=["is_active", "deleted_at"])
+
+    def hard_delete(self, using=None, keep_parents=False):
+        super().delete(using=using, keep_parents=keep_parents)
+
+    def restore(self):
+        self.is_active = True
+        self.deleted_at = None
+        self.save(update_fields=["is_active", "deleted_at"])
+
     def __str__(self):
         return f"{self.role.capitalize()} - {self.first_name} {self.last_name}"
 

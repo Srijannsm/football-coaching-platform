@@ -161,7 +161,7 @@ function GalleryDetailPanel({ item, onClose, onEdit, onDelete }) {
       </div>
 
       {/* Scrollable metadata */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      <div className="flex-1 overflow-y-auto app-scroll px-4 py-3 space-y-1">
         {/* Caption (editable) */}
         <div className="flex items-start gap-3 py-2.5 border-b border-app-border">
           <Pencil size={14} className="mt-0.5 shrink-0 text-app-text-muted" />

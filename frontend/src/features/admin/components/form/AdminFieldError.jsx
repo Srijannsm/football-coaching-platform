@@ -1,6 +1,10 @@
-function AdminFieldError({ message }) {
+function AdminFieldError({ message, id }) {
   if (!message) return null;
-  return <p className="mt-1 text-sm text-red-400">{message}</p>;
+  return (
+    <p id={id} role="alert" className="mt-1.5 text-xs text-app-danger-text">
+      {message}
+    </p>
+  );
 }
 
 export default AdminFieldError;

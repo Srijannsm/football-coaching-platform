@@ -6,23 +6,23 @@
 :root {
   /* Brand */
   --color-brand-primary: #d4a017;
-  --color-brand-primary-hover: #e0b63a;
-  --color-brand-primary-soft: #f6e7b3;
+  --color-brand-primary-hover: #b8890f;
+  --color-brand-primary-soft: #fef3c7;
 
   /* Background stack */
-  --color-app-bg: #f4f1ea;
-  --color-app-surface: #fcfbf8;
-  --color-app-surface-2: #f7f3ec;
+  --color-app-bg: #f1f5f9;
+  --color-app-surface: #f8fafc;
+  --color-app-surface-2: #f1f5f9;
   --color-app-card: #ffffff;
 
   /* Text */
-  --color-app-text: #161616;
-  --color-app-text-soft: #4b5563;
-  --color-app-text-muted: #6b7280;
+  --color-app-text: #0f172a;
+  --color-app-text-soft: #334155;
+  --color-app-text-muted: #566373;
 
   /* Borders */
-  --color-app-border: #e5dfd3;
-  --color-app-border-strong: #d6cebf;
+  --color-app-border: #e2e8f0;
+  --color-app-border-strong: #cbd5e1;
 
   /* Status / utility */
   --color-app-success: #166534;
@@ -30,13 +30,67 @@
   --color-app-warning: #92400e;
   --color-app-info: #1d4ed8;
 
+  /* Sidebar (light in light mode) */
+  --color-app-sidebar-bg: #ffffff;
+  --color-app-sidebar-text: #0f172a;
+  --color-app-sidebar-text-muted: #64748b;
+  --color-app-sidebar-border: #e2e8f0;
+  --color-app-sidebar-hover: #f1f5f9;
+  --color-app-overlay: rgba(2, 6, 23, 0.55);
+
+  /* Semantic: danger */
+  --color-app-danger-bg: #fef2f2;
+  --color-app-danger-text: #dc2626;
+  --color-app-danger-border: #fecaca;
+  --color-app-danger-hover-bg: #fee2e2;
+
+  /* Semantic: success */
+  --color-app-success-bg: #f0fdf4;
+  --color-app-success-text: #059669;
+  --color-app-success-border: #bbf7d0;
+
+  /* Semantic: warning */
+  --color-app-warning-bg: #fffbeb;
+  --color-app-warning-text: #d97706;
+  --color-app-warning-border: #fde68a;
+
+  /* Semantic: info */
+  --color-app-info-bg: #eff6ff;
+  --color-app-info-text: #2563eb;
+  --color-app-info-border: #bfdbfe;
+
+  /* Semantic: neutral */
+  --color-app-neutral-bg: #f8fafc;
+  --color-app-neutral-text: #475569;
+  --color-app-neutral-border: #e2e8f0;
+
+  /* Accent: yellow (stat cards, quick actions) */
+  --color-app-accent-yellow-bg: #fffbeb;
+  --color-app-accent-yellow-text: #d97706;
+  --color-app-accent-yellow-border: #fde68a;
+
+  /* Accent: blue */
+  --color-app-accent-blue-bg: #f0f9ff;
+  --color-app-accent-blue-text: #0284c7;
+  --color-app-accent-blue-border: #bae6fd;
+
+  /* Accent: emerald */
+  --color-app-accent-emerald-bg: #f0fdf4;
+  --color-app-accent-emerald-text: #059669;
+  --color-app-accent-emerald-border: #bbf7d0;
+
+  /* Accent: violet */
+  --color-app-accent-violet-bg: #f5f3ff;
+  --color-app-accent-violet-text: #7c3aed;
+  --color-app-accent-violet-border: #ddd6fe;
+
   /* Radius */
-  --radius-card: 1.25rem;
+  --radius-card: 1rem;
   --radius-pill: 9999px;
 
   /* Shadows */
-  --shadow-premium: 0 10px 30px rgba(17, 24, 39, 0.08);
-  --shadow-soft: 0 6px 18px rgba(17, 24, 39, 0.05);
+  --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
 }
 
 /* --------------------------------------------------
@@ -68,6 +122,60 @@
   --color-app-danger: #ef4444;
   --color-app-warning: #f59e0b;
   --color-app-info: #3b82f6;
+
+  /* Sidebar */
+  --color-app-sidebar-bg: #0d1424;
+  --color-app-sidebar-text: #f9fafb;
+  --color-app-sidebar-text-muted: #7b92b5;
+  --color-app-sidebar-border: rgba(255, 255, 255, 0.05);
+  --color-app-sidebar-hover: rgba(255, 255, 255, 0.05);
+  --color-app-overlay: rgba(0, 0, 0, 0.65);
+
+  /* Semantic: danger */
+  --color-app-danger-bg: rgba(239, 68, 68, 0.12);
+  --color-app-danger-text: #f87171;
+  --color-app-danger-border: rgba(239, 68, 68, 0.22);
+  --color-app-danger-hover-bg: rgba(239, 68, 68, 0.18);
+
+  /* Semantic: success */
+  --color-app-success-bg: rgba(34, 197, 94, 0.12);
+  --color-app-success-text: #4ade80;
+  --color-app-success-border: rgba(34, 197, 94, 0.22);
+
+  /* Semantic: warning */
+  --color-app-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-app-warning-text: #fbbf24;
+  --color-app-warning-border: rgba(245, 158, 11, 0.22);
+
+  /* Semantic: info */
+  --color-app-info-bg: rgba(59, 130, 246, 0.12);
+  --color-app-info-text: #60a5fa;
+  --color-app-info-border: rgba(59, 130, 246, 0.22);
+
+  /* Semantic: neutral */
+  --color-app-neutral-bg: rgba(148, 163, 184, 0.08);
+  --color-app-neutral-text: #94a3b8;
+  --color-app-neutral-border: rgba(148, 163, 184, 0.18);
+
+  /* Accent: yellow */
+  --color-app-accent-yellow-bg: rgba(251, 191, 36, 0.1);
+  --color-app-accent-yellow-text: #fbbf24;
+  --color-app-accent-yellow-border: rgba(251, 191, 36, 0.2);
+
+  /* Accent: blue */
+  --color-app-accent-blue-bg: rgba(56, 189, 248, 0.1);
+  --color-app-accent-blue-text: #38bdf8;
+  --color-app-accent-blue-border: rgba(56, 189, 248, 0.2);
+
+  /* Accent: emerald */
+  --color-app-accent-emerald-bg: rgba(52, 211, 153, 0.1);
+  --color-app-accent-emerald-text: #34d399;
+  --color-app-accent-emerald-border: rgba(52, 211, 153, 0.2);
+
+  /* Accent: violet */
+  --color-app-accent-violet-bg: rgba(167, 139, 250, 0.1);
+  --color-app-accent-violet-text: #a78bfa;
+  --color-app-accent-violet-border: rgba(167, 139, 250, 0.2);
 
   /* Shadows */
   --shadow-premium: 0 12px 30px rgba(0, 0, 0, 0.35);
@@ -102,6 +210,46 @@
   --color-app-danger: var(--color-app-danger);
   --color-app-warning: var(--color-app-warning);
   --color-app-info: var(--color-app-info);
+
+  /* Sidebar */
+  --color-app-sidebar-bg: var(--color-app-sidebar-bg);
+  --color-app-sidebar-text: var(--color-app-sidebar-text);
+  --color-app-sidebar-text-muted: var(--color-app-sidebar-text-muted);
+  --color-app-sidebar-border: var(--color-app-sidebar-border);
+  --color-app-sidebar-hover: var(--color-app-sidebar-hover);
+  --color-app-overlay: var(--color-app-overlay);
+
+  /* Semantic tokens */
+  --color-app-danger-bg: var(--color-app-danger-bg);
+  --color-app-danger-text: var(--color-app-danger-text);
+  --color-app-danger-border: var(--color-app-danger-border);
+  --color-app-danger-hover-bg: var(--color-app-danger-hover-bg);
+  --color-app-success-bg: var(--color-app-success-bg);
+  --color-app-success-text: var(--color-app-success-text);
+  --color-app-success-border: var(--color-app-success-border);
+  --color-app-warning-bg: var(--color-app-warning-bg);
+  --color-app-warning-text: var(--color-app-warning-text);
+  --color-app-warning-border: var(--color-app-warning-border);
+  --color-app-info-bg: var(--color-app-info-bg);
+  --color-app-info-text: var(--color-app-info-text);
+  --color-app-info-border: var(--color-app-info-border);
+  --color-app-neutral-bg: var(--color-app-neutral-bg);
+  --color-app-neutral-text: var(--color-app-neutral-text);
+  --color-app-neutral-border: var(--color-app-neutral-border);
+
+  /* Accent tokens */
+  --color-app-accent-yellow-bg: var(--color-app-accent-yellow-bg);
+  --color-app-accent-yellow-text: var(--color-app-accent-yellow-text);
+  --color-app-accent-yellow-border: var(--color-app-accent-yellow-border);
+  --color-app-accent-blue-bg: var(--color-app-accent-blue-bg);
+  --color-app-accent-blue-text: var(--color-app-accent-blue-text);
+  --color-app-accent-blue-border: var(--color-app-accent-blue-border);
+  --color-app-accent-emerald-bg: var(--color-app-accent-emerald-bg);
+  --color-app-accent-emerald-text: var(--color-app-accent-emerald-text);
+  --color-app-accent-emerald-border: var(--color-app-accent-emerald-border);
+  --color-app-accent-violet-bg: var(--color-app-accent-violet-bg);
+  --color-app-accent-violet-text: var(--color-app-accent-violet-text);
+  --color-app-accent-violet-border: var(--color-app-accent-violet-border);
 
   --radius-card: var(--radius-card);
   --radius-pill: var(--radius-pill);
@@ -192,6 +340,66 @@ a {
     background-color 0.25s ease,
     color 0.25s ease,
     border-color 0.25s ease;
+}
+
+/* Minimal scrollbars — global (public pages) */
+html::-webkit-scrollbar {
+  width: 8px;
+}
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.4);
+}
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+/* Minimal scrollbars — scrollable containers */
+.app-scroll::-webkit-scrollbar,
+.admin-sidebar-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.app-scroll::-webkit-scrollbar-track,
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.app-scroll::-webkit-scrollbar-thumb,
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+.app-scroll::-webkit-scrollbar-thumb:hover,
+.admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.45);
+}
+.app-scroll,
+.admin-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+/* Minimal scrollbars (dark theme) */
+[data-theme="dark"] html::-webkit-scrollbar-thumb,
+[data-theme="dark"] .app-scroll::-webkit-scrollbar-thumb,
+[data-theme="dark"] .admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.2);
+}
+[data-theme="dark"] html::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .app-scroll::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.35);
+}
+[data-theme="dark"] html,
+[data-theme="dark"] .app-scroll,
+[data-theme="dark"] .admin-sidebar-scroll {
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
 }
 
 @keyframes flash-highlight {

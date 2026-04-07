@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
+import { useToast } from "../../../hooks/useToast";
 import { formatDate } from "../../../utils/formatDate";
 import { formatTime } from "../../../utils/formatTime";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
@@ -39,6 +40,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: "published", label: "Published" },
   { value: "unpublished", label: "Unpublished" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "deleted", label: "Deleted" },
 ];
 
 const BULK_STATUS_OPTIONS = [
@@ -84,6 +86,7 @@ function formatProgramTypeLabel(sessionType) {
 function AdminSessionsPage() {
   const location = useLocation();
   const table = useAdminTable({ initialFilters: { status: "" } });
+  const { showToast } = useToast();
 
   const [sessions, setSessions] = useState([]);
   const [count, setCount] = useState(0);
@@ -267,6 +270,7 @@ function AdminSessionsPage() {
         await createAdminSession(payload);
       }
 
+      showToast(isEditing ? "Session updated." : "Session created.", "success");
       closeFormModal();
       await loadInitialData();
     } catch (err) {
@@ -284,10 +288,11 @@ function AdminSessionsPage() {
       setIsDeleting(true);
       await deleteAdminSession(sessionToDelete.id);
       if (editingSessionId === sessionToDelete.id) closeFormModal();
+      showToast("Session deleted.", "success");
       setSessionToDelete(null);
       await loadInitialData();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to delete session."));
+      showToast(getErrorMessage(err, "Failed to delete session."), "error");
     } finally {
       setIsDeleting(false);
     }
@@ -299,11 +304,13 @@ function AdminSessionsPage() {
     if (selectedIds.size === 0) return;
     try {
       setIsBulkUpdating(true);
+      const count = selectedIds.size;
       await bulkUpdateAdminSessionStatus(Array.from(selectedIds), action);
       clearSelection();
+      showToast(`${count} session${count === 1 ? "" : "s"} updated.`, "success");
       await loadInitialData();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to update sessions."));
+      showToast(getErrorMessage(err, "Failed to update sessions."), "error");
     } finally {
       setIsBulkUpdating(false);
     }
@@ -313,11 +320,13 @@ function AdminSessionsPage() {
     setBulkDeletePending(false);
     try {
       setIsBulkUpdating(true);
+      const count = selectedIds.size;
       await bulkDeleteAdminSessions(Array.from(selectedIds));
       clearSelection();
+      showToast(`${count} session${count === 1 ? "" : "s"} deleted.`, "success");
       await loadInitialData();
     } catch (err) {
-      setPageError(getErrorMessage(err, "Failed to delete sessions."));
+      showToast(getErrorMessage(err, "Failed to delete sessions."), "error");
     } finally {
       setIsBulkUpdating(false);
     }
@@ -356,42 +365,31 @@ function AdminSessionsPage() {
           actions={
             <AdminToolbar
               left={
-                <div className="ml-auto flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                      <span className="text-sm font-semibold">#</span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                        Total sessions
-                      </p>
-                      <p className="text-sm font-semibold text-app-text">
-                        {sessionCountLabel}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
-                    <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                      Status
-                    </span>
+                <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+                  <div className="flex items-center gap-2">
+                      {selectedIds.size > 0 && (
+                      <BulkActionBar
+                        selectedCount={selectedIds.size}
+                        statusOptions={BULK_STATUS_OPTIONS}
+                        onApplyStatus={handleBulkStatusApply}
+                        onDelete={() => setBulkDeletePending(true)}
+                        onClear={clearSelection}
+                        isLoading={isBulkUpdating}
+                      />
+                    )}
                     <select
                       value={table.filters.status}
-                      onChange={(event) =>
-                        table.updateFilter("status", event.target.value)
-                      }
-                      className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                      onChange={(e) => table.updateFilter("status", e.target.value)}
+                      className="h-9 rounded-lg border border-app-border bg-app-card px-3 text-sm text-app-text outline-none transition focus:border-brand-primary"
                     >
                       {STATUS_FILTER_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
+                        <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Button onClick={openCreateModal}>Add New Session</Button>
+                    <span className="hidden rounded-lg border border-app-border bg-app-surface-2 px-3 py-1.5 text-sm font-medium text-app-text-muted sm:inline">
+                      {isLoading ? "…" : `${count} total`}
+                    </span>
+                    <Button size="sm" onClick={openCreateModal}>Add Session</Button>
                   </div>
                 </div>
               }
@@ -399,18 +397,6 @@ function AdminSessionsPage() {
           }
         >
           <AdminTable
-            bulkBar={
-              selectedIds.size > 0 ? (
-                <BulkActionBar
-                  selectedCount={selectedIds.size}
-                  statusOptions={BULK_STATUS_OPTIONS}
-                  onApplyStatus={handleBulkStatusApply}
-                  onDelete={() => setBulkDeletePending(true)}
-                  onClear={clearSelection}
-                  isLoading={isBulkUpdating}
-                />
-              ) : null
-            }
             columns={[
               {
                 key: "select",
@@ -437,7 +423,8 @@ function AdminSessionsPage() {
             emptyTitle="No sessions found"
             emptyDescription="Create your first session to start scheduling training."
             className="pb-5"
-            renderRow={(session) => {
+            hiddenColumnsAtMobile={["coach"]}
+            renderRow={(session, _index, { isMobileHidden }) => {
               const isHighlighted = String(highlightedSessionId) === String(session.id);
               const isSelected = selectedIds.has(session.id);
 
@@ -445,11 +432,10 @@ function AdminSessionsPage() {
                 <tr
                   key={session.id}
                   ref={(el) => { rowRefs.current[session.id] = el; }}
-                  className={`border-b border-app-border text-app-text transition-all duration-300 hover:bg-app-surface-2/40 ${
-                    isSelected ? "bg-brand-primary/5" : ""
-                  } ${isHighlighted ? "flash-highlight ring-brand-primary" : ""}`}
+                  className={`text-app-text transition-colors hover:bg-app-surface-2/50 ${isSelected ? "bg-brand-primary/5" : ""
+                    } ${isHighlighted ? "flash-highlight ring-brand-primary" : ""}`}
                 >
-                  <td className="w-10 px-3 py-3">
+                  <td className="w-10 px-5 py-3.5">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -458,19 +444,19 @@ function AdminSessionsPage() {
                     />
                   </td>
 
-                  <td className="px-3 py-3">
+                  <td className="px-5 py-3.5">
                     <p className="font-medium text-app-text">{session.program_title}</p>
                     <p className="text-xs text-app-text-muted">{session.location}</p>
                   </td>
 
-                  <td className="px-3 py-3 text-app-text-muted">
+                  <td className="px-5 py-3.5 text-app-text-muted">
                     {formatDate(session.session_date)} • {formatTime(session.start_time)}
                     {session.end_time ? ` - ${formatTime(session.end_time)}` : ""}
                   </td>
 
-                  <td className="px-3 py-3">{session.coach_name}</td>
+                  <td className={isMobileHidden("coach") ? "hidden lg:table-cell px-5 py-3.5" : "px-5 py-3.5"}>{session.coach_name}</td>
 
-                  <td className="px-3 py-3">
+                  <td className="px-5 py-3.5">
                     <div className="flex flex-wrap gap-2">
                       <AdminStatusBadge
                         label={session.is_published ? "Published" : "Draft"}
@@ -478,10 +464,13 @@ function AdminSessionsPage() {
                       <AdminStatusBadge
                         label={session.is_cancelled ? "Cancelled" : "Active"}
                       />
+                      {session.deleted_at ? (
+                        <AdminStatusBadge label="Deleted" />
+                      ) : null}
                     </div>
                   </td>
 
-                  <td className="px-3 py-3">
+                  <td className="px-5 py-3.5">
                     <AdminRowActions>
                       <Button size="sm" onClick={() => openEditModal(session)}>
                         Edit
@@ -677,7 +666,11 @@ function AdminSessionsPage() {
       <AdminConfirmDialog
         open={bulkDeletePending}
         title={`Delete ${selectedIds.size} Session${selectedIds.size === 1 ? "" : "s"}`}
-        description={`This action cannot be undone. ${selectedIds.size} session${selectedIds.size === 1 ? "" : "s"} will be permanently removed.`}
+        description={
+          selectedIds.size === 1
+            ? "The session will be deactivated and hidden from public views. Existing bookings will remain intact."
+            : `${selectedIds.size} sessions will be deactivated and hidden from public views. Existing bookings will remain intact.`
+        }
         confirmLabel="Delete"
         cancelLabel="Cancel"
         onConfirm={handleBulkDeleteConfirm}
@@ -690,7 +683,7 @@ function AdminSessionsPage() {
         title="Delete Session"
         description={
           sessionToDelete
-            ? `This action cannot be undone. The session on ${formatDate(sessionToDelete.session_date)} will be permanently removed.`
+            ? `The session on ${formatDate(sessionToDelete.session_date)} will be deactivated and hidden from public views. Existing bookings will remain intact.`
             : ""
         }
         confirmLabel="Delete Session"

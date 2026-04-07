@@ -2,39 +2,18 @@ import {
   CalendarRange,
   ClipboardList,
   MessageSquareMore,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
-import AdminPageHeader from "../components/layout/AdminPageHeader";
 import AdminStatCard from "../components/ui/AdminStatCard";
 import RecentBookingsCard from "../components/dashboard/RecentBookingsCard";
 import RecentEnquiriesCard from "../components/dashboard/RecentEnquiriesCard";
 import UpcomingSessionsCard from "../components/dashboard/UpcomingSessionsCard";
 import QuickActionsCard from "../components/dashboard/QuickActionsCard";
 import AdminSkeleton from "../components/ui/AdminSkeleton";
-import AdminCard from "../components/ui/AdminCard";
 import { useAdminDashboard } from "../hooks/useAdminDashboard";
-
-function OverviewChip({ label, value, tone = "default" }) {
-  const toneMap = {
-    default: "border-app-border bg-app-surface-2 text-app-text",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    warning: "border-amber-200 bg-amber-50 text-amber-700",
-    info: "border-blue-200 bg-blue-50 text-blue-700",
-  };
-
-  return (
-    <div className={`rounded-2xl border px-4 py-3 ${toneMap[tone]}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] opacity-70">
-        {label}
-      </p>
-      <p className="mt-1 text-lg font-bold">{value}</p>
-    </div>
-  );
-}
 
 function AdminDashboardPage() {
   const { data, isLoading, error } = useAdminDashboard();
@@ -44,7 +23,6 @@ function AdminDashboardPage() {
   const recentEnquiries = data?.recent_enquiries || [];
   const upcomingSessions = data?.upcoming_sessions_preview || [];
 
-  // ✅ Centralized stat config (NO duplication)
   const statItems = [
     {
       title: "Total Players",
@@ -76,18 +54,26 @@ function AdminDashboardPage() {
     },
   ];
 
-
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Admin Dashboard" />
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <AdminSkeleton className="h-8 w-48 rounded-lg" />
+          <AdminSkeleton className="h-9 w-36 rounded-lg" />
+        </div>
 
-        <AdminSkeleton className="h-52 w-full rounded-3xl" />
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {/* Stat cards skeleton */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <AdminSkeleton key={i} className="h-36 w-full rounded-3xl" />
+            <AdminSkeleton key={i} className="h-28 w-full rounded-2xl" />
           ))}
+        </div>
+
+        {/* Content skeleton */}
+        <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+          <AdminSkeleton className="h-96 w-full rounded-2xl" />
+          <AdminSkeleton className="h-96 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -95,26 +81,32 @@ function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader
-        title="Admin Dashboard"
-        description="Monitor academy activity, player growth, bookings, enquiries, and daily session operations."
-        actions={
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/admin-dashboard/sessions">
-              <Button variant="outline">Manage Sessions</Button>
-            </Link>
-            <Link to="/admin-dashboard/enquiries">
-              <Button>Review Enquiries</Button>
-            </Link>
-          </div>
-        }
-      />
+      {/* Page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-app-text sm:text-2xl">
+            Dashboard Overview
+          </h1>
+          <p className="mt-1 text-sm text-app-text-muted">
+            Monitor academy activity, bookings, enquiries, and sessions.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link to="/admin-dashboard/sessions">
+            <Button variant="outline" size="sm">
+              Manage Sessions
+            </Button>
+          </Link>
+          <Link to="/admin-dashboard/enquiries">
+            <Button size="sm">Review Enquiries</Button>
+          </Link>
+        </div>
+      </div>
 
       {error && <Alert variant="error">{error}</Alert>}
 
-
-      {/* ✅ Stats */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* Stat Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statItems.map((item) => (
           <AdminStatCard
             key={item.title}
@@ -127,13 +119,15 @@ function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* ✅ Activity */}
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+      {/* Activity grid */}
+      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        {/* Left column */}
         <div className="space-y-6">
           <RecentBookingsCard bookings={recentBookings} />
           <UpcomingSessionsCard sessions={upcomingSessions} />
         </div>
 
+        {/* Right column */}
         <div className="space-y-6">
           <RecentEnquiriesCard enquiries={recentEnquiries} />
           <QuickActionsCard />

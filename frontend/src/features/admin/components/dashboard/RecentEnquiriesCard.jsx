@@ -1,84 +1,65 @@
-import { CalendarDays, Mail, MessageSquareMore, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
+import Button from "../../../../components/ui/Button";
 import AdminSectionCard from "../ui/AdminSectionCard";
 import AdminStatusBadge from "../ui/AdminStatusBadge";
 import AdminEmptyState from "../ui/AdminEmptyState";
 import { formatDate } from "../../../../utils/formatDate";
 
-function MetaPill({ icon: Icon, text }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-app-border bg-app-card px-3 py-1.5 text-xs font-medium text-app-text-muted">
-      <Icon size={14} className="text-app-text-muted" />
-      <span className="truncate">{text}</span>
-    </div>
-  );
-}
-
 function RecentEnquiriesCard({ enquiries = [] }) {
   return (
     <AdminSectionCard
       title="Recent Enquiries"
-      description="Newest incoming leads and communication status."
+      description="Newest incoming leads."
+      actions={
+        <Link to="/admin-dashboard/enquiries">
+          <Button variant="outline" size="sm" className="whitespace-nowrap">
+            View All
+          </Button>
+        </Link>
+      }
+      contentClassName="!p-0"
     >
       {!enquiries.length ? (
-        <AdminEmptyState
-          title="No enquiries yet"
-          description="New enquiries will appear here."
-        />
+        <div className="p-6">
+          <AdminEmptyState
+            title="No enquiries yet"
+            description="New enquiries will appear here."
+          />
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div className="divide-y divide-app-border">
           {enquiries.map((enquiry) => {
             const createdDate = enquiry.created_at
               ? formatDate(enquiry.created_at)
-              : "Unknown date";
+              : "—";
 
             return (
               <div
                 key={enquiry.id}
-                className="group rounded-3xl border border-app-border bg-app-surface-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-primary/30 hover:bg-app-surface hover:shadow-[var(--shadow-soft)]"
+                className="flex items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-app-surface-2"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="truncate text-base font-bold tracking-tight text-app-text">
-                      {enquiry.name || "Unknown Lead"}
-                    </h4>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      {enquiry.email ? (
-                        <MetaPill icon={Mail} text={enquiry.email} />
-                      ) : null}
-
-                      {enquiry.phone ? (
-                        <MetaPill icon={Phone} text={enquiry.phone} />
-                      ) : null}
-
-                      <MetaPill icon={CalendarDays} text={createdDate} />
-                    </div>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-accent-violet-bg text-sm font-semibold text-app-accent-violet-text">
+                    {(enquiry.name || "?").charAt(0).toUpperCase()}
                   </div>
-
-                  <div className="shrink-0">
-                    <AdminStatusBadge label={enquiry.status || "New"} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-app-text">
+                      {enquiry.name || "Unknown Lead"}
+                    </p>
+                    <p className="truncate text-xs text-app-text-muted">
+                      {enquiry.email || enquiry.phone || "No contact info"} · {createdDate}
+                    </p>
+                    {enquiry.program_title && (
+                      <p className="mt-0.5 truncate text-xs text-app-text-muted">
+                        Program: {enquiry.program_title}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {enquiry.program_title ? (
-                  <div className="mt-3">
-                    <MetaPill
-                      icon={MessageSquareMore}
-                      text={`Program: ${enquiry.program_title}`}
-                    />
-                  </div>
-                ) : null}
-
-                {enquiry.message ? (
-                  <div className="mt-4 rounded-2xl border border-app-border bg-app-card/80 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-app-text-muted">
-                      Message Preview
-                    </p>
-                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-app-text-soft">
-                      {enquiry.message}
-                    </p>
-                  </div>
-                ) : null}
+                <div className="shrink-0 pt-0.5">
+                  <AdminStatusBadge label={enquiry.status || "New"} />
+                </div>
               </div>
             );
           })}

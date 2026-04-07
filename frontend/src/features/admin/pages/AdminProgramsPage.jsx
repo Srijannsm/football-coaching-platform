@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
+import { useToast } from "../../../hooks/useToast";
 import { formatDate } from "../../../utils/formatDate";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 import AdminSectionCard from "../components/ui/AdminSectionCard";
@@ -33,6 +34,7 @@ const PROGRAM_STATUS_OPTIONS = [
     { value: "", label: "All programs" },
     { value: "active", label: "Active" },
     { value: "inactive", label: "Inactive" },
+    { value: "deleted", label: "Deleted" },
 ];
 
 const SESSION_TYPE_OPTIONS = [
@@ -69,13 +71,14 @@ function normalizeResponse(response) {
 
 function AdminProgramsPage() {
     const table = useAdminTable({ initialFilters: { status: "" } });
+    const { showToast } = useToast();
 
     const [programs, setPrograms] = useState([]);
     const [count, setCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
     const [editingProgramId, setEditingProgramId] = useState(null);
     const [programToDelete, setProgramToDelete] = useState(null);
@@ -199,6 +202,7 @@ function AdminProgramsPage() {
                 await createAdminProgram(payload);
             }
 
+            showToast(isEditing ? "Program updated." : "Program created.", "success");
             closeFormModal();
             await loadPrograms();
         } catch (err) {
@@ -228,10 +232,11 @@ function AdminProgramsPage() {
                 closeFormModal();
             }
 
+            showToast("Program deleted.", "success");
             setProgramToDelete(null);
             await loadPrograms();
         } catch (err) {
-            setPageError(getErrorMessage(err, "Failed to delete program."));
+            showToast(getErrorMessage(err, "Failed to delete program."), "error");
         } finally {
             setIsDeleting(false);
         }
@@ -240,14 +245,16 @@ function AdminProgramsPage() {
     async function handleBulkDeleteConfirm() {
         setBulkDeletePending(false);
         try {
-            setIsBulkDeleting(true);
+            setIsBulkUpdating(true);
+            const count = selectedIds.size;
             await bulkDeleteAdminPrograms(Array.from(selectedIds));
             clearSelection();
+            showToast(`${count} program${count === 1 ? "" : "s"} deleted.`, "success");
             await loadPrograms();
         } catch (err) {
-            setPageError(getErrorMessage(err, "Failed to delete programs."));
+            showToast(getErrorMessage(err, "Failed to delete programs."), "error");
         } finally {
-            setIsBulkDeleting(false);
+            setIsBulkUpdating(false);
         }
     }
 
@@ -290,47 +297,29 @@ function AdminProgramsPage() {
                     contentClassName="p-0"
                     actions={<AdminToolbar
                         left={
-                            <div className="flex flex-wrap items-center gap-3 ml-auto">
-                                <input
-                                    type="text"
-                                    placeholder="Search by title or description"
-                                    className="h-10 min-w-[280px] rounded-xl border border-app-border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
-                                />
-
-                                <div className="inline-flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-4 py-2.5 shadow-sm">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/12 text-brand-primary">
-                                        <span className="text-sm font-semibold">#</span>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                                            Total programs
-                                        </p>
-                                        <p className="text-sm font-semibold text-app-text">
-                                            {programCountLabel}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface-2 px-3 py-2 shadow-sm">
-                                    <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-app-text-muted">
-                                        Status
-                                    </span>
-
+                            <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+                                <div className="flex items-center gap-2">
+                                    {selectedIds.size > 0 && (
+                                        <BulkActionBar
+                                            selectedCount={selectedIds.size}
+                                            onDelete={() => setBulkDeletePending(true)}
+                                            onClear={clearSelection}
+                                            isLoading={isBulkUpdating}
+                                        />
+                                    )}
                                     <select
                                         value={table.filters.status}
-                                        onChange={(event) => table.updateFilter("status", event.target.value)}
-                                        className="h-10 rounded-xl border border-app-border bg-app-card px-3 text-sm font-medium text-app-text outline-none transition focus:border-brand-primary"
+                                        onChange={(e) => table.updateFilter("status", e.target.value)}
+                                        className="h-9 rounded-lg border border-app-border bg-app-card px-3 text-sm text-app-text outline-none transition focus:border-brand-primary"
                                     >
                                         {PROGRAM_STATUS_OPTIONS.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
+                                            <option key={option.value} value={option.value}>{option.label}</option>
                                         ))}
                                     </select>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Button onClick={openCreateModal}>Add New Program</Button>
+                                    <span className="hidden rounded-lg border border-app-border bg-app-surface-2 px-3 py-1.5 text-sm font-medium text-app-text-muted sm:inline">
+                                        {isLoading ? "…" : `${count} total`}
+                                    </span>
+                                    <Button size="sm" onClick={openCreateModal}>Add Program</Button>
                                 </div>
                             </div>
                         }
@@ -338,16 +327,6 @@ function AdminProgramsPage() {
                     }
                 >
                     <AdminTable
-                        bulkBar={
-                            selectedIds.size > 0 ? (
-                                <BulkActionBar
-                                    selectedCount={selectedIds.size}
-                                    onDelete={() => setBulkDeletePending(true)}
-                                    onClear={clearSelection}
-                                    isLoading={isBulkDeleting}
-                                />
-                            ) : null
-                        }
                         columns={[
                             {
                                 key: "select",
@@ -375,59 +354,60 @@ function AdminProgramsPage() {
                         emptyTitle="No programs found"
                         emptyDescription="Create your first program to get started."
                         className="pb-5"
-                        renderRow={(program) => {
+                        hiddenColumnsAtMobile={["price", "created"]}
+                        renderRow={(program, _index, { isMobileHidden }) => {
                             const isSelected = selectedIds.has(program.id);
                             return (
-                            <tr
-                                key={program.id}
-                                className={`border-b border-app-border text-app-text transition hover:bg-app-surface-2/40 ${isSelected ? "bg-brand-primary/5" : ""}`}
-                            >
-                                <td className="w-10 px-3 py-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => toggleSelectRow(program.id)}
-                                        className="h-4 w-4 cursor-pointer rounded border-app-border accent-brand-primary"
-                                    />
-                                </td>
+                                <tr
+                                    key={program.id}
+                                    className={`text-app-text transition-colors hover:bg-app-surface-2/50 ${isSelected ? "bg-brand-primary/5" : ""}`}
+                                >
+                                    <td className="w-10 px-5 py-3.5">
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => toggleSelectRow(program.id)}
+                                            className="h-4 w-4 cursor-pointer rounded border-app-border accent-brand-primary"
+                                        />
+                                    </td>
 
-                                <td className="px-3 py-3">
-                                    <p className="font-medium text-app-text">{program.title}</p>
-                                    <p className="text-xs text-app-text-muted">
-                                        {program.short_description || "No short description"}
-                                    </p>
-                                </td>
+                                    <td className="px-5 py-3.5">
+                                        <p className="font-medium text-app-text">{program.title}</p>
+                                        <p className="text-xs text-app-text-muted">
+                                            {program.short_description || "No short description"}
+                                        </p>
+                                    </td>
 
-                                <td className="px-3 py-3">{program.session_type}</td>
+                                    <td className="px-5 py-3.5">{program.session_type}</td>
 
-                                <td className="px-3 py-3">Rs. {program.default_price}</td>
+                                    <td className={isMobileHidden("price") ? "hidden lg:table-cell px-5 py-3.5" : "px-5 py-3.5"}>Rs. {program.default_price}</td>
 
-                                <td className="px-3 py-3">
-                                    <AdminStatusBadge
-                                        label={program.is_active ? "Active" : "Inactive"}
-                                    />
-                                </td>
+                                    <td className="px-5 py-3.5">
+                                        <AdminStatusBadge
+                                            label={program.deleted_at ? "Deleted" : program.is_active ? "Active" : "Inactive"}
+                                        />
+                                    </td>
 
-                                <td className="px-3 py-3 text-app-text-muted">
-                                    {formatDate(program.created_at)}
-                                </td>
+                                    <td className={isMobileHidden("created") ? "hidden lg:table-cell px-5 py-3.5 text-app-text-muted" : "px-5 py-3.5 text-app-text-muted"}>
+                                        {formatDate(program.created_at)}
+                                    </td>
 
-                                <td className="px-3 py-3">
-                                    <AdminRowActions>
-                                        <Button size="sm" onClick={() => openEditModal(program)}>
-                                            Edit
-                                        </Button>
+                                    <td className="px-5 py-3.5">
+                                        <AdminRowActions>
+                                            <Button size="sm" onClick={() => openEditModal(program)}>
+                                                Edit
+                                            </Button>
 
-                                        <Button
-                                            size="sm"
-                                            variant="danger-outline"
-                                            onClick={() => handleDeleteClick(program)}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </AdminRowActions>
-                                </td>
-                            </tr>
+                                            <Button
+                                                size="sm"
+                                                variant="danger-outline"
+                                                onClick={() => handleDeleteClick(program)}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </AdminRowActions>
+                                    </td>
+                                </tr>
                             );
                         }}
                     />
@@ -458,7 +438,7 @@ function AdminProgramsPage() {
                 <form id="program-form" onSubmit={handleSubmit} className="space-y-6">
                     <AdminFormAlert message={formErrors.nonField} />
 
-                    <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-4 sm:p-5">
+                    <section className="rounded-xl border border-app-border p-4 sm:p-5">
                         <div className="mb-4">
                             <h3 className="text-sm font-semibold text-app-text">
                                 Basic Information
@@ -497,7 +477,7 @@ function AdminProgramsPage() {
                         </div>
                     </section>
 
-                    <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-4 sm:p-5">
+                    <section className="rounded-xl border border-app-border p-4 sm:p-5">
                         <div className="mb-4">
                             <h3 className="text-sm font-semibold text-app-text">
                                 Configuration
@@ -547,7 +527,7 @@ function AdminProgramsPage() {
                         </div>
                     </section>
 
-                    <section className="rounded-3xl border border-app-border bg-app-surface-2/40 p-4 sm:p-5">
+                    <section className="rounded-xl border border-app-border p-4 sm:p-5">
                         <div className="mb-4">
                             <h3 className="text-sm font-semibold text-app-text">
                                 Media & Status
@@ -593,12 +573,17 @@ function AdminProgramsPage() {
             <AdminConfirmDialog
                 open={bulkDeletePending}
                 title={`Delete ${selectedIds.size} Program${selectedIds.size === 1 ? "" : "s"}`}
-                description={`This action cannot be undone. ${selectedIds.size} program${selectedIds.size === 1 ? "" : "s"} will be permanently removed.`}
+                description={
+                  selectedIds.size === 1
+                    ? "The program will be deactivated and hidden from public views. Existing sessions and bookings will remain intact."
+                    : `${selectedIds.size} programs will be deactivated and hidden from public views. Existing sessions and bookings will remain intact.`
+                }
                 confirmLabel="Delete"
                 cancelLabel="Cancel"
                 onConfirm={handleBulkDeleteConfirm}
                 onCancel={() => setBulkDeletePending(false)}
-                isLoading={isBulkDeleting}
+                isLoading={isBulkUpdating}
+                
             />
 
             <AdminConfirmDialog

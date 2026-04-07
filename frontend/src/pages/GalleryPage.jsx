@@ -42,6 +42,7 @@ function GalleryItemCard({ item, onOpen }) {
     return (
       <button
         onClick={() => onOpen(item)}
+        aria-label={item.caption ? `Play video: ${item.caption}` : "Play video"}
         className="group relative block w-full overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-[var(--shadow-soft)]"
       >
         <div className="relative h-64 w-full overflow-hidden bg-neutral-900">
@@ -88,6 +89,7 @@ function GalleryItemCard({ item, onOpen }) {
   return (
     <button
       onClick={() => onOpen(item)}
+      aria-label={item.caption ? `View image: ${item.caption}` : "View image"}
       className="group relative block w-full overflow-hidden rounded-[1.5rem] border border-app-border bg-app-card shadow-[var(--shadow-soft)]"
     >
       <img
@@ -109,27 +111,36 @@ function GalleryItemCard({ item, onOpen }) {
   );
 }
 
-function Lightbox({ item, onClose }) {
+function Lightbox({ items, initialIndex, onClose }) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const item = items[currentIndex];
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < items.length - 1;
+
   useEffect(() => {
-    const handleKey = (e) => e.key === "Escape" && onClose();
+    function handleKey(e) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && currentIndex > 0) setCurrentIndex((i) => i - 1);
+      if (e.key === "ArrowRight" && currentIndex < items.length - 1) setCurrentIndex((i) => i + 1);
+    }
     document.addEventListener("keydown", handleKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, currentIndex, items.length]);
 
   function renderMedia() {
     if (item.media_type !== "video") {
       return (
         <img
           src={item.image_url}
+          alt={item.caption || "Gallery image"}
           className="mx-auto block max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
         />
       );
     }
-    // Prefer direct file; fall back to URL
     const directSrc = item.video_file_url || item.video_file;
     if (directSrc) {
       return (
@@ -150,6 +161,7 @@ function Lightbox({ item, onClose }) {
         >
           <iframe
             src={embedUrl}
+            title={item.caption || "Video"}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             className="h-full w-full border-0"
@@ -157,7 +169,6 @@ function Lightbox({ item, onClose }) {
         </div>
       );
     }
-    // Generic video URL (non-YouTube)
     return (
       <video
         src={item.video_url}
@@ -170,15 +181,42 @@ function Lightbox({ item, onClose }) {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Gallery lightbox"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
+      {/* Close */}
       <button
         onClick={onClose}
+        aria-label="Close lightbox"
         className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
       >
         ✕
       </button>
+
+      {/* Prev */}
+      {hasPrev && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i - 1); }}
+          aria-label="Previous image"
+          className="absolute left-4 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+        >
+          ‹
+        </button>
+      )}
+
+      {/* Next */}
+      {hasNext && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i + 1); }}
+          aria-label="Next image"
+          className="absolute right-4 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+        >
+          ›
+        </button>
+      )}
 
       <div
         className="relative flex max-h-[90vh] w-full max-w-5xl flex-col items-center"
@@ -191,6 +229,12 @@ function Lightbox({ item, onClose }) {
             {item.caption}
           </p>
         )}
+
+        {items.length > 1 && (
+          <p className="mt-1.5 text-xs text-white/40">
+            {currentIndex + 1} / {items.length}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -199,7 +243,7 @@ function Lightbox({ item, onClose }) {
 function GalleryPage() {
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [lightboxItem, setLightboxItem] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -324,11 +368,11 @@ function GalleryPage() {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {filteredItems.map((item) => (
+            {filteredItems.map((item, idx) => (
               <GalleryItemCard
                 key={item.id}
                 item={item}
-                onOpen={setLightboxItem}
+                onOpen={() => setLightboxIndex(idx)}
               />
             ))}
           </div>
@@ -337,8 +381,12 @@ function GalleryPage() {
 
       <Footer />
 
-      {lightboxItem && (
-        <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
+      {lightboxIndex !== null && (
+        <Lightbox
+          items={filteredItems}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       )}
     </div>
   );

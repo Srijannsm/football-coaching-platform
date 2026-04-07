@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChevronDown, X } from "lucide-react";
 
 function BulkActionBar({
   selectedCount,
@@ -8,62 +8,60 @@ function BulkActionBar({
   onClear,
   isLoading = false,
 }) {
-  const [bulkStatus, setBulkStatus] = useState(statusOptions?.[0]?.value ?? "");
-
-  const showStatusAction = statusOptions && statusOptions.length > 0 && onApplyStatus;
+  const showStatusActions = statusOptions && statusOptions.length > 0 && onApplyStatus;
 
   return (
-    <div className="inline-flex items-center gap-0 divide-x divide-app-border overflow-hidden rounded-full border border-app-border bg-app-card text-sm shadow-sm">
-      {/* Count */}
-      <span className="px-4 py-1.5 font-semibold text-brand-primary">
-        {selectedCount} selected
-      </span>
-
-      {/* Status action */}
-      {showStatusAction && (
-        <div className="flex items-center gap-0 divide-x divide-app-border">
+    <div className="flex items-center gap-2">
+      {/* "Mark as" dropdown */}
+      {showStatusActions && (
+        <div className="relative">
           <select
-            value={bulkStatus}
-            onChange={(e) => setBulkStatus(e.target.value)}
+            value=""
+            onChange={(e) => {
+              if (e.target.value) onApplyStatus(e.target.value);
+            }}
             disabled={isLoading}
-            className="h-8 appearance-none border-0 bg-transparent px-3 text-sm text-app-text outline-none disabled:opacity-50"
+            className="h-9 cursor-pointer appearance-none rounded-lg border border-app-border bg-app-card pl-3 pr-7 text-sm text-app-text outline-none transition focus:border-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <option value="" disabled>
+              Mark as…
+            </option>
             {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
           </select>
-
-          <button
-            onClick={() => onApplyStatus(bulkStatus)}
-            disabled={isLoading}
-            className="px-4 py-1.5 font-medium text-app-text transition hover:bg-app-surface-2 disabled:opacity-50"
-          >
-            {isLoading ? "Applying…" : "Apply"}
-          </button>
+          <ChevronDown
+            size={13}
+            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-app-text-muted"
+          />
         </div>
       )}
 
-      {/* Delete */}
+      {/* Delete button */}
       {onDelete && (
         <button
           onClick={onDelete}
           disabled={isLoading}
-          className="px-4 py-1.5 font-medium text-red-500 transition hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950/30"
+          className="inline-flex h-9 items-center rounded-lg border border-app-danger-border bg-app-danger-bg px-3 text-sm font-medium text-app-danger-text transition-colors hover:bg-app-danger-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
         >
           Delete
         </button>
       )}
 
-      {/* Clear */}
-      <button
-        onClick={onClear}
-        disabled={isLoading}
-        className="px-3 py-1.5 text-app-text-muted transition hover:bg-app-surface-2 hover:text-app-text disabled:opacity-50"
-      >
-        ✕
-      </button>
+      {/* Selected count badge with clear */}
+      <span className="flex items-center gap-1.5 rounded-lg border border-brand-primary/25 bg-brand-primary/8 pl-3 pr-1.5 py-1.5 text-sm font-medium text-brand-primary">
+        {selectedCount} selected
+        <button
+          onClick={onClear}
+          disabled={isLoading}
+          aria-label="Clear selection"
+          className="flex h-5 w-5 items-center justify-center rounded-md transition-colors hover:bg-brand-primary/15 disabled:opacity-50"
+        >
+          <X size={12} />
+        </button>
+      </span>
     </div>
   );
 }

@@ -17,7 +17,7 @@ function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className={`mb-2 block text-sm font-semibold text-app-text ${labelClassName}`}
+          className={`mb-1.5 block text-sm font-medium text-app-text ${labelClassName}`}
         >
           {label}
         </label>
@@ -28,16 +28,16 @@ function Input({
         type={type}
         aria-invalid={error ? "true" : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`h-12 w-full rounded-2xl border bg-app-card px-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary ${
+        className={`h-10 w-full rounded-lg border bg-app-card px-3 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:ring-2 focus:ring-brand-primary/20 ${
           error
-            ? "border-red-500 focus:border-red-500"
-            : "border-app-border"
+            ? "border-app-danger-text focus:border-app-danger-text"
+            : "border-app-border focus:border-brand-primary"
         } ${className}`}
         {...props}
       />
 
       {error && (
-        <p id={errorId} className="mt-2 text-sm text-red-600" role="alert">
+        <p id={errorId} className="mt-1.5 text-xs text-app-danger-text" role="alert">
           {error}
         </p>
       )}

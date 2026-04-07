@@ -1,17 +1,16 @@
 function AdminPageHeader({ title, description, actions }) {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight text-app-text">
-          {title}
-        </h1>
-
+        <h1 className="text-xl font-bold text-app-text sm:text-2xl">{title}</h1>
         {description ? (
-          <p className="mt-2 text-sm text-app-text-muted">{description}</p>
+          <p className="mt-1 text-sm text-app-text-muted">{description}</p>
         ) : null}
       </div>
 
-      {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
     </div>
   );
 }
