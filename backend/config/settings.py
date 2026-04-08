@@ -138,7 +138,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Security hardening — only active when DEBUG=False (production)
+# Security hardening + production performance — only active when DEBUG=False
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -148,6 +148,10 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True  # redirect all HTTP → HTTPS
+
+    # Keep DB connections alive for 10 min instead of closing after every request
+    DATABASES["default"]["CONN_MAX_AGE"] = 600
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -220,6 +224,13 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF — allow frontend origin to POST when using cookie-based auth
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173",
+    cast=Csv(),
+)
 
 # Sentry — only active when SENTRY_DSN is set in .env
 SENTRY_DSN = config("SENTRY_DSN", default="")

@@ -163,7 +163,7 @@ class MeSerializer(serializers.ModelSerializer):
         if hasattr(obj, "player_profile"):
             return obj.player_profile.id
         return None
-    
+
     def get_coach_profile_id(self, obj):
         if hasattr(obj, "coach_profile"):
             return obj.coach_profile.id

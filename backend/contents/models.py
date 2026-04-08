@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
@@ -47,10 +46,10 @@ class Testimonial(models.Model):
 
     class Meta:
         ordering = ["display_order", "-created_at"]
-        
+
     def clean(self):
         if self.rating < 1 or self.rating > 5:
-            raise ValidationError({"rating": "Rating must be between 1 and 5."})    
+            raise ValidationError({"rating": "Rating must be between 1 and 5."})
 
     def __str__(self):
         return f"{self.name} ({self.get_role_display()})"

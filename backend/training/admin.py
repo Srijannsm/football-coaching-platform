@@ -9,8 +9,8 @@ class BookingInline(admin.TabularInline):
     extra = 0
     fields = ("player", "status", "booked_at")
     readonly_fields = ("booked_at",)
-    
-    
+
+
 @admin.register(TrainingProgram)
 class TrainingProgramAdmin(admin.ModelAdmin):
     list_display = (
@@ -56,7 +56,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
         "notes",
     )
     ordering = ("session_date", "start_time")
-    
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "coach":
             kwargs["queryset"] = User.objects.filter(role=User.ROLE_COACH)

@@ -168,7 +168,7 @@ class PlayerProfileDetailUpdateView(generics.RetrieveUpdateAPIView):
             raise NotFound("Player profile does not exist.")
 
         return user.player_profile
-    
+
 class CoachProfileListView(generics.ListAPIView):
     serializer_class = CoachProfileSerializer
     permission_classes = [permissions.AllowAny]
@@ -374,4 +374,4 @@ class SendVerificationEmailView(APIView):
         frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
         send_verification_email(user, frontend_url)
 
-        return Response({"detail": "Verification email sent."}, status=status.HTTP_200_OK)    
+        return Response({"detail": "Verification email sent."}, status=status.HTTP_200_OK)

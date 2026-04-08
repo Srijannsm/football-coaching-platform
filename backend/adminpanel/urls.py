@@ -19,7 +19,6 @@ from .dashboard_views import (
     AdminTrainingSessionDetailView,
     AdminEnquiryListView,
     AdminEnquiryDetailView,
-    AdminCoachListView,
     AdminCoachDirectoryListView,
     AdminCoachDetailView,
     AdminNotificationListView,
@@ -73,6 +72,6 @@ urlpatterns = [
     path("gallery/items/<int:pk>/", AdminGalleryItemDetailView.as_view(), name="admin-gallery-item-detail"),
 
     path("audit-log/", AdminAuditLogView.as_view(), name="admin-audit-log"),
-    
+
     path("analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),
 ]

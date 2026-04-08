@@ -35,7 +35,7 @@ class User(AbstractUser):
         if self.email:
             self.email = self.email.strip().lower()
         super().save(*args, **kwargs)
-        
+
     @property
     def is_coach(self):
         return self.role == self.ROLE_COACH
@@ -43,11 +43,11 @@ class User(AbstractUser):
     @property
     def is_player(self):
         return self.role == self.ROLE_PLAYER
-    
+
     @property
     def is_admin(self):
         return self.role == self.ROLE_ADMIN
-    
+
     def delete(self, using=None, keep_parents=False):
         """Soft delete: deactivate user but keep record for booking history."""
         self.is_active = False

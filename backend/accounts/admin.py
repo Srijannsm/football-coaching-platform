@@ -42,7 +42,7 @@ class PlayerProfileAdmin(admin.ModelAdmin):
         "user__last_name",
         "user__email",
     )
-    
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "user":
             kwargs["queryset"] = User.objects.filter(role=User.ROLE_PLAYER)
