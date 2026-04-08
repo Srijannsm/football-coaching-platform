@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
+import SEO, { buildOrganizationSchema } from "../components/SEO";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -281,8 +282,20 @@ function HomePage() {
     }
   }, [location]);
 
+  const orgSchema = buildOrganizationSchema({
+    name: "Football Academy",
+    url: window.location.origin,
+    phone: "+977-98XXXXXXXX",
+    email: "academy@example.com",
+    address: { city: "Nepal", country: "NP" },
+  });
+
   return (
     <div className="app-shell">
+      <SEO
+        description="Professional football coaching academy offering group sessions, 1-to-1 coaching, and goalkeeper training. Book your place online today."
+        jsonLd={[orgSchema]}
+      />
       <Navbar mode="overlay" />
 
       <section

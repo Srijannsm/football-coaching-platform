@@ -1,19 +1,42 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MailWarning, Check, X, RefreshCw } from "lucide-react";
 import api from "../api/axios";
 import { useToast } from "../hooks/useToast";
+
+const COOLDOWN_SECONDS = 60;
 
 function UnverifiedEmailBanner() {
     const { showToast } = useToast();
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
     const [dismissed, setDismissed] = useState(false);
+    const [cooldown, setCooldown] = useState(0);
+    const timerRef = useRef(null);
+
+    useEffect(() => {
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, []);
+
+    function startCooldown() {
+        setCooldown(COOLDOWN_SECONDS);
+        timerRef.current = setInterval(() => {
+            setCooldown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }
 
     async function handleResend() {
+        if (cooldown > 0) return;
         setSending(true);
         try {
             await api.post("/send-verification/");
             setSent(true);
+            startCooldown();
             showToast("Verification email sent! Check your inbox.", "success");
         } catch (err) {
             const msg = err.response?.data?.detail || "Failed to send verification email.";
@@ -24,6 +47,8 @@ function UnverifiedEmailBanner() {
     }
 
     if (dismissed) return null;
+
+    const canResend = !sending && cooldown === 0;
 
     return (
         <div className="fixed inset-x-0 top-0 z-40 px-4 pointer-events-none lg:px-6">
@@ -51,20 +76,21 @@ function UnverifiedEmailBanner() {
 
                     {/* Right: actions */}
                     <div className="flex shrink-0 items-center gap-2">
-                        {sent ? (
+                        {sent && cooldown > 0 ? (
                             <span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-600 dark:text-green-400">
                                 <Check size={12} />
-                                Email sent
+                                Sent · resend in {cooldown}s
                             </span>
                         ) : (
                             <button
                                 type="button"
                                 onClick={handleResend}
-                                disabled={sending}
-                                className="flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 transition hover:bg-amber-500/25 disabled:opacity-60"
+                                disabled={!canResend}
+                                title={cooldown > 0 ? `Resend available in ${cooldown}s` : "Resend verification email"}
+                                className="flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 transition hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <RefreshCw size={11} className={sending ? "animate-spin" : ""} />
-                                {sending ? "Sending…" : "Resend link"}
+                                {sending ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : "Resend link"}
                             </button>
                         )}
 
@@ -72,7 +98,7 @@ function UnverifiedEmailBanner() {
                             type="button"
                             onClick={() => setDismissed(true)}
                             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-amber-500/50 transition hover:bg-amber-500/10 hover:text-amber-500"
-                            aria-label="Dismiss"
+                            aria-label="Dismiss banner"
                         >
                             <X size={13} />
                         </button>

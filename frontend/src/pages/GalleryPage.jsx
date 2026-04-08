@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import SEO from "../components/SEO";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Button from "../components/ui/Button";
@@ -280,6 +281,10 @@ function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-app-surface text-app-text">
+      <SEO
+        title="Gallery"
+        description="A look inside our football coaching sessions — photos and videos from training, drills, and academy events."
+      />
       <Navbar />
 
       {/* Hero */}

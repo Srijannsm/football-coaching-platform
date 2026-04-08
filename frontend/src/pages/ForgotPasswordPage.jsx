@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 import api from "../api/axios";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -29,6 +30,7 @@ function ForgotPasswordPage() {
 
   return (
     <div className="app-shell">
+      <SEO title="Forgot Password" noindex />
       <div className="flex min-h-screen items-center justify-center px-6 py-12">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 md:p-10">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import SEO from "../components/SEO";
 import { useAuth } from "../hooks/useAuth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -73,6 +74,7 @@ function LoginPage() {
 
   return (
     <div className="app-shell">
+      <SEO title="Sign In" description="Sign in to your Football Academy account to manage bookings and track your player development." noindex />
       <div className="grid min-h-screen lg:grid-cols-[1fr_1.05fr]">
         <div className="hidden border-r border-app-border bg-app-surface px-10 py-12 lg:flex lg:flex-col lg:justify-between">
           <div>

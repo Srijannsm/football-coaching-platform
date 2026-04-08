@@ -8,24 +8,37 @@ export function AuthProvider({ children }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
     async function initAuth() {
       try {
         // The access_token cookie is sent automatically.
         // If it is expired the axios interceptor will transparently refresh it
         // using the refresh_token cookie before this await resolves.
-        const response = await api.get("/me/");
+        const response = await api.get("/me/", { signal: controller.signal });
         setUser(response.data);
         setIsAuthenticated(true);
-      } catch {
-        // Both the access and refresh tokens are absent or expired.
+      } catch (err) {
+        // Treat timeout (AbortError) the same as a failed auth — just log it.
+        if (err.name === "AbortError" || err.code === "ERR_CANCELED") {
+          console.warn("Auth check timed out — treating as unauthenticated.");
+        }
+        // Both the access and refresh tokens are absent, expired, or unreachable.
         setUser(null);
         setIsAuthenticated(false);
       } finally {
+        clearTimeout(timeoutId);
         setIsAuthLoading(false);
       }
     }
 
     initAuth();
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   async function login(credentials) {

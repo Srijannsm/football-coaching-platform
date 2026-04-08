@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import SEO from "../components/SEO";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
@@ -237,6 +238,7 @@ function RegisterPage() {
 
   return (
     <div className="app-shell">
+      <SEO title="Create Account" description="Join Football Academy. Create your player account to browse and book professional football training sessions." noindex />
       <div className="grid min-h-screen lg:grid-cols-[1fr_1.35fr]">
         <div className="hidden border-r border-app-border bg-app-surface px-10 py-12 lg:flex lg:flex-col lg:justify-around">
           <div>
@@ -370,27 +372,51 @@ function RegisterPage() {
                       error={fieldErrors.phone_number}
                     />
 
-                    <Input
-                      id="password"
-                      type="password"
-                      name="password"
-                      label="Password *"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="At least 8 characters"
-                      error={fieldErrors.password}
-                    />
+                    <div>
+                      <Input
+                        id="password"
+                        type="password"
+                        name="password"
+                        label="Password *"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="At least 8 characters"
+                        error={fieldErrors.password}
+                      />
+                      {formData.password && !fieldErrors.password && (
+                        <p className={`mt-1.5 text-xs font-medium ${formData.password.length >= 8 ? "text-app-success-text" : "text-app-warning-text"}`}>
+                          {formData.password.length >= 8
+                            ? `✓ ${formData.password.length} characters`
+                            : `${8 - formData.password.length} more character${8 - formData.password.length !== 1 ? "s" : ""} needed`}
+                        </p>
+                      )}
+                    </div>
 
-                    <Input
-                      id="confirm_password"
-                      type="password"
-                      name="confirm_password"
-                      label="Confirm Password *"
-                      value={formData.confirm_password}
-                      onChange={handleChange}
-                      placeholder="Re-enter password"
-                      error={fieldErrors.confirm_password}
-                    />
+                    <div>
+                      <Input
+                        id="confirm_password"
+                        type="password"
+                        name="confirm_password"
+                        label="Confirm Password *"
+                        value={formData.confirm_password}
+                        onChange={handleChange}
+                        placeholder="Re-enter password"
+                        error={fieldErrors.confirm_password}
+                      />
+                      {formData.confirm_password && !fieldErrors.confirm_password && (
+                        <p
+                          className={`mt-1.5 text-xs font-medium ${
+                            formData.password === formData.confirm_password
+                              ? "text-app-success-text"
+                              : "text-app-danger-text"
+                          }`}
+                        >
+                          {formData.password === formData.confirm_password
+                            ? "✓ Passwords match"
+                            : "✗ Passwords do not match"}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </section>
 

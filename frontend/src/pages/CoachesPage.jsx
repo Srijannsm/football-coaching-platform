@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Alert from "../components/ui/Alert";
@@ -88,6 +89,10 @@ function CoachesPage() {
 
     return (
         <div className="app-shell flex min-h-screen flex-col bg-app-bg">
+            <SEO
+              title="Our Coaches"
+              description="Meet our professional football coaches. Expert trainers specialising in group sessions, 1-to-1 coaching, and goalkeeper development."
+            />
             <Navbar />
 
             <main className="flex-1 pt-28">

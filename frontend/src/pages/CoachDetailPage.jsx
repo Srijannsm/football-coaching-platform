@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import SEO, { buildCoachSchema } from "../components/SEO";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Button from "../components/ui/Button";
@@ -101,8 +102,19 @@ function CoachDetailPage() {
     );
   }
 
+  const coachUrl = `${window.location.origin}/coaches/${coach.id}`;
+  const coachName = getCoachName(coach);
+  const coachSchema = buildCoachSchema({ coach, url: coachUrl });
+
   return (
     <div className="app-shell flex min-h-screen flex-col bg-app-bg">
+      <SEO
+        title={coachName}
+        description={coach.bio ? coach.bio.slice(0, 160) : `${coachName} — professional football coach at Football Academy. ${coach.coaching_level || ""} ${coach.years_experience ? `${coach.years_experience} years experience.` : ""}`}
+        canonical={coachUrl}
+        type="profile"
+        jsonLd={[coachSchema]}
+      />
       <Navbar />
 
       <main className="flex-1 pt-28">

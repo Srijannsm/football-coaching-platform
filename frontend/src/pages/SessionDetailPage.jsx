@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import SEO, { buildTrainingSessionSchema } from "../components/SEO";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
@@ -46,6 +47,7 @@ function SessionDetailPage() {
   const [error, setError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [confirmingBooking, setConfirmingBooking] = useState(false);
 
   const loadSessionDetail = useCallback(async () => {
     try {
@@ -76,21 +78,25 @@ function SessionDetailPage() {
     loadPageData();
   }, [loadPageData]);
 
-  async function handleBookSession() {
+  function handleBookSession() {
     if (session?.is_booked_by_current_user) {
       showToast("You have already booked this session.", "error");
       return;
     }
 
     if (!isAuthenticated) {
-      navigate("/login", {
-        state: { from: location },
-      });
+      navigate("/login", { state: { from: location } });
       return;
     }
 
+    // Show inline confirmation step instead of booking immediately
+    setConfirmingBooking(true);
+  }
+
+  async function handleConfirmBooking() {
     try {
       setBookingLoading(true);
+      setConfirmingBooking(false);
 
       await createBooking(session.id, paymentMethod);
       await loadPageData();
@@ -132,6 +138,9 @@ function SessionDetailPage() {
 
   const isFull = session?.is_full;
   const isAlreadyBooked = session?.is_booked_by_current_user;
+  const isPast = session?.session_date
+    ? new Date(session.session_date) < new Date(new Date().toDateString())
+    : false;
 
   const badgeStatus = useMemo(() => {
     if (isAlreadyBooked) return "booked";
@@ -141,11 +150,12 @@ function SessionDetailPage() {
 
   const bookingButtonText = useMemo(() => {
     if (isAlreadyBooked) return "Already Booked";
+    if (isPast) return "Session Ended";
     if (isFull) return "Session Full";
-    if (bookingLoading) return "Booking...";
     if (!isAuthenticated) return "Login to Book";
+    if (confirmingBooking) return "Confirm Booking";
     return "Book Session";
-  }, [isAlreadyBooked, isFull, bookingLoading, isAuthenticated]);
+  }, [isAlreadyBooked, isPast, isFull, isAuthenticated, confirmingBooking]);
 
   if (loading) {
     return (
@@ -187,11 +197,29 @@ function SessionDetailPage() {
     );
   }
 
+  const sessionUrl = `${window.location.origin}/training-sessions/${session.id}`;
+  const sessionSchema = buildTrainingSessionSchema({ session, url: sessionUrl });
+
   return (
     <div className="app-shell">
+      <SEO
+        title={session.program_title || "Training Session"}
+        description={`${session.session_type?.replace("_", " ")} training session on ${session.session_date} at ${session.location || "Football Academy"}. Rs. ${session.price}. Book your place now.`}
+        canonical={sessionUrl}
+        jsonLd={[sessionSchema]}
+      />
       <Navbar />
 
       <section className="mx-auto max-w-6xl px-6 pt-32 pb-12 lg:px-10">
+        {isPast && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>This session has already taken place and is no longer available for booking.</span>
+          </div>
+        )}
+
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <Link to="/training-sessions">
             <Button variant="outline">← Back to Sessions</Button>
@@ -274,7 +302,7 @@ function SessionDetailPage() {
                   />
                 </div>
 
-                {!isAlreadyBooked && !isFull && (
+                {!isAlreadyBooked && !isFull && !isPast && (
                   <div className="mt-6 border-t border-app-border pt-5">
                     <PaymentMethodSelector
                       value={paymentMethod}
@@ -283,30 +311,62 @@ function SessionDetailPage() {
                   </div>
                 )}
 
-                <Button
-                  type="button"
-                  onClick={handleBookSession}
-                  disabled={isAlreadyBooked || isFull || bookingLoading}
-                  variant={
-                    isAlreadyBooked || isFull || bookingLoading
-                      ? "secondary"
-                      : "primary"
-                  }
-                  className="mt-6 w-full"
-                >
-                  {bookingButtonText}
-                </Button>
+                {confirmingBooking ? (
+                  <div className="mt-6 space-y-3">
+                    <div className="rounded-2xl border border-brand-primary/30 bg-brand-primary/5 px-4 py-3 text-sm text-app-text-soft">
+                      <p className="font-semibold text-app-text">Confirm your booking</p>
+                      <p className="mt-1">
+                        <span className="font-medium">{session.program_title}</span> · {paymentMethod === "cash" ? "Pay in person (cash)" : paymentMethod}
+                      </p>
+                      {user?.first_name && (
+                        <p className="mt-1 text-xs text-app-text-muted">Booking as {user.first_name}</p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleConfirmBooking}
+                      loading={bookingLoading}
+                      disabled={bookingLoading}
+                      variant="primary"
+                      className="w-full"
+                    >
+                      Yes, Book Session
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setConfirmingBooking(false)}
+                      disabled={bookingLoading}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Go Back
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={handleBookSession}
+                      disabled={isAlreadyBooked || isFull || isPast || bookingLoading}
+                      loading={bookingLoading}
+                      variant={isAlreadyBooked || isFull || isPast ? "secondary" : "primary"}
+                      className="mt-6 w-full"
+                    >
+                      {bookingButtonText}
+                    </Button>
 
-                {!isAuthenticated && (
-                  <p className="mt-4 text-sm text-app-text-muted">
-                    Log in to reserve your place in this session.
-                  </p>
-                )}
+                    {!isAuthenticated && (
+                      <p className="mt-4 text-sm text-app-text-muted">
+                        Log in to reserve your place in this session.
+                      </p>
+                    )}
 
-                {isAuthenticated && user?.first_name && (
-                  <p className="mt-4 text-sm text-app-text-muted">
-                    Booking as {user.first_name}.
-                  </p>
+                    {isAuthenticated && user?.first_name && !isAlreadyBooked && !isFull && !isPast && (
+                      <p className="mt-4 text-sm text-app-text-muted">
+                        Booking as <span className="font-medium text-app-text">{user.first_name}</span>.
+                      </p>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

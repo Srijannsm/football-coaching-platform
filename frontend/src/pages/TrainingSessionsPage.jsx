@@ -1,5 +1,6 @@
-import { createElement, useEffect, useMemo, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SEO from "../components/SEO";
 import { List, LayoutGrid, Calendar, Search, X } from "lucide-react";
 import { getTrainingSessions, getAllTrainingSessions } from "../services/trainingSessionService";
 import Navbar from "../components/Navbar";
@@ -10,6 +11,23 @@ import CalendarView, { CompactSessionCard } from "../components/CalendarView";
 import { useAuth } from "../hooks/useAuth";
 import { formatDate } from "../utils/formatDate";
 import { formatSessionTimeRange } from "../utils/formatSessionTimeRange";
+
+/** Returns a page number array with "…" ellipsis gaps for large page counts. */
+function buildPageRange(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total, current]);
+  for (let d = -2; d <= 2; d++) {
+    const p = current + d;
+    if (p > 1 && p < total) pages.add(p);
+  }
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push("…");
+    result.push(sorted[i]);
+  }
+  return result;
+}
 
 const VIEW_MODES = [
   { mode: "list", icon: List, label: "List" },
@@ -29,7 +47,9 @@ function TrainingSessionsPage() {
   const [allSessions, setAllSessions] = useState([]);
   const [allSessionsLoading, setAllSessionsLoading] = useState(false);
 
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const searchDebounceRef = useRef(null);
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -39,7 +59,7 @@ function TrainingSessionsPage() {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const isAdmin = user?.role === "admin";
-  const hasActiveFilters = searchTerm || typeFilter !== "all" || statusFilter !== "all";
+  const hasActiveFilters = searchInput || typeFilter !== "all" || statusFilter !== "all";
 
   async function fetchSessions(page = 1) {
     try {
@@ -60,8 +80,23 @@ function TrainingSessionsPage() {
     fetchSessions(currentPage);
   }, [currentPage]);
 
-  function handleClearFilters() {
+  function handleSearchChange(e) {
+    const val = e.target.value;
+    setSearchInput(val);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setSearchTerm(val), 300);
+  }
+
+  function handleClearSearch() {
+    setSearchInput("");
     setSearchTerm("");
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+  }
+
+  function handleClearFilters() {
+    setSearchInput("");
+    setSearchTerm("");
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     setTypeFilter("all");
     setStatusFilter("all");
     setCurrentPage(1);
@@ -75,6 +110,9 @@ function TrainingSessionsPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, typeFilter, statusFilter]);
+
+  // Clean up debounce on unmount
+  useEffect(() => () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); }, []);
 
   useEffect(() => {
     if (viewMode !== "calendar") return;
@@ -168,6 +206,10 @@ function TrainingSessionsPage() {
 
   return (
     <div className="app-shell">
+      <SEO
+        title="Training Sessions"
+        description="Browse and book football training sessions — group coaching, 1-to-1 sessions, and goalkeeper training. Find your next session and reserve your place."
+      />
       <Navbar />
 
       {/* ── Hero + Filters ──────────────────────────────────────────── */}
@@ -221,11 +263,22 @@ function TrainingSessionsPage() {
               />
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={handleSearchChange}
                 placeholder="Search by program, coach, or location…"
-                className="h-10 w-full rounded-xl border border-app-border bg-app-card pl-9 pr-4 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
+                aria-label="Search sessions"
+                className="h-10 w-full rounded-xl border border-app-border bg-app-card pl-9 pr-9 text-sm text-app-text outline-none transition placeholder:text-app-text-muted focus:border-brand-primary"
               />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  aria-label="Clear search"
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-full p-0.5 text-app-text-muted hover:text-app-text transition"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
             {/* Session type */}
@@ -446,25 +499,34 @@ function TrainingSessionsPage() {
               size="sm"
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
+              aria-label="Previous page"
             >
-              Previous
+              ← Prev
             </Button>
 
             <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() => handlePageChange(page)}
-                  className={`h-9 w-9 rounded-lg text-sm font-semibold transition-colors ${
-                    page === currentPage
-                      ? "bg-brand-primary text-white"
-                      : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {buildPageRange(currentPage, totalPages).map((item, idx) =>
+                item === "…" ? (
+                  <span key={`ellipsis-${idx}`} className="h-9 w-7 flex items-center justify-center text-app-text-muted text-sm select-none">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => handlePageChange(item)}
+                    aria-label={`Page ${item}`}
+                    aria-current={item === currentPage ? "page" : undefined}
+                    className={`h-9 w-9 rounded-lg text-sm font-semibold transition-colors ${
+                      item === currentPage
+                        ? "bg-brand-primary text-white"
+                        : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
             </div>
 
             <Button
@@ -473,8 +535,9 @@ function TrainingSessionsPage() {
               size="sm"
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
+              aria-label="Next page"
             >
-              Next
+              Next →
             </Button>
           </div>
         )}

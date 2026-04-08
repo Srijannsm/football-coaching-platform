@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 import Button from "../components/ui/Button";
 
 function NotFoundPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-app-surface px-6 text-center">
+      <SEO title="404 — Page Not Found" noindex />
       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-primary-soft text-5xl font-black text-brand-primary">
         404
       </div>

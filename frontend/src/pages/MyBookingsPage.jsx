@@ -50,8 +50,8 @@ function StatusFilterBar({ value, onChange }) {
               type="button"
               onClick={() => onChange(filter.value)}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition ${isActive
-                  ? "border-brand-primary bg-brand-primary text-black"
-                  : "border-app-border bg-app-card text-app-text-soft hover:border-brand-primary hover:text-app-text"
+                ? "border-brand-primary bg-brand-primary text-black"
+                : "border-app-border bg-app-card text-app-text-soft hover:border-brand-primary hover:text-app-text"
                 }`}
             >
               {filter.label}
@@ -73,15 +73,15 @@ function PaymentBadge({ method, paymentStatus }) {
     paymentStatus === "completed"
       ? "Paid"
       : paymentStatus === "failed"
-      ? "Failed"
-      : "Pending";
+        ? "Failed"
+        : "Pending";
 
   const colorClass =
     paymentStatus === "completed"
       ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
       : paymentStatus === "failed"
-      ? "border-red-400/30 bg-red-500/10 text-red-600 dark:text-red-400"
-      : "border-amber-400/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+        ? "border-red-400/30 bg-red-500/10 text-red-600 dark:text-red-400"
+        : "border-amber-400/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
 
   return (
     <span
@@ -94,6 +94,18 @@ function PaymentBadge({ method, paymentStatus }) {
 
 function CancelBookingDialog({ open, onConfirm, onClose, isLoading }) {
   const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(e) {
+      if (e.key === "Escape" && !isLoading) {
+        handleClose();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isLoading]);
 
   function handleConfirm() {
     onConfirm(reason.trim());
@@ -108,11 +120,17 @@ function CancelBookingDialog({ open, onConfirm, onClose, isLoading }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4"
+      onClick={(e) => { if (e.target === e.currentTarget && !isLoading) handleClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancel-dialog-title"
+    >
       <div className="w-full max-w-md rounded-3xl border border-app-border bg-app-card p-6 shadow-2xl">
-        <h3 className="text-lg font-semibold text-app-text">Cancel Booking</h3>
+        <h3 id="cancel-dialog-title" className="text-lg font-semibold text-app-text">Cancel Booking</h3>
         <p className="mt-2 text-sm text-app-text-muted">
-          Are you sure you want to cancel this booking? This cannot be undone.
+          Are you sure you want to cancel this booking? This action cannot be undone.
         </p>
 
         <div className="mt-4">
@@ -341,32 +359,6 @@ function MyBookingsPage() {
     <div className="space-y-6">
       {/* Intro card */}
       <Card className="border-brand-primary/10 bg-gradient-to-r from-brand-primary/5 via-transparent to-transparent">
-        {/* <CardContent className="p-6 md:p-8">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
-                Booking Management
-              </p>
-              <h2 className="text-2xl font-black tracking-tight text-app-text md:text-3xl">
-                My Bookings
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-app-text-soft md:text-base">
-                View your active sessions, track cancelled bookings, and manage
-                your football training schedule in one place.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link to="/training-sessions">
-                <Button>Browse Sessions</Button>
-              </Link>
-
-              <Link to="/player-dashboard">
-                <Button variant="outline">Dashboard Home</Button>
-              </Link>
-            </div>
-          </div>
-        </CardContent> */}
       </Card>
 
       {/* Error */}
