@@ -283,8 +283,8 @@ class PasswordResetRequestView(APIView):
             signer = TimestampSigner(salt=PASSWORD_RESET_SIGNER_SALT)
             token = signer.sign(user.email)
             frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
-            from adminpanel.email_utils import send_password_reset_email
-            send_password_reset_email(user, frontend_url, token)
+            from adminpanel.tasks import send_password_reset_email_task, fire_task
+            fire_task(send_password_reset_email_task, user.pk, token)
 
         # Always return the same response to prevent email enumeration.
         return Response(
@@ -369,9 +369,7 @@ class SendVerificationEmailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        from adminpanel.email_utils import send_verification_email
+        from adminpanel.tasks import send_verification_email_task, fire_task
 
-        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
-        send_verification_email(user, frontend_url)
-
+        fire_task(send_verification_email_task, user.pk)
         return Response({"detail": "Verification email sent."}, status=status.HTTP_200_OK)

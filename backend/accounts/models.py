@@ -1,16 +1,8 @@
-import re
-
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
-
-
-def validate_phone_number(value):
-    if value and not PHONE_REGEX.match(value.replace(" ", "")):
-        raise ValidationError("Enter a valid phone number (7–15 digits, optional + prefix).")
+from config.validators import validate_phone_number
 
 
 class User(AbstractUser):

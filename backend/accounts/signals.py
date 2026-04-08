@@ -9,9 +9,10 @@ def on_new_player(sender, instance, created, **kwargs):
         return
 
     from adminpanel.models import Notification
-    from adminpanel.email_utils import (
-        send_registration_admin_notification,
-        send_verification_email,
+    from adminpanel.tasks import (
+        send_registration_admin_notification_task,
+        send_verification_email_task,
+        fire_task,
     )
 
     player_name = f"{instance.first_name} {instance.last_name}".strip() or instance.username
@@ -23,7 +24,5 @@ def on_new_player(sender, instance, created, **kwargs):
         link="/admin-dashboard/players",
     )
 
-    send_registration_admin_notification(instance)
-
-    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
-    send_verification_email(instance, frontend_url)
+    fire_task(send_registration_admin_notification_task, instance.pk)
+    fire_task(send_verification_email_task, instance.pk)

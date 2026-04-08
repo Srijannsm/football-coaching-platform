@@ -217,6 +217,21 @@ ADMIN_NOTIFICATION_EMAIL = config("ADMIN_NOTIFICATION_EMAIL", default="")
 # Frontend base URL — used for email verification links, password reset, etc.
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
+# ── Celery ────────────────────────────────────────────────────────────────────
+# Broker: Redis (must be running; start with `redis-server`)
+CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
+# No result backend needed — all tasks are fire-and-forget emails.
+CELERY_RESULT_BACKEND = None
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+# Set to True in .env if you want tasks to run synchronously (no Redis needed).
+# Useful for CI or environments where Redis is unavailable.
+CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=False, cast=bool)
+CELERY_TASK_EAGER_PROPAGATES = True
+# ─────────────────────────────────────────────────────────────────────────────
+
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
     default="http://localhost:5173,http://127.0.0.1:5173",

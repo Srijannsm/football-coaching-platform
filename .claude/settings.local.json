@@ -1,16 +1,4 @@
 {
-  "env": {
-    "ANTHROPIC_BASE_URL":"https://openrouter.ai/api",
-    "ANTHROPIC_AUTH_TOKEN":"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",
-    "ANTHROPIC_API_KEY":"",
-    "ANTHROPIC_MODEL":"qwen/qwen3.6-plus:free",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL":"qwen/qwen3.6-plus:free",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL":"qwen/qwen3.6-plus:free",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL":"qwen/qwen3.6-plus:free",
-    "ANTHROPIC_SMALL_FAST_MODEL":"qwen/qwen3.6-plus:free",
-    "CLAUDE_CODE_SUBAGENT_MODEL":"qwen/qwen3.6-plus:free"
-  
-  },
   "permissions": {
     "allow": [
       "Bash(npm run:*)",

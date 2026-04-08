@@ -27,5 +27,5 @@ def on_session_cancelled(sender, instance, created, **kwargs):
         return
     was_cancelled = getattr(instance, "_was_cancelled", True)
     if not was_cancelled and instance.is_cancelled:
-        from adminpanel.email_utils import send_session_cancelled_to_players
-        send_session_cancelled_to_players(instance)
+        from adminpanel.tasks import send_session_cancelled_to_players_task, fire_task
+        fire_task(send_session_cancelled_to_players_task, instance.pk)

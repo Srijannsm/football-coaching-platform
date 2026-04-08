@@ -37,10 +37,9 @@ def send_enquiry_admin_notification(enquiry):
             ),
             from_email=_from_email(),
             recipient_list=[recipient],
-            fail_silently=True,
         )
     except Exception as exc:
-        logger.warning("Failed to send enquiry admin email: %s", exc)
+        logger.error("Failed to send enquiry admin email: %s", exc)
 
 
 def send_enquiry_confirmation(enquiry):
@@ -60,10 +59,9 @@ def send_enquiry_confirmation(enquiry):
             ),
             from_email=_from_email(),
             recipient_list=[enquiry.email],
-            fail_silently=True,
         )
     except Exception as exc:
-        logger.warning("Failed to send enquiry confirmation email: %s", exc)
+        logger.error("Failed to send enquiry confirmation email: %s", exc)
 
 
 def send_booking_admin_notification(booking):
@@ -85,10 +83,9 @@ def send_booking_admin_notification(booking):
             ),
             from_email=_from_email(),
             recipient_list=[recipient],
-            fail_silently=True,
         )
     except Exception as exc:
-        logger.warning("Failed to send booking admin email: %s", exc)
+        logger.error("Failed to send booking admin email: %s", exc)
 
 
 def send_cancellation_admin_notification(booking):
@@ -110,10 +107,9 @@ def send_cancellation_admin_notification(booking):
             ),
             from_email=_from_email(),
             recipient_list=[recipient],
-            fail_silently=True,
         )
     except Exception as exc:
-        logger.warning("Failed to send cancellation admin email: %s", exc)
+        logger.error("Failed to send cancellation admin email: %s", exc)
 
 
 def send_welcome_email(user):
@@ -134,10 +130,9 @@ def send_welcome_email(user):
             ),
             from_email=_from_email(),
             recipient_list=[user.email],
-            fail_silently=True,
         )
     except Exception as exc:
-        logger.warning("Failed to send welcome email: %s", exc)
+        logger.error("Failed to send welcome email: %s", exc)
 
 
 def send_registration_admin_notification(user):
@@ -157,10 +152,9 @@ def send_registration_admin_notification(user):
             ),
             from_email=_from_email(),
             recipient_list=[recipient],
-            fail_silently=True,
         )
     except Exception as exc:
-        logger.warning("Failed to send registration admin email: %s", exc)
+        logger.error("Failed to send registration admin email: %s", exc)
 
 
 def send_session_cancelled_to_players(session):
@@ -231,82 +225,76 @@ def send_session_cancelled_to_players(session):
                 to=[user.email],
             )
             msg.attach_alternative(html_message, "text/html")
-            msg.send(fail_silently=True)
+            msg.send()
         except Exception as exc:
-            logger.warning("Failed to send session cancellation email to %s: %s", user.email, exc)
+            logger.error("Failed to send session cancellation email to %s: %s", user.email, exc)
 
 
 def send_password_reset_email(user, frontend_url, token):
-    """Send a password reset link."""
+    """Send a password reset link. Raises on failure so the caller can handle it."""
     reset_url = f"{frontend_url.rstrip('/')}/reset-password?token={token}"
-    try:
-        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
-        html_message = (
-            f"<p>Hi {player_name},</p>"
-            f"<p>We received a request to reset your Football Academy password. "
-            f"Click the button below to set a new password:</p>"
-            f'<p><a href="{reset_url}" style="background:#22c55e;color:#fff;padding:12px 24px;'
-            f'border-radius:6px;text-decoration:none;display:inline-block;">Reset My Password</a></p>'
-            f"<p>If the button doesn't work, copy and paste this link into your browser:</p>"
-            f"<p>{reset_url}</p>"
-            f"<p>This link will expire in 1 hour. If you didn't request a password reset, "
-            f"you can safely ignore this email.</p>"
-            f"<p>Football Academy Team</p>"
-        )
-        text_message = (
-            f"Hi {player_name},\n\n"
-            f"We received a request to reset your Football Academy password.\n\n"
-            f"Reset link:\n{reset_url}\n\n"
-            f"This link will expire in 1 hour. If you didn't request this, "
-            f"you can safely ignore this email.\n\n"
-            f"Football Academy Team"
-        )
-        msg = EmailMultiAlternatives(
-            subject="Reset your password — Football Academy",
-            body=text_message,
-            from_email=_from_email(),
-            to=[user.email],
-        )
-        msg.attach_alternative(html_message, "text/html")
-        msg.send(fail_silently=True)
-    except Exception as exc:
-        logger.warning("Failed to send password reset email: %s", exc)
+    player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+    html_message = (
+        f"<p>Hi {player_name},</p>"
+        f"<p>We received a request to reset your Football Academy password. "
+        f"Click the button below to set a new password:</p>"
+        f'<p><a href="{reset_url}" style="background:#22c55e;color:#fff;padding:12px 24px;'
+        f'border-radius:6px;text-decoration:none;display:inline-block;">Reset My Password</a></p>'
+        f"<p>If the button doesn't work, copy and paste this link into your browser:</p>"
+        f"<p>{reset_url}</p>"
+        f"<p>This link will expire in 1 hour. If you didn't request a password reset, "
+        f"you can safely ignore this email.</p>"
+        f"<p>Football Academy Team</p>"
+    )
+    text_message = (
+        f"Hi {player_name},\n\n"
+        f"We received a request to reset your Football Academy password.\n\n"
+        f"Reset link:\n{reset_url}\n\n"
+        f"This link will expire in 1 hour. If you didn't request this, "
+        f"you can safely ignore this email.\n\n"
+        f"Football Academy Team"
+    )
+    msg = EmailMultiAlternatives(
+        subject="Reset your password — Football Academy",
+        body=text_message,
+        from_email=_from_email(),
+        to=[user.email],
+    )
+    msg.attach_alternative(html_message, "text/html")
+    msg.send()
 
 
 def send_verification_email(user, frontend_url):
-    """Send email verification link with a signed token."""
+    """Send email verification link. Raises on failure so the caller can handle it."""
     from django.core.signing import TimestampSigner
 
     signer = TimestampSigner()
     token = signer.sign(user.email)
     verify_url = f"{frontend_url.rstrip('/')}/verify-email?token={token}"
 
-    try:
-        player_name = f"{user.first_name} {user.last_name}".strip() or user.username
-        html_message = (
-            f"<p>Hi {player_name},</p>"
-            f"<p>Welcome to Football Academy! Please verify your email address by clicking the link below:</p>"
-            f'<p><a href="{verify_url}" style="background:#22c55e;color:#fff;padding:12px 24px;'
-            f'border-radius:6px;text-decoration:none;display:inline-block;">Verify My Email</a></p>'
-            f"<p>If the button doesn't work, copy and paste this link into your browser:</p>"
-            f"<p>{verify_url}</p>"
-            f"<p>This link will expire in 24 hours.</p>"
-            f"<p>See you on the pitch!<br>Football Academy Team</p>"
-        )
-        text_message = (
-            f"Hi {player_name},\n\n"
-            f"Welcome to Football Academy! Please verify your email address by clicking this link:\n\n"
-            f"{verify_url}\n\n"
-            f"This link will expire in 24 hours.\n\n"
-            f"See you on the pitch!\nFootball Academy Team"
-        )
-        msg = EmailMultiAlternatives(
-            subject="Verify your email — Football Academy",
-            body=text_message,
-            from_email=_from_email(),
-            to=[user.email],
-        )
-        msg.attach_alternative(html_message, "text/html")
-        msg.send(fail_silently=True)
-    except Exception as exc:
-        logger.warning("Failed to send verification email: %s", exc)
+    player_name = f"{user.first_name} {user.last_name}".strip() or user.username
+    html_message = (
+        f"<p>Hi {player_name},</p>"
+        f"<p>Welcome to Football Academy! Please verify your email address by clicking the link below:</p>"
+        f'<p><a href="{verify_url}" style="background:#22c55e;color:#fff;padding:12px 24px;'
+        f'border-radius:6px;text-decoration:none;display:inline-block;">Verify My Email</a></p>'
+        f"<p>If the button doesn't work, copy and paste this link into your browser:</p>"
+        f"<p>{verify_url}</p>"
+        f"<p>This link will expire in 24 hours.</p>"
+        f"<p>See you on the pitch!<br>Football Academy Team</p>"
+    )
+    text_message = (
+        f"Hi {player_name},\n\n"
+        f"Welcome to Football Academy! Please verify your email address by clicking this link:\n\n"
+        f"{verify_url}\n\n"
+        f"This link will expire in 24 hours.\n\n"
+        f"See you on the pitch!\nFootball Academy Team"
+    )
+    msg = EmailMultiAlternatives(
+        subject="Verify your email — Football Academy",
+        body=text_message,
+        from_email=_from_email(),
+        to=[user.email],
+    )
+    msg.attach_alternative(html_message, "text/html")
+    msg.send()

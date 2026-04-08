@@ -1,14 +1,6 @@
-import re
-
-from django.core.exceptions import ValidationError
 from django.db import models
 
-PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
-
-
-def validate_phone_number(value):
-    if not PHONE_REGEX.match(value.replace(" ", "")):
-        raise ValidationError("Enter a valid phone number (7–15 digits, optional + prefix).")
+from config.validators import validate_phone_number
 
 
 class Enquiry(models.Model):

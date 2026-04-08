@@ -19,8 +19,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from config.seo_views import robots_txt, sitemap_xml
 
 urlpatterns = [
+    path("robots.txt", robots_txt, name="robots-txt"),
+    path("sitemap.xml", sitemap_xml, name="sitemap-xml"),
     path("admin/", admin.site.urls),
     path("api/", include("accounts.urls")),
     path("api/", include("training.urls")),

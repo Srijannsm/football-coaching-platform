@@ -18,16 +18,9 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "booked_at"]
 
     def validate_session(self, value):
-        if value.is_cancelled:
-            raise serializers.ValidationError("Cannot book a cancelled session.")
-
-        if not value.is_published:
-            raise serializers.ValidationError("Cannot book an unpublished session.")
-
-        if not value.program.is_active:
-            raise serializers.ValidationError(
-                "Cannot book a session from an inactive training program."
-            )
+        # State checks (cancelled, published, program active) are enforced by
+        # Booking.clean() at the model layer — no need to duplicate them here.
+        # Only add checks that the model cannot perform.
 
         if value.session_date is None or value.start_time is None:
             raise serializers.ValidationError(

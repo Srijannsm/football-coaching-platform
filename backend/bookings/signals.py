@@ -19,9 +19,10 @@ def _track_old_status(sender, instance, **kwargs):
 @receiver(post_save, sender=Booking)
 def on_booking_change(sender, instance, created, **kwargs):
     from adminpanel.models import Notification
-    from adminpanel.email_utils import (
-        send_booking_admin_notification,
-        send_cancellation_admin_notification,
+    from adminpanel.tasks import (
+        send_booking_admin_notification_task,
+        send_cancellation_admin_notification_task,
+        fire_task,
     )
 
     player = instance.player.user
@@ -30,34 +31,35 @@ def on_booking_change(sender, instance, created, **kwargs):
     old_status = getattr(instance, "_old_status", None)
 
     if created:
-        # Brand-new booking
+        # Brand-new booking — notify admin via in-app notification (sync, fast)
+        # and send email asynchronously via Celery.
         Notification.objects.create(
             title=f"New booking: {player_name}",
             message=session_label,
             notification_type=Notification.TYPE_BOOKING,
             link="/admin-dashboard/bookings",
         )
-        send_booking_admin_notification(instance)
+        fire_task(send_booking_admin_notification_task, instance.pk)
 
     elif old_status == Booking.STATUS_CANCELLED and instance.status != Booking.STATUS_CANCELLED:
-        # Player re-booked a previously cancelled session
+        # Player re-booked a previously cancelled session.
         Notification.objects.create(
             title=f"Re-booking: {player_name}",
             message=session_label,
             notification_type=Notification.TYPE_BOOKING,
             link="/admin-dashboard/bookings",
         )
-        send_booking_admin_notification(instance)
+        fire_task(send_booking_admin_notification_task, instance.pk)
 
     elif old_status != Booking.STATUS_CANCELLED and instance.status == Booking.STATUS_CANCELLED:
-        # Booking was cancelled
+        # Booking was cancelled.
         Notification.objects.create(
             title=f"Booking cancelled: {player_name}",
             message=session_label,
             notification_type=Notification.TYPE_CANCELLATION,
             link="/admin-dashboard/bookings",
         )
-        send_cancellation_admin_notification(instance)
+        fire_task(send_cancellation_admin_notification_task, instance.pk)
 
     # Keep payment status in sync with booking status changes.
     if not created:
