@@ -173,13 +173,44 @@ function TrainingSessionsPage() {
     return (
       <div className="app-shell">
         <Navbar />
-        <div className="mx-auto flex max-w-7xl items-center justify-center px-6 py-28 lg:px-10">
-          <EmptyState
-            title="Loading training sessions..."
-            description="Please wait while we fetch the latest academy sessions."
-            className="w-full max-w-xl"
-          />
-        </div>
+        <section className="bg-app-surface pt-20 pb-6">
+          <div className="mx-auto max-w-7xl px-6 lg:px-10">
+            <div className="mb-5">
+              <div className="h-3 w-36 animate-pulse rounded-full bg-app-surface-2" />
+              <div className="mt-3 h-10 w-72 animate-pulse rounded-xl bg-app-surface-2" />
+              <div className="mt-2 h-4 w-56 animate-pulse rounded-full bg-app-surface-2" />
+            </div>
+            <div className="h-10 w-full animate-pulse rounded-xl bg-app-surface-2" />
+          </div>
+        </section>
+        <section className="mx-auto max-w-7xl px-6 py-8 pb-16 lg:px-10">
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex overflow-hidden rounded-2xl border border-app-border bg-app-card">
+                <div className="w-1 shrink-0 animate-pulse bg-app-surface-2" />
+                <div className="flex flex-1 flex-col gap-4 p-5 lg:flex-row lg:items-center lg:gap-8 lg:p-6">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <div className="h-5 w-20 animate-pulse rounded-full bg-app-surface-2" />
+                      <div className="h-5 w-16 animate-pulse rounded-full bg-app-surface-2" />
+                    </div>
+                    <div className="h-6 w-48 animate-pulse rounded-lg bg-app-surface-2" />
+                    <div className="h-4 w-32 animate-pulse rounded-lg bg-app-surface-2" />
+                  </div>
+                  <div className="flex gap-6">
+                    {[1, 2, 3].map((j) => (
+                      <div key={j} className="space-y-1">
+                        <div className="h-3 w-10 animate-pulse rounded bg-app-surface-2" />
+                        <div className="h-5 w-16 animate-pulse rounded bg-app-surface-2" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h-9 w-28 animate-pulse rounded-xl bg-app-surface-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
@@ -213,19 +244,19 @@ function TrainingSessionsPage() {
       <Navbar />
 
       {/* ── Hero + Filters ──────────────────────────────────────────── */}
-      <section className="bg-app-surface pt-32 pb-10">
+      <section className="bg-app-surface pt-30 pb-6">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
 
           {/* Title row */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-primary">
                 Training Sessions
               </p>
-              <h1 className="text-4xl font-black tracking-tight text-app-text md:text-5xl">
+              <h1 className="text-2xl font-black tracking-tight text-app-text md:text-3xl">
                 Book your next session
               </h1>
-              <p className="mt-3 text-base leading-7 text-app-text-soft">
+              <p className="mt-1.5 text-sm leading-6 text-app-text-soft">
                 {isAuthenticated
                   ? `Welcome${user?.first_name ? `, ${user.first_name}` : ""}. Find a session and reserve your place.`
                   : "Browse sessions and log in when you're ready to book."}
@@ -370,6 +401,7 @@ function TrainingSessionsPage() {
         {viewMode === "card" && (
           filteredSessions.length === 0 ? (
             <EmptyState
+              icon="search"
               title="No matching sessions found"
               description="Try adjusting your search or filters."
               action={<Button type="button" onClick={handleClearFilters}>Reset Filters</Button>}
@@ -391,6 +423,7 @@ function TrainingSessionsPage() {
         {viewMode === "list" && (
           filteredSessions.length === 0 ? (
             <EmptyState
+              icon="search"
               title="No matching sessions found"
               description="Try adjusting your search or filters."
               action={<Button type="button" onClick={handleClearFilters}>Reset Filters</Button>}
@@ -451,7 +484,7 @@ function TrainingSessionsPage() {
                         </div>
                         <div>
                           <p className="text-xs font-medium uppercase tracking-wide text-app-text-muted">Price</p>
-                          <p className="mt-0.5 text-sm font-semibold text-app-text">
+                          <p className="mt-0.5 text-base font-extrabold text-brand-primary">
                             Rs. {session.price}
                           </p>
                         </div>

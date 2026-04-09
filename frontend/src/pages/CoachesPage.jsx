@@ -95,29 +95,29 @@ function CoachesPage() {
             />
             <Navbar />
 
-            <main className="flex-1 pt-28">
+            <main className="flex-1 pt-20">
                 <section className="border-b border-app-border bg-app-surface/70">
-                    <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-20">
+                    <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
                         <div className="max-w-3xl">
-                            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-brand-primary">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-brand-primary">
                                 Our Coaching Team
                             </p>
 
-                            <h1 className="text-4xl font-black tracking-tight text-app-text sm:text-5xl">
+                            <h1 className="text-2xl font-black tracking-tight text-app-text sm:text-3xl">
                                 Learn from experienced football coaches
                             </h1>
 
-                            <p className="mt-5 text-base leading-8 text-app-text-soft sm:text-lg">
+                            <p className="mt-2 text-sm leading-6 text-app-text-soft">
                                 Meet the coaches registered on the platform and explore their
                                 experience, coaching specialties, and player development focus.
                             </p>
 
                             {!isLoading && !error ? (
-                                <div className="mt-8 flex flex-wrap gap-3">
-                                    <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm font-medium text-app-text">
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    <div className="rounded-full border border-app-border bg-app-card px-3 py-1.5 text-sm font-medium text-app-text">
                                         {coaches.length} {coaches.length === 1 ? "Coach" : "Coaches"}
                                     </div>
-                                    <div className="rounded-full border border-app-border bg-app-card px-4 py-2 text-sm text-app-text-soft">
+                                    <div className="rounded-full border border-app-border bg-app-card px-3 py-1.5 text-sm text-app-text-soft">
                                         Verified platform profiles
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@ function CoachesPage() {
                     </div>
                 </section>
 
-                <section className="mx-auto max-w-7xl px-6 py-12 lg:px-10 lg:py-16">
+                <section className="mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
                     {error ? (
                         <div className="space-y-4">
                             <Alert variant="error">{error}</Alert>
@@ -188,6 +188,17 @@ function CoachesPage() {
                                                     {coach.specialties || "Not specified"}
                                                 </p>
                                             </div>
+
+                                            {typeof coach.total_sessions === "number" && (
+                                                <div className="rounded-2xl border border-app-border bg-app-surface-2 px-4 py-3">
+                                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-app-text-muted">
+                                                        Sessions
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-semibold text-app-text">
+                                                        {coach.total_sessions} total
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="mt-5">

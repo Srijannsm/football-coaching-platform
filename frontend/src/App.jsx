@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -67,6 +67,16 @@ const AdminAnalyticsPage = lazy(() =>
   import("./features/admin/pages/AdminAnalyticsPage")
 );
 
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, hash]);
+  return null;
+}
+
 function PageLoader() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-app-surface">
@@ -85,6 +95,7 @@ function AppContent() {
 
   return (
     <>
+      <ScrollToTop />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<HomePage />} />

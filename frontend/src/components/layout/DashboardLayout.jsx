@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import Navbar from "../Navbar";
 import Button from "../ui/Button";
+import { useAuth } from "../../hooks/useAuth";
 
 const navigationItems = [
     {
@@ -83,9 +84,73 @@ function SidebarLink({
     );
 }
 
+const ONBOARDING_KEY = "onboarding_dismissed";
+
+function OnboardingBanner({ user, onDismiss }) {
+    return (
+        <div className="relative mb-6 overflow-hidden rounded-[1.5rem] border border-brand-primary/20 bg-gradient-to-r from-brand-primary/8 via-brand-primary/4 to-transparent p-6">
+            <button
+                type="button"
+                onClick={onDismiss}
+                aria-label="Dismiss welcome message"
+                className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-app-text-muted transition hover:bg-app-surface-2 hover:text-app-text"
+            >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+
+            <p className="mb-1 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+                Welcome{user?.first_name ? `, ${user.first_name}` : ""}!
+            </p>
+            <h3 className="text-xl font-bold text-app-text">Get started with Football Academy</h3>
+            <p className="mt-1.5 text-sm text-app-text-soft">Complete these steps to make the most of your player account.</p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                {[
+                    {
+                        step: "1",
+                        label: "Complete your profile",
+                        desc: "Add your position, age, and a photo.",
+                        to: "/player-dashboard/profile/edit",
+                        cta: "Edit Profile",
+                    },
+                    {
+                        step: "2",
+                        label: "Browse sessions",
+                        desc: "Find a training session that fits your schedule.",
+                        to: "/training-sessions",
+                        cta: "View Sessions",
+                    },
+                    {
+                        step: "3",
+                        label: "Book your first session",
+                        desc: "Reserve your place and start training.",
+                        to: "/training-sessions",
+                        cta: "Book Now",
+                    },
+                ].map(({ step, label, desc, to, cta }) => (
+                    <Link key={step} to={to} className="group flex flex-col gap-2 rounded-2xl border border-app-border bg-app-card p-4 transition hover:border-brand-primary/40 hover:shadow-sm">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary-soft text-sm font-black text-brand-primary">
+                            {step}
+                        </div>
+                        <p className="text-sm font-semibold text-app-text">{label}</p>
+                        <p className="text-xs leading-5 text-app-text-muted">{desc}</p>
+                        <span className="mt-auto text-xs font-semibold text-brand-primary group-hover:underline">{cta} →</span>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function DashboardLayout() {
     const location = useLocation();
+    const { user } = useAuth();
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(() => {
+        try { return !localStorage.getItem(ONBOARDING_KEY); } catch { return true; }
+    });
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [hasHoveredSidebar, setHasHoveredSidebar] = useState(false);
     const autoCollapseDoneRef = useRef(false);
@@ -144,6 +209,13 @@ function DashboardLayout() {
     function closeMobileSidebar() {
         setMobileSidebarOpen(false);
     }
+
+    function dismissOnboarding() {
+        try { localStorage.setItem(ONBOARDING_KEY, "1"); } catch { /* ignore */ }
+        setShowOnboarding(false);
+    }
+
+    const isOverviewPage = location.pathname === "/player-dashboard";
 
     return (
         <div className="app-shell">
@@ -322,6 +394,9 @@ function DashboardLayout() {
 
                         {/* Child Content */}
                         <div className="mt-6">
+                            {isOverviewPage && showOnboarding && (
+                                <OnboardingBanner user={user} onDismiss={dismissOnboarding} />
+                            )}
                             <Outlet />
                         </div>
                     </div>

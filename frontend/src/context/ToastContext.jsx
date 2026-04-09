@@ -33,7 +33,11 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={value}>
       {children}
 
-      <div className="pointer-events-none fixed bottom-4 right-4 z-[9999] flex w-full max-w-sm flex-col gap-2.5">
+      <div
+        aria-live="polite"
+        aria-atomic="false"
+        className="pointer-events-none fixed bottom-20 right-4 z-[9999] flex w-full max-w-sm flex-col gap-2.5 sm:bottom-4"
+      >
         {toasts.map((toast) => {
           const isSuccess = toast.type === "success";
           const isError = toast.type === "error";

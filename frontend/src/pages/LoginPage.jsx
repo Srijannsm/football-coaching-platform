@@ -157,6 +157,7 @@ function LoginPage() {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Enter your username"
+                  autoComplete="username"
                   required
                 />
 
@@ -169,6 +170,8 @@ function LoginPage() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
+                    autoComplete="current-password"
+                    showToggle
                     required
                   />
                   <div className="mt-1.5 text-right">

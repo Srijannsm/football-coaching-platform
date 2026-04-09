@@ -5,6 +5,36 @@ import Footer from "../components/Footer";
 import Button from "../components/ui/Button";
 import { getGalleryCategories } from "../services/galleryService";
 
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+function VideoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+
 function extractYouTubeId(url) {
   if (!url) return null;
   const match = url.match(
@@ -243,7 +273,7 @@ function Lightbox({ items, initialIndex, onClose }) {
 
 function GalleryPage() {
   const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeType, setActiveType] = useState("all");
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -266,13 +296,22 @@ function GalleryPage() {
     loadGallery();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const allItems = useMemo(
+    () => categories.flatMap((cat) => cat.items ?? []),
+    [categories]
+  );
+
+  const typeCounts = useMemo(() => ({
+    all: allItems.length,
+    photo: allItems.filter((i) => i.media_type !== "video").length,
+    video: allItems.filter((i) => i.media_type === "video").length,
+  }), [allItems]);
+
   const filteredItems = useMemo(() => {
-    if (activeCategory === "all") {
-      return categories.flatMap((cat) => cat.items ?? []);
-    }
-    const cat = categories.find((c) => c.id === activeCategory);
-    return cat ? (cat.items ?? []) : [];
-  }, [categories, activeCategory]);
+    if (activeType === "photo") return allItems.filter((i) => i.media_type !== "video");
+    if (activeType === "video") return allItems.filter((i) => i.media_type === "video");
+    return allItems;
+  }, [allItems, activeType]);
 
   const totalCount = useMemo(
     () => categories.reduce((acc, c) => acc + (c.item_count ?? 0), 0),
@@ -288,21 +327,21 @@ function GalleryPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-app-card pt-32 pb-20">
+      <section className="relative overflow-hidden bg-app-card pt-30 pb-6">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/8 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-7xl px-6 text-center lg:px-10">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-primary">
             Gallery
           </p>
-          <h1 className="text-4xl font-bold tracking-tight text-app-text sm:text-5xl">
+          <h1 className="text-2xl font-bold tracking-tight text-app-text sm:text-3xl">
             Our Training in Action
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-app-text-soft">
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-app-text-soft">
             Browse photos and videos from our training sessions, camps, and
             events. See the dedication and skill that defines Football Academy.
           </p>
           {totalCount > 0 && (
-            <p className="mt-4 text-sm text-app-text-muted">
+            <p className="mt-2 text-xs text-app-text-muted">
               {totalCount} {totalCount === 1 ? "item" : "items"} across{" "}
               {categories.length}{" "}
               {categories.length === 1 ? "category" : "categories"}
@@ -311,41 +350,48 @@ function GalleryPage() {
         </div>
       </section>
 
-      {/* Category Tabs */}
-      {categories.length > 0 && (
-        <div className="sticky top-[72px] z-30 border-b border-app-border bg-app-surface/90 backdrop-blur-md">
-          <div className="mx-auto max-w-7xl overflow-x-auto px-6 lg:px-10">
-            <div className="flex gap-1 py-3">
-              <button
-                type="button"
-                onClick={() => setActiveCategory("all")}
-                className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition ${activeCategory === "all"
-                  ? "bg-brand-primary text-black"
-                  : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
-                  }`}
-              >
-                All ({totalCount})
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition ${activeCategory === cat.id
-                    ? "bg-brand-primary text-black"
-                    : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
+      {/* Media type filter */}
+      {!isLoading && allItems.length > 0 && (
+        <div className="mx-auto max-w-7xl px-6 pt-8 lg:px-10">
+          <div className="flex justify-center">
+            <div className="flex gap-1 rounded-2xl border border-app-border bg-app-card p-1 shadow-sm">
+              {[
+                { id: "all", label: "All", Icon: GridIcon },
+                { id: "photo", label: "Photos", Icon: CameraIcon },
+                { id: "video", label: "Videos", Icon: VideoIcon },
+              ]
+                .filter((t) => t.id === "all" || typeCounts[t.id] > 0)
+                .map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setActiveType(id)}
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      activeType === id
+                        ? "bg-brand-primary text-black shadow-sm"
+                        : "text-app-text-soft hover:text-app-text"
                     }`}
-                >
-                  {cat.name} ({cat.item_count})
-                </button>
-              ))}
+                  >
+                    <Icon />
+                    <span>{label}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+                        activeType === id
+                          ? "bg-black/15 text-black"
+                          : "bg-app-surface-2 text-app-text-muted"
+                      }`}
+                    >
+                      {typeCounts[id]}
+                    </span>
+                  </button>
+                ))}
             </div>
           </div>
         </div>
       )}
 
       {/* Content */}
-      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-10">
+      <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
         {isLoading ? (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -365,7 +411,9 @@ function GalleryPage() {
         ) : filteredItems.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-lg font-medium text-app-text-soft">
-              No items in this category yet.
+              {activeType !== "all"
+                ? `No ${activeType === "photo" ? "photos" : "videos"} in this category yet.`
+                : "No items in this category yet."}
             </p>
             <p className="mt-2 text-sm text-app-text-muted">
               Check back soon for updates.

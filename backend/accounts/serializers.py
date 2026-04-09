@@ -286,6 +286,7 @@ class CoachProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source="user.phone_number", read_only=True)
     full_name = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
+    total_sessions = serializers.SerializerMethodField()
 
     class Meta:
         model = CoachProfile
@@ -305,12 +306,16 @@ class CoachProfileSerializer(serializers.ModelSerializer):
             "availability_schedule",
             "image",
             "image_url",
+            "total_sessions",
             "updated_at",
         ]
 
     def get_full_name(self, obj):
         full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
         return full_name or obj.user.username
+
+    def get_total_sessions(self, obj):
+        return obj.user.assigned_training_sessions.count()
 
     def get_image_url(self, obj):
         request = self.context.get("request")

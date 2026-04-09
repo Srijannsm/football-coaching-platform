@@ -37,16 +37,19 @@ function Navbar({ mode = "solid" }) {
 
   const handleAnchorNavigation = useCallback(
     (event, sectionId) => {
+      event.preventDefault();
       if (location.pathname === "/") {
-        event.preventDefault();
         const section = document.getElementById(sectionId);
         if (section) {
-          section.scrollIntoView({ behavior: "smooth", block: "start" });
+          const y = section.getBoundingClientRect().top + window.scrollY - 88;
+          window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
         }
+      } else {
+        navigate(`/#${sectionId}`);
       }
       setMobileMenuOpen(false);
     },
-    [location.pathname]
+    [location.pathname, navigate]
   );
 
   useEffect(() => {
@@ -118,20 +121,18 @@ function Navbar({ mode = "solid" }) {
 
   const desktopAnchorClass = useMemo(
     () =>
-      `text-sm font-medium transition-colors duration-200 ${
-        isAtTop
-          ? "text-white/80 hover:text-white"
-          : "text-app-text-soft hover:text-app-text"
+      `text-sm font-medium transition-colors duration-200 ${isAtTop
+        ? "text-white/80 hover:text-white"
+        : "text-app-text-soft hover:text-app-text"
       }`,
     [isAtTop]
   );
 
   const mobileNavLinkClass = useCallback(
     ({ isActive }) =>
-      `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
-        isActive
-          ? "bg-brand-primary-soft text-app-text"
-          : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
+      `rounded-2xl px-3 py-2.5 text-sm font-medium transition ${isActive
+        ? "bg-brand-primary-soft text-app-text"
+        : "text-app-text-soft hover:bg-app-surface-2 hover:text-app-text"
       }`,
     []
   );
@@ -143,263 +144,279 @@ function Navbar({ mode = "solid" }) {
 
   return (
     <>
-    <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-        }`}
-    >
-      <div
-        className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${isAtTop
-            ? "border-white/12 bg-white/8 text-white backdrop-blur-md"
-            : "border-app-border bg-app-surface/88 text-app-text backdrop-blur-xl"
+      <nav
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${isHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
           }`}
       >
-        <div className="flex items-center gap-4 px-5 py-3 lg:px-8">
-          <div className="flex min-w-0 flex-1">
-            <NavLink
-              to="/"
-              onClick={(event) => {
-                closeMobileMenu();
-                handleGoHome(event);
-              }}
-              className="flex min-w-0 items-center gap-3"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-primary text-sm font-black text-black shadow-[var(--shadow-soft)]">
-                FA
-              </div>
+        <div
+          className={`mx-4 mt-4 rounded-[1.5rem] border transition-all duration-300 lg:mx-6 ${isAtTop
+            ? "border-white/12 bg-white/8 text-white backdrop-blur-md"
+            : "border-app-border bg-app-surface/88 text-app-text backdrop-blur-xl"
+            }`}
+        >
+          <div className="flex items-center gap-4 px-5 py-3 lg:px-8">
+            <div className="flex min-w-0 flex-1">
+              <NavLink
+                to="/"
+                onClick={(event) => {
+                  closeMobileMenu();
+                  handleGoHome(event);
+                }}
+                className="flex min-w-0 items-center gap-3"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-primary text-sm font-black text-black shadow-[var(--shadow-soft)]">
+                  FA
+                </div>
 
-              <div className="min-w-0 leading-tight">
-                <p
-                  className={`truncate text-base font-extrabold tracking-tight sm:text-lg ${isAtTop ? "text-white" : "text-app-text"
-                    }`}
-                >
-                  Football Academy
-                </p>
-                <p
-                  className={`hidden text-xs sm:block ${isAtTop ? "text-white/70" : "text-app-text-muted"
-                    }`}
-                >
-                  Train. Book. Improve.
-                </p>
-              </div>
-            </NavLink>
-          </div>
-
-          <div className="hidden items-center justify-center gap-8 md:flex">
-            <NavLink
-              to="/"
-              end
-              className={navLinkClass}
-              onClick={handleGoHome}
-            >
-              Home
-            </NavLink>
-
-            <NavLink to="/training-sessions" className={navLinkClass}>
-              Sessions
-            </NavLink>
-
-            <NavLink to="/coaches" className={navLinkClass}>
-              Coaches
-            </NavLink>
-
-            <a
-              href="/#about"
-              onClick={(event) => handleAnchorNavigation(event, "about")}
-              className={desktopAnchorClass}
-            >
-              About Us
-            </a>
-
-            <NavLink to="/gallery" className={navLinkClass}>
-              Gallery
-            </NavLink>
-
-            <a
-              href="/#contact"
-              onClick={(event) => handleAnchorNavigation(event, "contact")}
-              className={desktopAnchorClass}
-            >
-              Contact Us
-            </a>
-          </div>
-
-          <div className="hidden items-center gap-3 md:flex">
-            <ThemeToggle />
-
-            {!isAuthenticated ? (
-              <>
-                <NavLink to="/login">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={
-                      isAtTop
-                        ? "border-white/25 bg-white/8 text-white hover:border-white/40 hover:bg-white/14 hover:text-white"
-                        : ""
-                    }
+                <div className="min-w-0 leading-tight">
+                  <p
+                    className={`truncate text-base font-extrabold tracking-tight sm:text-lg ${isAtTop ? "text-white" : "text-app-text"
+                      }`}
                   >
-                    Login
-                  </Button>
-                </NavLink>
-
-                <NavLink to="/register">
-                  <Button size="sm">Join Academy</Button>
-                </NavLink>
-              </>
-            ) : (
-              <>
-                <NavLink to={dashboardPath}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={
-                      isAtTop
-                        ? "border-white/25 bg-white/8 text-white hover:border-white/40 hover:bg-white/14 hover:text-white"
-                        : ""
-                    }
+                    Football Academy
+                  </p>
+                  <p
+                    className={`hidden text-xs sm:block ${isAtTop ? "text-white/70" : "text-app-text-muted"
+                      }`}
                   >
-                    Dashboard
-                  </Button>
-                </NavLink>
-
-                <Button
-                  size="sm"
-                  onClick={handleLogout}
-                  variant="danger-outline"
-                  className={isAtTop ? "bg-white/92" : ""}
-                >
-                  Logout
-                </Button>
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className={`ml-auto inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${isAtTop
-                ? "border-white/20 bg-white/10 text-white hover:border-white/40"
-                : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
-              }`}
-            aria-label="Toggle navigation menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            <span className="text-lg">{mobileMenuOpen ? "✕" : "☰"}</span>
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="border-t border-app-border bg-app-surface px-5 py-5 md:hidden">
-            <div className="mb-5">
-              <ThemeToggle />
+                    Train. Book. Improve.
+                  </p>
+                </div>
+              </NavLink>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="hidden items-center justify-center gap-8 md:flex">
               <NavLink
                 to="/"
                 end
-                className={mobileNavLinkClass}
-                onClick={(event) => {
-                  handleGoHome(event);
-                  closeMobileMenu();
-                }}
+                className={navLinkClass}
+                onClick={handleGoHome}
               >
                 Home
               </NavLink>
 
-              <NavLink
-                to="/training-sessions"
-                className={mobileNavLinkClass}
-                onClick={closeMobileMenu}
-              >
+              <NavLink to="/training-sessions" className={navLinkClass}>
                 Sessions
               </NavLink>
 
+              <NavLink to="/coaches" className={navLinkClass}>
+                Coaches
+              </NavLink>
+
+
+              <NavLink to="/gallery" className={navLinkClass}>
+                Gallery
+              </NavLink>
+              
               <a
                 href="/#about"
                 onClick={(event) => handleAnchorNavigation(event, "about")}
-                className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+                className={desktopAnchorClass}
               >
-                About Us
+                About
               </a>
-
-              <NavLink
-                to="/gallery"
-                className={mobileNavLinkClass}
-                onClick={closeMobileMenu}
-              >
-                Gallery
-              </NavLink>
 
               <a
                 href="/#contact"
                 onClick={(event) => handleAnchorNavigation(event, "contact")}
-                className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+                className={desktopAnchorClass}
               >
                 Contact Us
               </a>
-
-              {isAuthenticated && (
-                <>
-                  <NavLink
-                    to={dashboardPath}
-                    className={mobileNavLinkClass}
-                    onClick={closeMobileMenu}
-                  >
-                    Dashboard
-                  </NavLink>
-
-                  <NavLink
-                    to="/player-dashboard/bookings"
-                    className={mobileNavLinkClass}
-                    onClick={closeMobileMenu}
-                  >
-                    My Bookings
-                  </NavLink>
-
-                  <NavLink
-                    to="/player-dashboard/profile"
-                    className={mobileNavLinkClass}
-                    onClick={closeMobileMenu}
-                  >
-                    Profile
-                  </NavLink>
-                </>
-              )}
             </div>
 
-            <div className="mt-5 border-t border-app-border pt-5">
+            <div className="hidden items-center gap-3 md:flex">
+              <ThemeToggle />
+
               {!isAuthenticated ? (
-                <div className="flex flex-col gap-3">
-                  <NavLink to="/login" onClick={closeMobileMenu}>
-                    <Button fullWidth variant="outline">
+                <>
+                  <NavLink to="/login">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={
+                        isAtTop
+                          ? "border-white/25 bg-white/8 text-white hover:border-white/40 hover:bg-white/14 hover:text-white"
+                          : ""
+                      }
+                    >
                       Login
                     </Button>
                   </NavLink>
 
-                  <NavLink to="/register" onClick={closeMobileMenu}>
-                    <Button fullWidth>Join Academy</Button>
+                  <NavLink to="/register">
+                    <Button size="sm">Join Academy</Button>
                   </NavLink>
-                </div>
+                </>
               ) : (
-                <Button
-                  fullWidth
-                  onClick={handleLogout}
-                  variant="danger-outline"
-                >
-                  Logout
-                </Button>
+                <>
+                  <NavLink to={dashboardPath}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={
+                        isAtTop
+                          ? "border-white/25 bg-white/8 text-white hover:border-white/40 hover:bg-white/14 hover:text-white"
+                          : ""
+                      }
+                    >
+                      Dashboard
+                    </Button>
+                  </NavLink>
+
+                  <Button
+                    size="sm"
+                    onClick={handleLogout}
+                    variant="danger-outline"
+                    className={isAtTop ? "bg-white/92" : ""}
+                  >
+                    Logout
+                  </Button>
+                </>
               )}
             </div>
-          </div>
-        )}
-      </div>
-    </nav>
 
-    {isAuthenticated && user?.is_email_verified === false && (
-      <UnverifiedEmailBanner />
-    )}
-  </>
+            {/* Mobile: always-visible dashboard shortcut for authenticated users */}
+            {isAuthenticated && (
+              <NavLink
+                to={dashboardPath}
+                onClick={closeMobileMenu}
+                className={`ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full border text-xs font-black transition md:hidden ${isAtTop
+                    ? "border-white/25 bg-white/10 text-white hover:bg-white/20"
+                    : "border-app-border bg-brand-primary-soft text-brand-primary hover:bg-brand-primary hover:text-black"
+                  }`}
+                aria-label="Go to dashboard"
+              >
+                {user?.first_name ? user.first_name.slice(0, 1).toUpperCase() : "D"}
+              </NavLink>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className={`${isAuthenticated ? "" : "ml-auto"} inline-flex items-center justify-center rounded-2xl border px-3 py-2 transition md:hidden ${isAtTop
+                ? "border-white/20 bg-white/10 text-white hover:border-white/40"
+                : "border-app-border bg-app-card text-app-text hover:border-brand-primary hover:text-brand-primary"
+                }`}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <span className="text-lg">{mobileMenuOpen ? "✕" : "☰"}</span>
+            </button>
+          </div>
+
+          {mobileMenuOpen && (
+            <div className="border-t border-app-border bg-app-surface px-5 py-5 md:hidden">
+              <div className="mb-5">
+                <ThemeToggle />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <NavLink
+                  to="/"
+                  end
+                  className={mobileNavLinkClass}
+                  onClick={(event) => {
+                    handleGoHome(event);
+                    closeMobileMenu();
+                  }}
+                >
+                  Home
+                </NavLink>
+
+                <NavLink
+                  to="/training-sessions"
+                  className={mobileNavLinkClass}
+                  onClick={closeMobileMenu}
+                >
+                  Sessions
+                </NavLink>
+
+                <NavLink
+                  to="/gallery"
+                  className={mobileNavLinkClass}
+                  onClick={closeMobileMenu}
+                >
+                  Gallery
+                </NavLink>
+
+                <a
+                  href="/#about"
+                  onClick={(event) => handleAnchorNavigation(event, "about")}
+                  className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+                >
+                  About Us
+                </a>
+
+                <a
+                  href="/#contact"
+                  onClick={(event) => handleAnchorNavigation(event, "contact")}
+                  className="rounded-2xl px-3 py-2.5 text-sm font-medium text-app-text-soft transition hover:bg-app-surface-2 hover:text-app-text"
+                >
+                  Contact Us
+                </a>
+
+                {isAuthenticated && (
+                  <>
+                    <NavLink
+                      to={dashboardPath}
+                      className={mobileNavLinkClass}
+                      onClick={closeMobileMenu}
+                    >
+                      Dashboard
+                    </NavLink>
+
+                    <NavLink
+                      to="/player-dashboard/bookings"
+                      className={mobileNavLinkClass}
+                      onClick={closeMobileMenu}
+                    >
+                      My Bookings
+                    </NavLink>
+
+                    <NavLink
+                      to="/player-dashboard/profile"
+                      className={mobileNavLinkClass}
+                      onClick={closeMobileMenu}
+                    >
+                      Profile
+                    </NavLink>
+                  </>
+                )}
+              </div>
+
+              <div className="mt-5 border-t border-app-border pt-5">
+                {!isAuthenticated ? (
+                  <div className="flex flex-col gap-3">
+                    <NavLink to="/login" onClick={closeMobileMenu}>
+                      <Button fullWidth variant="outline">
+                        Login
+                      </Button>
+                    </NavLink>
+
+                    <NavLink to="/register" onClick={closeMobileMenu}>
+                      <Button fullWidth>Join Academy</Button>
+                    </NavLink>
+                  </div>
+                ) : (
+                  <Button
+                    fullWidth
+                    onClick={handleLogout}
+                    variant="danger-outline"
+                  >
+                    Logout
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {isAuthenticated && user?.is_email_verified === false && (
+        <UnverifiedEmailBanner />
+      )}
+    </>
   );
 }
 

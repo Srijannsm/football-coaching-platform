@@ -30,6 +30,68 @@ function getYouTubeThumbnail(url) {
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
 
+function GroupIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function PersonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function GoalIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <line x1="2" y1="9" x2="22" y2="9" />
+      <line x1="8" y1="3" x2="8" y2="17" />
+      <line x1="16" y1="3" x2="16" y2="17" />
+      <path d="M6 21l6-4 6 4" />
+    </svg>
+  );
+}
+
+function TargetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function TrendingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
 function HomeGalleryCard({ item, onOpen }) {
   const isVideo = item.media_type === "video";
   // Priority: backend thumbnail → YouTube API thumbnail (sync, no state needed)
@@ -270,10 +332,10 @@ function HomePage() {
   useEffect(() => {
     if (location.hash) {
       const element = document.querySelector(location.hash);
-
       if (element) {
         const timer = setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
+          const y = element.getBoundingClientRect().top + window.scrollY - 88;
+          window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
         }, 80);
         return () => clearTimeout(timer);
       }
@@ -325,50 +387,62 @@ function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link to="/register">
-                <Button size="lg">Join Academy</Button>
+              <Link to="/training-sessions">
+                <Button size="lg">Book Your First Session</Button>
               </Link>
 
-              <Link to="/training-sessions">
+              <Link to="/coaches">
                 <Button
                   variant="outline"
                   size="lg"
                   className="border-white/40 bg-white/10 text-white hover:border-white hover:bg-white/15 hover:text-white"
                 >
-                  View Training Sessions
+                  Meet Our Coaches
                 </Button>
               </Link>
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3 text-sm text-white/75">
-              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
-                Structured coaching
-              </span>
-              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
-                Flexible bookings
-              </span>
-              <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
-                Player-first development
-              </span>
+              {["Structured coaching", "Flexible bookings", "Player-first development"].map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-primary" />
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-10 left-1/2 hidden -translate-x-1/2 animate-bounce flex-col items-center gap-1.5 lg:flex">
+          <span className="text-xs font-medium uppercase tracking-widest text-white/40">Scroll</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-white/40">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <polyline points="19 12 12 19 5 12" />
+          </svg>
         </div>
       </section>
 
       <section className="relative z-10 -mt-14 px-6 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { value: "100+", label: "Training Sessions" },
-            { value: "Expert", label: "Coach-Led Development" },
-            { value: "All Levels", label: "Youth to Competitive Players" },
-            { value: "Flexible", label: "Easy Online Booking" },
+            { value: "100+", label: "Training Sessions", Icon: CalendarIcon },
+            { value: "Expert", label: "Coach-Led Development", Icon: TargetIcon },
+            { value: "All Levels", label: "Youth to Competitive Players", Icon: GroupIcon },
+            { value: "Flexible", label: "Easy Online Booking", Icon: TrendingIcon },
           ].map((item) => (
             <Card key={item.label} className="h-full">
               <CardContent className="p-5">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-primary-soft text-brand-primary">
+                  <item.Icon />
+                </div>
                 <h3 className="text-2xl font-extrabold tracking-tight text-app-text">
                   {item.value}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-app-text-soft">
+                <p className="mt-1.5 text-sm leading-6 text-app-text-soft">
                   {item.label}
                 </p>
               </CardContent>
@@ -398,26 +472,42 @@ function HomePage() {
                 title: "Group Training",
                 description:
                   "Improve technical ability, awareness, and decision-making in high-quality academy group sessions.",
+                Icon: GroupIcon,
               },
               {
                 title: "1-to-1 Coaching",
                 description:
                   "Focused individual coaching built around your strengths, weaknesses, and performance goals.",
+                Icon: PersonIcon,
               },
               {
                 title: "Goalkeeper Training",
                 description:
                   "Specialist goalkeeper sessions covering handling, reactions, positioning, footwork, and confidence.",
+                Icon: GoalIcon,
               },
             ].map((program) => (
-              <Card key={program.title} className="h-full">
-                <CardContent className="p-8">
+              <Card key={program.title} className="group h-full transition-shadow duration-300 hover:shadow-[var(--shadow-premium)]">
+                <CardContent className="flex h-full flex-col p-8">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary-soft text-brand-primary">
+                    <program.Icon />
+                  </div>
                   <h3 className="text-2xl font-bold tracking-tight text-app-text">
                     {program.title}
                   </h3>
-                  <p className="mt-4 leading-7 text-app-text-soft">
+                  <p className="mt-4 flex-1 leading-7 text-app-text-soft">
                     {program.description}
                   </p>
+                  <Link
+                    to="/training-sessions"
+                    className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-primary transition-opacity hover:opacity-75"
+                  >
+                    View sessions
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -425,11 +515,8 @@ function HomePage() {
         </div>
       </section>
 
-      <section
-        id="about"
-        className="scroll-mt-24 bg-app-surface py-16 lg:py-24"
-      >
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-2 lg:items-center lg:px-10">
+      <section className="bg-app-surface py-16 lg:py-24">
+        <div id="about" className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-2 lg:items-center lg:px-10">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               About Us
@@ -479,7 +566,7 @@ function HomePage() {
 
       <section
         id="gallery"
-        className="scroll-mt-24 px-6 py-16 lg:px-10 lg:py-24"
+        className="scroll-mt-20 px-6 py-16 lg:px-10 lg:py-24"
       >
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto mb-14 max-w-3xl text-center">
@@ -551,25 +638,32 @@ function HomePage() {
                 title: "Structured Coaching",
                 description:
                   "Sessions are planned with clear outcomes instead of random drills.",
+                Icon: TargetIcon,
               },
               {
                 title: "Player-Focused Development",
                 description:
                   "Training is designed to improve technical ability and game understanding.",
+                Icon: PersonIcon,
               },
               {
                 title: "Easy Booking Experience",
                 description:
                   "Browse sessions, reserve your place, and manage bookings easily.",
+                Icon: CalendarIcon,
               },
               {
                 title: "Long-Term Progress",
                 description:
                   "We focus on continuous development, not just one good session.",
+                Icon: TrendingIcon,
               },
             ].map((item) => (
               <Card key={item.title} className="h-full">
                 <CardContent className="p-7">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-primary-soft text-brand-primary">
+                    <item.Icon />
+                  </div>
                   <h3 className="text-xl font-bold tracking-tight text-app-text">
                     {item.title}
                   </h3>
@@ -583,11 +677,8 @@ function HomePage() {
         </div>
       </section>
 
-      <section
-        id="contact"
-        className="scroll-mt-24 px-6 py-16 lg:px-10 lg:py-24"
-      >
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+      <section className="px-6 py-16 lg:px-10 lg:py-24">
+        <div id="contact" className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand-primary">
               Contact Us
@@ -711,13 +802,13 @@ function HomePage() {
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg">Register Now</Button>
+            <Link to="/training-sessions">
+              <Button size="lg">Book Your First Session</Button>
             </Link>
 
-            <Link to="/training-sessions">
+            <Link to="/register">
               <Button variant="outline" size="lg">
-                Browse Sessions
+                Create Free Account
               </Button>
             </Link>
           </div>

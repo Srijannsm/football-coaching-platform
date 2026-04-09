@@ -183,6 +183,7 @@ function PlayerDashboardPage() {
               </div>
             ) : (
               <EmptyState
+                icon="sessions"
                 title="No upcoming session"
                 description="You do not have any future session booked right now."
                 action={
@@ -224,6 +225,7 @@ function PlayerDashboardPage() {
               </div>
             ) : (
               <EmptyState
+                icon="bookings"
                 title="No bookings yet"
                 description="You have not made any bookings yet."
                 action={

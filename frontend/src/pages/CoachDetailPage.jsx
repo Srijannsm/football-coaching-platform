@@ -8,7 +8,7 @@ import EmptyState from "../components/ui/EmptyState";
 import { Card, CardContent } from "../components/ui/Card";
 import { getCoachProfile } from "../services/coachService";
 import { getErrorMessage } from "../utils/getErrorMessage";
-import { Award, Briefcase, Star } from "lucide-react";
+import { Award, Briefcase, Star, CalendarDays } from "lucide-react";
 
 function getCoachName(coach) {
   return (
@@ -65,13 +65,37 @@ function CoachDetailPage() {
 
   if (loading) {
     return (
-      <div className="app-shell flex min-h-screen flex-col">
+      <div className="app-shell flex min-h-screen flex-col bg-app-bg">
         <Navbar />
-        <main className="flex flex-1 items-center justify-center px-6 pt-28">
-          <EmptyState
-            title="Loading coach profile..."
-            description="Please wait while we fetch the details."
-          />
+        <main className="flex-1 pt-20">
+          <section className="border-b border-app-border bg-app-surface/70">
+            <div className="mx-auto max-w-5xl px-6 py-6 lg:px-10 lg:py-8">
+              <div className="mb-4 h-8 w-28 animate-pulse rounded-full bg-app-surface-2" />
+              <div className="flex items-center gap-6">
+                <div className="h-28 w-28 animate-pulse rounded-2xl bg-app-surface-2" />
+                <div className="space-y-3">
+                  <div className="h-3 w-24 animate-pulse rounded bg-app-surface-2" />
+                  <div className="h-8 w-52 animate-pulse rounded-xl bg-app-surface-2" />
+                  <div className="h-4 w-36 animate-pulse rounded bg-app-surface-2" />
+                </div>
+              </div>
+            </div>
+          </section>
+          <section className="mx-auto max-w-5xl px-6 py-8 lg:px-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+              <div className="space-y-3 rounded-2xl border border-app-border bg-app-card p-8">
+                <div className="h-5 w-16 animate-pulse rounded bg-app-surface-2" />
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-4 animate-pulse rounded bg-app-surface-2" style={{ width: `${70 + (i % 3) * 10}%` }} />
+                ))}
+              </div>
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-2xl bg-app-surface-2" />
+                ))}
+              </div>
+            </div>
+          </section>
         </main>
         <Footer />
       </div>
@@ -82,7 +106,7 @@ function CoachDetailPage() {
     return (
       <div className="app-shell flex min-h-screen flex-col">
         <Navbar />
-        <main className="flex flex-1 items-center justify-center px-6 pt-28">
+        <main className="flex flex-1 items-center justify-center px-6 pt-20">
           <EmptyState
             title={notFound ? "Coach not found" : "Something went wrong"}
             description={
@@ -117,19 +141,19 @@ function CoachDetailPage() {
       />
       <Navbar />
 
-      <main className="flex-1 pt-28">
+      <main className="flex-1 pt-20">
         {/* Hero */}
         <section className="border-b border-app-border bg-app-surface/70">
-          <div className="mx-auto max-w-5xl px-6 py-12 lg:px-10 lg:py-16">
+          <div className="mx-auto max-w-5xl px-6 py-6 lg:px-10 lg:py-8">
             <Link
               to="/coaches"
-              className="mb-8 inline-flex items-center gap-2 rounded-full border border-app-border bg-app-card px-4 py-2 text-sm font-medium text-app-text-soft transition hover:border-brand-primary hover:text-app-text"
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-app-border bg-app-card px-3 py-1.5 text-sm font-medium text-app-text-soft transition hover:border-brand-primary hover:text-app-text"
             >
               <span>←</span>
               <span>All Coaches</span>
             </Link>
 
-            <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               {/* Avatar */}
               {coach.image_url ? (
                 <img
@@ -137,23 +161,23 @@ function CoachDetailPage() {
                   alt={name}
                   loading="lazy"
                   decoding="async"
-                  className="h-24 w-24 rounded-2xl border border-app-border object-cover shadow-soft sm:h-28 sm:w-28"
+                  className="h-20 w-20 rounded-2xl border border-app-border object-cover shadow-soft sm:h-24 sm:w-24"
                 />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-brand-primary/20 bg-brand-primary/10 text-3xl font-black text-brand-primary shadow-soft sm:h-28 sm:w-28">
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-brand-primary/20 bg-brand-primary/10 text-3xl font-black text-brand-primary shadow-soft sm:h-24 sm:w-24">
                   {name.slice(0, 1).toUpperCase()}
                 </div>
               )}
 
               <div>
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-brand-primary">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary">
                   Coach Profile
                 </p>
-                <h1 className="text-3xl font-black tracking-tight text-app-text sm:text-4xl">
+                <h1 className="text-2xl font-black tracking-tight text-app-text sm:text-3xl">
                   {name}
                 </h1>
                 {coach.coaching_level && (
-                  <p className="mt-2 text-base font-medium text-app-text-soft">
+                  <p className="mt-1.5 text-sm font-medium text-app-text-soft">
                     {coach.coaching_level}
                   </p>
                 )}
@@ -190,6 +214,13 @@ function CoachDetailPage() {
 
             {/* Info chips */}
             <div className="space-y-3">
+              {typeof coach.total_sessions === "number" && (
+                <DetailChip
+                  icon={CalendarDays}
+                  label="Total Sessions"
+                  value={`${coach.total_sessions} session${coach.total_sessions !== 1 ? "s" : ""}`}
+                />
+              )}
               <DetailChip
                 icon={Briefcase}
                 label="Experience"
